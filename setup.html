@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Setup Firebase · PMR WIRA UNIT SMK IBG 3</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/variables.css"/>
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/components.css"/>
+
+  <!-- Firebase SDK (compat version — sesuai dengan firebase-config.js) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    body{ background:var(--gray-100); }
+
+    .setup-wrap{
+      min-height:100vh;
+      display:flex; align-items:flex-start; justify-content:center;
+      padding:40px 20px 80px;
+    }
+    .setup-inner{ width:100%; max-width:780px; }
+
+    .setup-header{
+      display:flex; align-items:center; gap:14px;
+      background:var(--pmr-red); color:var(--white);
+      padding:24px 28px;
+      border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+    }
+    .setup-header h1{ color:var(--white); font-size:1.3rem; margin:0; }
+    .setup-header p{ color:rgba(255,255,255,0.82); margin:0; font-size:0.85rem; }
+
+    .setup-body{
+      background:var(--white);
+      border:1px solid var(--gray-200);
+      border-top:none;
+      border-radius:0 0 var(--radius-lg) var(--radius-lg);
+      padding:28px;
+    }
+
+    /* Langkah setup */
+    .steps{ display:flex; flex-direction:column; gap:14px; margin-bottom:28px; }
+    .step{
+      display:flex; gap:14px;
+      padding:16px;
+      border:1px solid var(--gray-200);
+      border-radius:var(--radius-md);
+      background:var(--gray-100);
+    }
+    .step.done{ background:var(--success-bg); border-color:var(--success); }
+    .step.active{ background:var(--pmr-red-light); border-color:var(--pmr-red); }
+    .step-num{
+      width:30px; height:30px; border-radius:50%; flex-shrink:0;
+      background:var(--gray-300); color:var(--white);
+      display:flex; align-items:center; justify-content:center;
+      font-weight:700; font-size:0.85rem;
+    }
+    .step.done .step-num{ background:var(--success); }
+    .step.active .step-num{ background:var(--pmr-red); }
+    .step-body h3{ font-size:0.95rem; margin:0 0 4px; }
+    .step-body p{ font-size:0.84rem; margin:0; }
+    .step-body code{
+      background:var(--white); border:1px solid var(--gray-300);
+      border-radius:4px; padding:1px 7px; font-size:0.82rem;
+    }
+
+    /* Log output */
+    .log-panel{
+      background:var(--ink);
+      border-radius:var(--radius-md);
+      padding:16px 20px;
+      min-height:180px;
+      max-height:340px;
+      overflow-y:auto;
+      margin-bottom:20px;
+      font-family: 'Courier New', monospace;
+      font-size:0.82rem;
+    }
+    .log-line{ padding:2px 0; }
+    .log-line.ok    { color:#4ade80; }
+    .log-line.warn  { color:#fbbf24; }
+    .log-line.error { color:#f87171; }
+    .log-line.done  { color:#818cf8; font-weight:700; }
+    .log-line.info  { color:#94a3b8; }
+
+    /* Status badge */
+    .status-bar{
+      display:flex; align-items:center; gap:10px;
+      padding:12px 16px;
+      border-radius:var(--radius-sm);
+      border:1px solid var(--gray-200);
+      font-size:0.85rem;
+      margin-bottom:20px;
+    }
+    .status-dot{
+      width:10px; height:10px; border-radius:50%; flex-shrink:0;
+    }
+    .status-dot.red    { background:var(--pmr-red); animation:pulse 1.5s infinite; }
+    .status-dot.green  { background:var(--success); }
+    .status-dot.gray   { background:var(--gray-400); }
+    @keyframes pulse{
+      0%,100%{ opacity:1; } 50%{ opacity:0.4; }
+    }
+
+    .actions-row{ display:flex; gap:10px; flex-wrap:wrap; }
+  </style>
+</head>
+<body>
+<div class="setup-wrap">
+  <div class="setup-inner">
+
+    <!-- Header -->
+    <div class="setup-header">
+      <img src="assets/logo.svg" alt="Logo" width="42" height="42"/>
+      <div>
+        <h1>Setup Firebase · PMR WIRA UNIT SMK IBG 3</h1>
+        <p>Jalankan halaman ini sekali saja untuk menginisialisasi database Firestore dan membuat akun pengguna.</p>
+      </div>
+    </div>
+
+    <div class="setup-body">
+
+      <!-- Status koneksi Firebase -->
+      <div class="status-bar" id="status-bar">
+        <div class="status-dot gray" id="status-dot"></div>
+        <span id="status-text">Memeriksa konfigurasi Firebase…</span>
+      </div>
+
+      <!-- Panduan langkah -->
+      <div class="steps">
+        <div class="step" id="step-1">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h3>Buat Project Firebase</h3>
+            <p>Buka <a href="https://console.firebase.google.com" target="_blank" style="color:var(--pmr-red)">console.firebase.google.com</a>
+              → <strong>Add project</strong> → beri nama (misal: <code>pmr-smkibg3</code>) → selesaikan wizard.</p>
+          </div>
+        </div>
+        <div class="step" id="step-2">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h3>Aktifkan Firestore & Authentication</h3>
+            <p>Di sidebar Firebase Console: <strong>Firestore Database</strong> → Create database (pilih mode production atau test) ·
+              <strong>Authentication</strong> → Sign-in method → aktifkan <strong>Email/Password</strong>.</p>
+          </div>
+        </div>
+        <div class="step" id="step-3">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h3>Salin Config ke <code>firebase-config.js</code></h3>
+            <p>Project Settings → Your apps → Add app (Web) → salin objek config →
+              tempel ke <code>js/firebase-config.js</code>, lalu ubah <code>FIREBASE_ENABLED = true</code>.</p>
+          </div>
+        </div>
+        <div class="step" id="step-4">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h3>Atur Firestore Rules</h3>
+            <p>Firestore → Rules → salin rules berikut:</p>
+            <pre id="rules-box" style="background:var(--gray-100);border:1px solid var(--gray-200);border-radius:8px;padding:12px;font-size:0.78rem;overflow-x:auto;margin:8px 0 0">
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Hanya user yang sudah login yang bisa baca/tulis
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}</pre>
+            <button class="btn btn-ghost btn-sm" onclick="salinRules()" style="margin-top:8px">📋 Salin Rules</button>
+          </div>
+        </div>
+        <div class="step" id="step-5">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <h3>Jalankan Seed & Buat Akun (tombol di bawah)</h3>
+            <p>Klik tombol di bawah secara berurutan. Pastikan sudah login sebagai admin Firebase terlebih dahulu
+              atau gunakan mode test rules sementara.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Log panel -->
+      <div class="log-panel" id="log-panel">
+        <div class="log-line info">Menunggu tindakan…</div>
+      </div>
+
+      <!-- Aksi -->
+      <div class="actions-row">
+        <button class="btn btn-primary" id="btn-seed" disabled>
+          📦 1. Seed Data ke Firestore
+        </button>
+        <button class="btn btn-outline" id="btn-buat-akun" disabled>
+          👤 2. Buat Akun Pengguna
+        </button>
+        <button class="btn btn-ghost" id="btn-clear-log">
+          🗑 Bersihkan Log
+        </button>
+      </div>
+
+      <div class="alert alert-danger" style="margin-top:20px">
+        ⚠️ <strong>Perhatian:</strong> Halaman setup hanya perlu dijalankan sekali.
+        Menjalankan seed berulang kali bisa menyebabkan data duplikat di Firestore.
+        Hapus file <code>setup.html</code> setelah selesai untuk keamanan.
+      </div>
+
+      <!-- ══════════════════════════════════════════════
+           IMPORT MASSAL PROFIL FIRESTORE
+           Untuk akun yang sudah ada di Firebase Auth
+           tapi belum punya dokumen di Firestore users/
+      ══════════════════════════════════════════════ -->
+      <div style="margin-top:28px;border-top:2px solid var(--gray-200);padding-top:26px">
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <div style="font-weight:700;font-size:1rem">📋 Import Massal Profil Firestore</div>
+          <span class="badge badge-info">Aman dijalankan berulang kali</span>
+        </div>
+
+        <p style="font-size:0.84rem;color:var(--ink-soft);margin-bottom:16px">
+          Untuk akun yang sudah dibuat manual di Firebase Authentication tapi belum punya
+          profil di Firestore. Paste daftar akun di bawah, satu baris per akun.
+          Format: <code style="background:var(--gray-100);border:1px solid var(--gray-200);border-radius:4px;padding:1px 7px">username | Nama Lengkap | role</code>
+        </p>
+
+        <!-- Contoh format -->
+        <div style="background:var(--gray-100);border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:12px 14px;font-family:monospace;font-size:0.79rem;color:var(--ink-soft);margin-bottom:14px;line-height:1.8">
+          Contoh isi:<br>
+          pjkesehatan1 | Budi Santoso | pj<br>
+          pjlogistik1 | Sari Dewi | pj<br>
+          pjhumas1 | Andi Pratama | pj<br>
+          sekretaris2 | Nisa Rahmawati | sekretaris
+        </div>
+
+        <!-- Role yang tersedia -->
+        <div style="font-size:0.78rem;color:var(--ink-soft);margin-bottom:12px">
+          Role yang tersedia: <code>admin</code> <code>ketua</code> <code>wakil</code>
+          <code>sekretaris</code> <code>bendahara</code> <code>pj</code>
+        </div>
+
+        <!-- Textarea input -->
+        <textarea id="import-textarea"
+          placeholder="pjkesehatan1 | Nama Lengkap | pj&#10;pjlogistik1 | Nama Lengkap | pj&#10;pjhumas1 | Nama Lengkap | pj"
+          style="width:100%;height:160px;padding:12px 14px;
+            border:1.5px solid var(--gray-300);border-radius:var(--radius-sm);
+            font-family:monospace;font-size:0.84rem;resize:vertical;
+            background:var(--white);transition:border-color 0.2s">
+        </textarea>
+
+        <!-- Preview parsed -->
+        <div id="import-preview" style="display:none;margin-top:12px">
+          <div style="font-size:0.82rem;font-weight:700;margin-bottom:8px;color:var(--ink)">
+            Preview — <span id="import-count">0</span> akun akan diproses:
+          </div>
+          <div style="overflow-x:auto">
+            <table class="data-table" style="font-size:0.8rem">
+              <thead><tr><th>#</th><th>Username</th><th>Nama</th><th>Role</th><th>Email Firebase</th><th>Status Parse</th></tr></thead>
+              <tbody id="import-preview-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Error parse -->
+        <div id="import-parse-error" style="display:none;margin-top:8px"
+          class="alert alert-danger"></div>
+
+        <!-- Tombol aksi -->
+        <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-outline btn-sm" id="btn-parse">🔍 Parse & Preview</button>
+          <button class="btn btn-primary btn-sm" id="btn-import" disabled>
+            ⬆ Jalankan Import
+          </button>
+          <button class="btn btn-ghost btn-sm" id="btn-reset-import">✕ Reset</button>
+          <span id="import-status-text" style="font-size:0.78rem;color:var(--ink-soft)"></span>
+        </div>
+
+        <!-- Progress bar -->
+        <div id="import-progress-wrap" style="display:none;margin-top:14px">
+          <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px">
+            <span id="import-progress-label">Memproses…</span>
+            <span id="import-progress-pct">0%</span>
+          </div>
+          <div style="background:var(--gray-200);border-radius:4px;height:8px">
+            <div id="import-progress-bar"
+              style="height:100%;border-radius:4px;background:var(--pmr-red);width:0%;transition:width 0.3s">
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <!-- ═══════════════════════════════════════════ -->
+
+      <div style="margin-top:20px;text-align:center">
+        <a href="index.html" style="color:var(--pmr-red);font-size:0.85rem;font-weight:600">← Kembali ke Beranda</a>
+        &nbsp;·&nbsp;
+        <a href="dashboard.html" style="color:var(--pmr-red);font-size:0.85rem;font-weight:600">Buka Dashboard →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="js/firebase-config.js"></script>
+<script src="js/data-dummy.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/firebase-db.js"></script>
+<script>
+/* ── Daftar akun yang akan dibuat di Firebase Auth ── */
+const AKUN_BUAT = [
+  { username:"admin",       password:"admin123",    role:"admin",      nama:"Admin Sistem"    },
+  { username:"ketua",       password:"ketua123",    role:"ketua",      nama:"M. Arif Hidayat" },
+  { username:"wakil",       password:"wakil123",    role:"wakil",      nama:"Nadia Salsabila" },
+  { username:"sekretaris",  password:"sekre123",    role:"sekretaris", nama:"Dewi Lestari"    },
+  { username:"bendahara",   password:"bendahara123",role:"bendahara",  nama:"Putri Ramadhani" },
+  { username:"pj",          password:"pj123",       role:"pj",         nama:"Raka Pratama"    }
+];
+
+const logPanel   = document.getElementById("log-panel");
+const statusDot  = document.getElementById("status-dot");
+const statusText = document.getElementById("status-text");
+const btnSeed    = document.getElementById("btn-seed");
+const btnAkun    = document.getElementById("btn-buat-akun");
+
+/* ── Log helper ── */
+function log(msg, tipe="info") {
+  const div = document.createElement("div");
+  div.className = "log-line " + tipe;
+  div.textContent = "[" + new Date().toLocaleTimeString("id-ID") + "] " + msg;
+  logPanel.appendChild(div);
+  logPanel.scrollTop = logPanel.scrollHeight;
+}
+document.getElementById("btn-clear-log").addEventListener("click", () => {
+  logPanel.innerHTML = "";
+  log("Log dibersihkan.", "info");
+});
+
+/* ── Cek status Firebase pada load ── */
+document.addEventListener("DOMContentLoaded", () => {
+  if (!FIREBASE_ENABLED) {
+    statusDot.className = "status-dot gray";
+    statusText.textContent = "FIREBASE_ENABLED = false — ubah ke true di firebase-config.js lalu refresh.";
+    log("Firebase belum diaktifkan. Isi FIREBASE_CONFIG dan set FIREBASE_ENABLED=true.", "warn");
+    return;
+  }
+
+  statusDot.className = "status-dot red";
+  statusText.textContent = "Menghubungkan ke Firebase…";
+
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      statusDot.className = "status-dot green";
+      statusText.textContent = "Terhubung ke Firebase ✓ · Logged in as: " + user.email;
+      log("Koneksi Firebase berhasil.", "ok");
+      btnSeed.disabled  = false;
+      btnAkun.disabled  = false;
+    } else {
+      statusDot.className = "status-dot gray";
+      statusText.textContent = "Belum login ke Firebase. Jalankan melalui browser setelah deploy, atau pakai test rules sementara.";
+      log("Belum terautentikasi ke Firebase. Seed & buat akun tetap bisa dicoba jika Firestore rules = allow all.", "warn");
+      btnSeed.disabled  = false;
+      btnAkun.disabled  = false;
+    }
+  });
+});
+
+/* ── Tombol Seed ── */
+btnSeed.addEventListener("click", async () => {
+  btnSeed.disabled = true;
+  btnSeed.textContent = "Seeding…";
+  logPanel.innerHTML = "";
+  log("Memulai seed data ke Firestore…", "info");
+  await seedFirestore(log);
+  btnSeed.disabled = false;
+  btnSeed.textContent = "📦 1. Seed Data ke Firestore";
+});
+
+/* ── Tombol Buat Akun ── */
+btnAkun.addEventListener("click", async () => {
+  btnAkun.disabled = true;
+  btnAkun.textContent = "Membuat akun…";
+  log("Memulai pembuatan akun Firebase Auth…", "info");
+  await buatAkunFirebase(AKUN_BUAT, log);
+  btnAkun.disabled = false;
+  btnAkun.textContent = "👤 2. Buat Akun Pengguna";
+});
+
+/* ── Salin Firestore Rules ── */
+function salinRules() {
+  const text = document.getElementById("rules-box").textContent.trim();
+  navigator.clipboard.writeText(text)
+    .then(() => alert("Rules berhasil disalin ke clipboard!"))
+    .catch(() => alert("Salin manual: blok teks di kotak abu-abu lalu Ctrl+C."));
+}
+
+/* ═══════════════════════════════════════════════════════
+   IMPORT MASSAL — logika inti
+   ═══════════════════════════════════════════════════════ */
+
+const VALID_ROLES = new Set(["admin","ketua","wakil","sekretaris","bendahara","pj"]);
+
+/**
+ * Parse textarea → array objek {username, nama, role, email, error?}
+ * Format per baris: "username | Nama Lengkap | role"
+ * Baris kosong dan baris komentar (#) diabaikan.
+ */
+function parseImport(teks) {
+  return teks
+    .split("\n")
+    .map((baris, i) => ({ baris: baris.trim(), nomor: i + 1 }))
+    .filter(({ baris }) => baris && !baris.startsWith("#"))
+    .map(({ baris, nomor }) => {
+      const parts = baris.split("|").map(s => s.trim());
+      if (parts.length < 3) {
+        return { nomor, raw: baris, error: "Format salah — harus 3 kolom dipisah |" };
+      }
+      const [username, nama, role] = parts;
+      if (!username) return { nomor, raw: baris, error: "Username kosong" };
+      if (!nama)     return { nomor, raw: baris, error: "Nama kosong" };
+      if (!VALID_ROLES.has(role)) {
+        return { nomor, raw: baris, error: `Role "${role}" tidak valid` };
+      }
+      return {
+        nomor,
+        username: username.toLowerCase().replace(/\s+/g, "_"),
+        nama,
+        role,
+        email: `${username.toLowerCase().replace(/\s+/g, "_")}@pmr-smkibg3.app`
+      };
+    });
+}
+
+/* ── State module-level ── */
+let _parsedRows   = [];  /* hasil parse terakhir */
+let _importRunning = false;
+
+/* ── Tombol Parse & Preview ── */
+document.getElementById("btn-parse").addEventListener("click", () => {
+  const teks   = document.getElementById("import-textarea").value;
+  const errEl  = document.getElementById("import-parse-error");
+  const prevEl = document.getElementById("import-preview");
+
+  errEl.style.display  = "none";
+  prevEl.style.display = "none";
+  document.getElementById("btn-import").disabled = true;
+  document.getElementById("import-status-text").textContent = "";
+
+  if (!teks.trim()) {
+    errEl.textContent  = "Textarea masih kosong. Isi daftar akun terlebih dahulu.";
+    errEl.style.display = "flex";
+    return;
+  }
+
+  _parsedRows = parseImport(teks);
+  const adaError = _parsedRows.some(r => r.error);
+
+  /* Render tabel preview */
+  document.getElementById("import-count").textContent = _parsedRows.length;
+  document.getElementById("import-preview-body").innerHTML = _parsedRows.map(r => `
+    <tr style="${r.error ? "background:var(--danger-bg)" : ""}">
+      <td>${r.nomor}</td>
+      <td>${r.error ? `<span style="color:var(--ink-soft)">${r.raw}</span>` : `<code>${r.username}</code>`}</td>
+      <td>${r.nama  || "—"}</td>
+      <td>${r.role  || "—"}</td>
+      <td style="font-size:0.75rem">${r.email || "—"}</td>
+      <td>${r.error
+        ? `<span style="color:var(--danger);font-size:0.78rem">✗ ${r.error}</span>`
+        : `<span style="color:var(--success)">✓ OK</span>`}</td>
+    </tr>`).join("");
+
+  prevEl.style.display = "block";
+
+  if (adaError) {
+    errEl.textContent  = "Ada baris dengan format salah (ditandai merah). Perbaiki lalu parse ulang.";
+    errEl.style.display = "flex";
+    document.getElementById("import-status-text").textContent = "Perbaiki error dulu sebelum import.";
+  } else {
+    document.getElementById("btn-import").disabled = !FIREBASE_ENABLED;
+    document.getElementById("import-status-text").textContent =
+      FIREBASE_ENABLED
+        ? `${_parsedRows.length} akun siap diimport.`
+        : "Firebase belum aktif — aktifkan FIREBASE_ENABLED dulu.";
+  }
+});
+
+/* ── Tombol Reset ── */
+document.getElementById("btn-reset-import").addEventListener("click", () => {
+  document.getElementById("import-textarea").value = "";
+  document.getElementById("import-preview").style.display = "none";
+  document.getElementById("import-parse-error").style.display = "none";
+  document.getElementById("import-progress-wrap").style.display = "none";
+  document.getElementById("btn-import").disabled = true;
+  document.getElementById("import-status-text").textContent = "";
+  _parsedRows = [];
+});
+
+/* ── FUNGSI INTI: import satu akun secara idempotent ──
+   Urutan yang dijamin:
+   1. Cek apakah users/{uid-kandidat-by-email} sudah ada → skip jika ada
+   2. Cek apakah ada dokumen Auto-ID dengan email yang sama → kandidat migrasi
+   3. Tulis users/{tempUID} dulu (write-first)
+   4. Pastikan tulis berhasil dengan read-back
+   5. Baru hapus dokumen Auto-ID lama (delete-after-confirm)
+   6. Jika koneksi putus di mana saja → tidak ada data yang hilang
+      (paling buruk: ada dua dokumen dengan email sama, ditangani saat login)
+── */
+async function importSatuAkun(fdb, akun) {
+  const { username, nama, role, email } = akun;
+
+  /* LANGKAH 1: Cek apakah sudah ada profil dengan email ini di Firestore
+     Ini mencegah duplikat, aman dijalankan berulang kali. */
+  const existSnap = await fdb.collection("users")
+    .where("email", "==", email)
+    .limit(1)
+    .get();
+
+  if (!existSnap.empty) {
+    const existDoc = existSnap.docs[0];
+    /* Sudah ada — cek apakah Doc ID adalah UID atau Auto-ID
+       UID Firebase Auth panjangnya 28 karakter dan tidak mengandung spasi.
+       Auto-ID Firestore juga 20 karakter alfanumerik.
+       Kita tandai dengan field "synced:true" untuk membedakan. */
+    if (!existDoc.data().synced) {
+      /* Sudah ada dengan UID asli → benar-benar skip */
+      return { status: "skip", pesan: `Profil sudah ada (UID: ${existDoc.id.slice(0,8)}…)` };
+    }
+    /* Ada tapi masih Auto-ID (synced:true) → biarkan, akan dimigrasi saat login pertama */
+    return { status: "skip-autoid", pesan: "Profil Auto-ID sudah ada, akan dimigrasi saat login pertama." };
+  }
+
+  /* LANGKAH 2: Tulis profil baru dengan Auto-ID + flag synced:true
+     Kita tidak punya UID karena Client SDK tidak bisa list Auth users.
+     Profil ini akan dimigrasi ke users/{UID} saat login pertama (di auth.js). */
+  const payload = { username, nama, role, email, synced: true };
+
+  /* LANGKAH 3: Write-first — tulis dokumen baru */
+  const newRef = fdb.collection("users").doc(); /* Auto-ID baru */
+  await newRef.set(payload);
+
+  /* LANGKAH 4: Read-back untuk konfirmasi tulis berhasil
+     Ini memastikan data benar-benar tersimpan sebelum lanjut. */
+  const confirmSnap = await newRef.get();
+  if (!confirmSnap.exists) {
+    throw new Error(`Write berhasil dipanggil tapi dokumen tidak ditemukan saat read-back (${newRef.id})`);
+  }
+
+  /* LANGKAH 5: Tidak ada Auto-ID lama yang perlu dihapus (ini dokumen baru).
+     Jika ada dokumen Auto-ID lama dari proses sebelumnya yang gagal,
+     query WHERE email di LANGKAH 1 sudah menangkapnya — tidak akan sampai sini. */
+
+  return { status: "created", pesan: `Profil dibuat (Auto-ID: ${newRef.id.slice(0,8)}…)` };
+}
+
+/* ── Tombol Jalankan Import ── */
+document.getElementById("btn-import").addEventListener("click", async () => {
+  if (_importRunning) return;
+  if (_parsedRows.length === 0 || _parsedRows.some(r => r.error)) return;
+  if (!FIREBASE_ENABLED) { log("Firebase belum aktif.", "warn"); return; }
+
+  _importRunning = true;
+
+  const btnImport = document.getElementById("btn-import");
+  const btnParse  = document.getElementById("btn-parse");
+  const progWrap  = document.getElementById("import-progress-wrap");
+  const progBar   = document.getElementById("import-progress-bar");
+  const progLabel = document.getElementById("import-progress-label");
+  const progPct   = document.getElementById("import-progress-pct");
+
+  btnImport.disabled = true;
+  btnParse.disabled  = true;
+  progWrap.style.display = "block";
+
+  const fdb    = firebase.firestore();
+  const total  = _parsedRows.length;
+  let created  = 0, skipped = 0, gagal = 0;
+
+  log(`Memulai import ${total} akun…`, "info");
+
+  for (let i = 0; i < _parsedRows.length; i++) {
+    const akun = _parsedRows[i];
+
+    /* Update progress */
+    const pct = Math.round(((i) / total) * 100);
+    progBar.style.width  = pct + "%";
+    progPct.textContent  = pct + "%";
+    progLabel.textContent = `[${i+1}/${total}] Memproses ${akun.username}…`;
+
+    try {
+      const hasil = await importSatuAkun(fdb, akun);
+
+      if (hasil.status === "created") {
+        created++;
+        log(`✓ [${i+1}/${total}] ${akun.username} (${akun.role}) — ${hasil.pesan}`, "ok");
+      } else {
+        skipped++;
+        log(`↷ [${i+1}/${total}] ${akun.username} — ${hasil.pesan}`, "warn");
+      }
+    } catch(e) {
+      gagal++;
+      /* Catat error tapi LANJUTKAN akun berikutnya — tidak abort seluruh batch */
+      log(`✗ [${i+1}/${total}] ${akun.username} gagal: ${e.message}`, "error");
+      log(`  ↳ Data tidak hilang — tidak ada penghapusan yang terjadi.`, "info");
+    }
+  }
+
+  /* Final */
+  progBar.style.width  = "100%";
+  progPct.textContent  = "100%";
+  progLabel.textContent = "Selesai.";
+
+  log("─────────────────────────────────", "info");
+  log(`✓ Import selesai: ${created} dibuat · ${skipped} dilewati · ${gagal} gagal`, "done");
+
+  if (created > 0) {
+    log("Profil yang baru dibuat akan otomatis dipindahkan ke users/{UID} saat pemilik akun login pertama kali.", "info");
+  }
+  if (gagal > 0) {
+    log("Akun yang gagal bisa dicoba lagi — import aman dijalankan ulang (tidak membuat duplikat).", "warn");
+  }
+
+  btnImport.disabled = false;
+  btnParse.disabled  = false;
+  _importRunning = false;
+});
+</script>
+</body>
+</html>

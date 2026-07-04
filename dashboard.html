@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Dashboard · PMR WIRA UNIT SMK IBG 3</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/variables.css"/>
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/components.css"/>
+  <link rel="stylesheet" href="css/dashboard.css"/>
+  <link rel="stylesheet" href="css/modal.css"/>
+  <link rel="stylesheet" href="css/pengurus.css"/>
+
+  <!-- Firebase SDK (compat) — dimuat sebelum firebase-config.js -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<!-- Overlay mobile sidebar -->
+<div id="sidebar-overlay" class="sidebar-overlay" aria-hidden="true"></div>
+
+<div class="app-shell">
+
+  <!-- ══════════════ SIDEBAR ══════════════ -->
+  <aside id="sidebar" class="sidebar" role="navigation" aria-label="Navigasi sidebar">
+
+    <!-- Brand -->
+    <div class="sidebar-brand">
+      <img src="assets/logo.svg" alt="Logo PMR" width="34" height="34"/>
+      <div>
+        <div class="brand-name">PMR WIRA UNIT</div>
+        <div class="brand-sub">SMK IBG 3 · 2025/2026</div>
+      </div>
+    </div>
+
+    <!-- Info user -->
+    <div class="sidebar-user">
+      <div class="avatar js-user-avatar">??</div>
+      <div>
+        <div class="user-name js-user-name">Memuat…</div>
+        <span class="user-role badge js-user-role">—</span>
+      </div>
+    </div>
+
+    <!-- Nav items -->
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Utama</div>
+
+      <a href="#beranda" class="sidebar-link" data-page="beranda">
+        <!-- Ikon Beranda -->
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        Beranda
+      </a>
+
+      <a href="#anggota" class="sidebar-link" data-page="anggota">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Anggota
+      </a>
+
+      <a href="#kegiatan" class="sidebar-link" data-page="kegiatan">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        Kegiatan
+      </a>
+
+      <a href="#presensi" class="sidebar-link" data-page="presensi">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+        </svg>
+        Presensi
+      </a>
+
+      <div class="nav-section-label">Administrasi</div>
+
+      <a href="#keuangan" class="sidebar-link" data-page="keuangan">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+        </svg>
+        Keuangan
+      </a>
+
+      <a href="#pengurus" class="sidebar-link" data-page="pengurus">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
+        Pengurus
+      </a>
+
+      <div class="nav-section-label">Akun</div>
+
+      <a href="#pengaturan" class="sidebar-link" data-page="pengaturan">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Pengaturan
+      </a>
+    </nav>
+
+    <!-- Logout -->
+    <div class="sidebar-foot">
+      <button id="btn-logout" class="btn btn-ghost btn-block"
+        style="color:var(--danger);justify-content:flex-start;gap:12px;padding:10px 12px;border-radius:var(--radius-sm)">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+        </svg>
+        Keluar
+      </button>
+    </div>
+  </aside>
+
+  <!-- ══════════════ MAIN ══════════════ -->
+  <div class="app-main">
+
+    <!-- Topbar -->
+    <header class="topbar" role="banner">
+      <div class="topbar-left">
+        <button class="sidebar-toggle js-sidebar-toggle" aria-label="Buka sidebar">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+        <h1 id="topbar-title" class="topbar-title">Beranda</h1>
+      </div>
+
+      <div class="topbar-right">
+        <!-- Notifikasi dropdown -->
+        <div class="notif-wrap">
+          <button id="btn-notif" class="btn btn-ghost btn-sm" aria-label="Notifikasi"
+            style="width:38px;height:38px;padding:0;position:relative">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <span id="notif-badge" class="notif-badge" style="display:none">0</span>
+          </button>
+          <div id="notif-dropdown" class="notif-dropdown">
+            <div class="notif-dropdown-head">Notifikasi</div>
+            <div class="notif-list"></div>
+          </div>
+        </div>
+
+        <!-- Avatar user -->
+        <div class="avatar js-user-avatar" style="cursor:default" title="Profil akun">??</div>
+      </div>
+    </header>
+
+    <!-- Area konten — diisi oleh dashboard.js -->
+    <main class="content" id="content-area" role="main"
+      aria-live="polite" aria-label="Konten halaman">
+      <!-- Loading state awal -->
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+        </div>
+        <p>Memuat dashboard…</p>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Root untuk modal dinamis -->
+<div id="modal-root"></div>
+
+<script src="js/firebase-config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/data-dummy.js"></script>
+<script src="js/firebase-db.js"></script>
+<script src="js/modal.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>

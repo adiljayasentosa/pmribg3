@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>PMR WIRA UNIT — SMK IBG 3</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/variables.css"/>
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/components.css"/>
+  <link rel="stylesheet" href="css/landing.css"/>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<!-- ═══════════════════ NAVBAR ═══════════════════ -->
+<header class="nav" role="banner">
+  <div class="nav-inner">
+    <a href="#" class="nav-brand">
+      <img src="assets/logo.svg" alt="Logo PMR" width="36" height="36"/>
+      <div>
+        <div class="brand-name">PMR WIRA UNIT</div>
+        <div class="brand-sub">SMK IBG 3 · Masa Bakti 2025/2026</div>
+      </div>
+    </a>
+
+    <nav id="nav-links" class="nav-links" aria-label="Navigasi utama">
+      <a href="#tentang">Tentang</a>
+      <a href="#fitur">Fitur</a>
+      <a href="#pengurus">Pengurus</a>
+      <a href="#kontak">Kontak</a>
+    </nav>
+
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-outline btn-sm">Masuk</a>
+      <button id="nav-toggle" class="nav-toggle" aria-label="Buka menu" aria-expanded="false">
+        <span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<main>
+  <section class="hero" aria-label="Hero">
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <div class="hero-eyebrow">
+          <svg width="14" height="14" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="17" y="4" width="6" height="32" rx="2" fill="white"/>
+            <rect x="4" y="17" width="32" height="6" rx="2" fill="white"/>
+          </svg>
+          Palang Merah Remaja
+        </div>
+        <h1>Sistem Manajemen<br/>PMR WIRA UNIT<br/>SMK IBG 3</h1>
+        <p class="lead">
+          Platform terpadu untuk mengelola keanggotaan, kegiatan, keuangan, 
+          dan presensi Palang Merah Remaja secara efisien dan transparan.
+        </p>
+        <div class="hero-actions">
+          <a href="dashboard.html" id="btn-hero-dashboard" class="btn btn-primary">
+            Buka Dashboard →
+          </a>
+          <a href="login.html" id="btn-hero-login" class="btn btn-outline">
+            Masuk ke Akun
+          </a>
+        </div>
+      </div>
+
+      <!-- Emblem lambang palang -->
+      <div class="hero-emblem" aria-hidden="true">
+        <div class="emblem-cross">
+          <div class="bar v"></div>
+          <div class="bar h"></div>
+        </div>
+        <p style="text-align:center;color:rgba(255,255,255,0.85);font-size:0.9rem;margin:0 0 18px">
+          Masa Bakti 2025/2026
+        </p>
+        <div class="hero-emblem-stats">
+          <div>
+            <div class="num"><span class="js-counter" data-target="48">0</span></div>
+            <div class="lbl">Anggota</div>
+          </div>
+          <div>
+            <div class="num"><span class="js-counter" data-target="12">0</span></div>
+            <div class="lbl">Kegiatan</div>
+          </div>
+          <div>
+            <div class="num"><span class="js-counter" data-target="87" data-suffix="%">0%</span></div>
+            <div class="lbl">Hadir</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ TENTANG ═══════════════════ -->
+  <section id="tentang" class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Tentang Kami</span>
+        <h2>PMR WIRA yang Aktif & Berkarakter</h2>
+        <p>
+          PMR WIRA UNIT SMK IBG 3 adalah wadah pengembangan diri siswa dalam 
+          kepalangmerahan, kemanusiaan, dan kepemimpinan di tingkat wira (SMA/SMK).
+        </p>
+      </div>
+      <div class="grid grid-3">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+          </div>
+          <h3>Kemanusiaan</h3>
+          <p>Mengutamakan nilai kemanusiaan dalam setiap kegiatan bakti sosial dan pertolongan pertama.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+          </div>
+          <h3>Pendidikan & Pelatihan</h3>
+          <p>Program PP dasar, PPGD, dan kesehatan remaja yang terstruktur setiap semester.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </div>
+          <h3>Kesiapsiagaan</h3>
+          <p>Siap siaga dalam setiap situasi darurat di lingkungan sekolah dan masyarakat sekitar.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ FITUR ═══════════════════ -->
+  <section id="fitur" class="section section-alt">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Fitur Sistem</span>
+        <h2>Semua yang Dibutuhkan dalam Satu Platform</h2>
+        <p>Dirancang khusus untuk kebutuhan organisasi PMR tingkat sekolah.</p>
+      </div>
+      <div class="grid grid-3">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+          <h3>Data Anggota</h3>
+          <p>Kelola biodata, divisi, dan status aktif seluruh anggota PMR dengan mudah.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <h3>Manajemen Kegiatan</h3>
+          <p>Jadwal, PJ, dan dokumentasi setiap kegiatan PMR tersusun rapi dan mudah diakses.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <h3>Keuangan Transparan</h3>
+          <p>Catatan kas masuk dan keluar yang bisa diakses bendahara dan ketua secara real-time.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+            </svg>
+          </div>
+          <h3>Presensi Digital</h3>
+          <p>Rekap kehadiran pertemuan rutin dengan fitur keterangan dan rekapitulasi otomatis.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </div>
+          <h3>Sistem Role</h3>
+          <p>Hak akses berbeda untuk Admin, Ketua, Wakil, Sekretaris, Bendahara, dan PJ.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <h3>Responsif</h3>
+          <p>Tampilan optimal di HP, tablet, maupun laptop tanpa instal aplikasi tambahan.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ PENGURUS ═══════════════════ -->
+  <section id="pengurus" class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Struktur Pengurus</span>
+        <h2>Pengurus PMR Masa Bakti 2025/2026</h2>
+      </div>
+      <div class="org-row">
+        <div class="org-chip">
+          <div class="avatar" style="background:var(--pmr-red)">MA</div>
+          <div>
+            <div class="org-role">Ketua</div>
+            <div class="org-name">M. Arif Hidayat</div>
+          </div>
+        </div>
+        <div class="org-chip">
+          <div class="avatar" style="background:var(--pmr-red-dark)">NS</div>
+          <div>
+            <div class="org-role">Wakil Ketua</div>
+            <div class="org-name">Nadia Salsabila</div>
+          </div>
+        </div>
+        <div class="org-chip">
+          <div class="avatar" style="background:#2563EB">DL</div>
+          <div>
+            <div class="org-role">Sekretaris</div>
+            <div class="org-name">Dewi Lestari</div>
+          </div>
+        </div>
+        <div class="org-chip">
+          <div class="avatar" style="background:var(--success)">PR</div>
+          <div>
+            <div class="org-role">Bendahara</div>
+            <div class="org-name">Putri Ramadhani</div>
+          </div>
+        </div>
+        <div class="org-chip">
+          <div class="avatar" style="background:var(--warning)">RP</div>
+          <div>
+            <div class="org-role">PJ Divisi PP</div>
+            <div class="org-name">Raka Pratama</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ CTA ═══════════════════ -->
+  <section id="kontak" class="section">
+    <div class="container">
+      <div class="cta-band">
+        <h2>Siap Mengakses Dashboard?</h2>
+        <p>Masuk menggunakan akun yang diberikan oleh Admin atau Pembina PMR sekolah.</p>
+        <a href="login.html" class="btn btn-primary">Masuk Sekarang →</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ═══════════════════ FOOTER ═══════════════════ -->
+<footer class="site-footer" id="footer">
+  <div class="footer-inner">
+    <div style="display:flex;align-items:center;gap:10px">
+      <img src="assets/logo.svg" alt="" width="28" height="28"/>
+      <p>PMR WIRA UNIT · SMK IBG 3 · Masa Bakti 2025/2026</p>
+    </div>
+    <p>Sistem Manajemen Internal PMR — Frontend Demo</p>
+  </div>
+</footer>
+
+<script src="js/firebase-config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/landing.js"></script>
+</body>
+</html>

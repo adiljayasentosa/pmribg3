@@ -1,0 +1,204 @@
+/* =========================================================
+   LANDING PAGE
+   Signature: motif "palang" (plus) berulang sebagai tekstur,
+   merujuk langsung pada lambang Palang Merah.
+   ========================================================= */
+
+/* ---------- Navbar ---------- */
+.nav{
+  position:sticky; top:0; z-index:50;
+  background:rgba(255,255,255,0.92);
+  backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--gray-200);
+}
+.nav-inner{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 24px;
+}
+.nav-brand{ display:flex; align-items:center; gap:10px; }
+.nav-brand .brand-name{ font-family:var(--font-display); font-weight:700; font-size:1rem; line-height:1.2; }
+.nav-brand .brand-sub{ font-size:0.72rem; color:var(--ink-soft); }
+.nav-links{ display:flex; gap:28px; }
+.nav-links a{ font-size:0.9rem; font-weight:600; color:var(--ink-soft); transition:color var(--transition); }
+.nav-links a:hover{ color:var(--pmr-red); }
+.nav-actions{ display:flex; align-items:center; gap:12px; }
+.nav-toggle{
+  display:none;
+  width:40px; height:40px;
+  border:none; background:none;
+  align-items:center; justify-content:center;
+}
+.nav-toggle span{
+  display:block; width:22px; height:2px; background:var(--ink);
+  position:relative;
+}
+.nav-toggle span::before,.nav-toggle span::after{
+  content:''; position:absolute; left:0; width:22px; height:2px; background:var(--ink);
+}
+.nav-toggle span::before{ top:-7px; }
+.nav-toggle span::after{ top:7px; }
+
+/* ---------- Hero ---------- */
+.hero{
+  position:relative;
+  overflow:hidden;
+  background:var(--pmr-red);
+  color:var(--white);
+  padding:96px 24px 110px;
+}
+.hero::before{
+  /* motif palang berulang, halus, jadi tekstur identitas */
+  content:'';
+  position:absolute; inset:0;
+  background-image:
+    linear-gradient(var(--pmr-red-dark) 2px, transparent 2px),
+    linear-gradient(90deg, var(--pmr-red-dark) 2px, transparent 2px);
+  background-size:48px 48px;
+  opacity:0.18;
+  mask-image:radial-gradient(circle at 75% 30%, black 0%, transparent 70%);
+}
+.hero-inner{
+  position:relative;
+  max-width:var(--container-max);
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:1.1fr 0.9fr;
+  gap:48px;
+  align-items:center;
+}
+.hero-eyebrow{
+  display:inline-flex; align-items:center; gap:8px;
+  background:rgba(255,255,255,0.14);
+  padding:6px 14px;
+  border-radius:var(--radius-pill);
+  font-size:0.78rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+  margin-bottom:18px;
+}
+.hero h1{
+  color:var(--white);
+  font-size:clamp(2rem, 4vw, 3.1rem);
+  margin-bottom:18px;
+}
+.hero p.lead{
+  color:rgba(255,255,255,0.88);
+  font-size:1.05rem;
+  max-width:520px;
+  margin-bottom:28px;
+}
+.hero-actions{ display:flex; gap:14px; flex-wrap:wrap; }
+.hero .btn-primary{ background:var(--white); color:var(--pmr-red); }
+.hero .btn-primary:hover{ background:var(--pmr-red-light); }
+.hero .btn-outline{ border-color:rgba(255,255,255,0.6); color:var(--white); }
+.hero .btn-outline:hover{ background:rgba(255,255,255,0.12); }
+
+/* Kartu "lambang" di hero — signature element */
+.hero-emblem{
+  position:relative;
+  background:rgba(255,255,255,0.08);
+  border:1.5px solid rgba(255,255,255,0.25);
+  border-radius:var(--radius-lg);
+  padding:36px;
+  backdrop-filter:blur(4px);
+}
+.hero-emblem .emblem-cross{
+  width:96px; height:96px;
+  margin:0 auto 18px;
+  position:relative;
+}
+.hero-emblem .emblem-cross .bar{
+  position:absolute; background:var(--white); border-radius:6px;
+}
+.hero-emblem .emblem-cross .bar.v{ left:38px; top:0; width:20px; height:96px; }
+.hero-emblem .emblem-cross .bar.h{ left:0; top:38px; width:96px; height:20px; }
+.hero-emblem-stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; text-align:center; margin-top:8px; }
+.hero-emblem-stats .num{ font-family:var(--font-display); font-size:1.6rem; font-weight:700; color:var(--white); }
+.hero-emblem-stats .lbl{ font-size:0.7rem; color:rgba(255,255,255,0.78); }
+
+@media (max-width: 900px){
+  .hero-inner{ grid-template-columns:1fr; }
+  .hero{ padding:64px 20px 80px; text-align:left; }
+}
+
+/* ---------- Section umum ---------- */
+.section{ padding:80px 24px; }
+.section-alt{ background:var(--gray-100); }
+.section-head{ max-width:640px; margin:0 auto 44px; text-align:center; }
+.section-head .eyebrow{
+  color:var(--pmr-red); font-weight:700; font-size:0.78rem;
+  text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; display:block;
+}
+.section-head h2{ font-size:clamp(1.6rem,3vw,2.1rem); }
+
+/* Kartu fitur / tentang */
+.feature-card{
+  background:var(--white);
+  border:1px solid var(--gray-200);
+  border-radius:var(--radius-md);
+  padding:26px;
+  transition:transform var(--transition), box-shadow var(--transition);
+}
+.feature-card:hover{ transform:translateY(-4px); box-shadow:var(--shadow-md); }
+.feature-card .feature-icon{
+  width:46px; height:46px;
+  border-radius:var(--radius-sm);
+  background:var(--pmr-red-light);
+  color:var(--pmr-red);
+  display:flex; align-items:center; justify-content:center;
+  margin-bottom:14px;
+}
+.feature-card h3{ font-size:1.02rem; margin-bottom:6px; }
+.feature-card p{ font-size:0.9rem; margin-bottom:0; }
+
+/* Struktur organisasi preview */
+.org-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:16px; }
+.org-chip{
+  display:flex; align-items:center; gap:10px;
+  background:var(--white);
+  border:1px solid var(--gray-200);
+  border-radius:var(--radius-pill);
+  padding:10px 18px 10px 10px;
+  box-shadow:var(--shadow-sm);
+}
+.org-chip .avatar{ width:34px; height:34px; font-size:0.75rem; }
+.org-chip .org-role{ font-size:0.8rem; font-weight:700; }
+.org-chip .org-name{ font-size:0.76rem; color:var(--ink-soft); }
+
+/* CTA penutup */
+.cta-band{
+  background:var(--ink);
+  color:var(--white);
+  border-radius:var(--radius-lg);
+  padding:48px;
+  text-align:center;
+  margin:0 24px;
+}
+.cta-band h2{ color:var(--white); margin-bottom:10px; }
+.cta-band p{ color:rgba(255,255,255,0.75); max-width:480px; margin:0 auto 26px; }
+
+/* Footer */
+.site-footer{
+  padding:40px 24px 30px;
+  border-top:1px solid var(--gray-200);
+  margin-top:40px;
+}
+.footer-inner{
+  display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap;
+  max-width:var(--container-max); margin:0 auto;
+}
+.footer-inner p{ font-size:0.82rem; margin:0; color:var(--ink-soft); }
+
+/* ---------- Responsif ---------- */
+@media (max-width: 760px){
+  .nav-links{
+    position:absolute; top:100%; left:0; right:0;
+    background:var(--white);
+    flex-direction:column;
+    padding:16px 24px;
+    border-bottom:1px solid var(--gray-200);
+    display:none;
+    gap:14px;
+  }
+  .nav-links.open{ display:flex; }
+  .nav-toggle{ display:flex; }
+  .nav-actions .btn-outline{ display:none; }
+}
