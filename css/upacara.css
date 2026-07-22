@@ -1,27 +1,17 @@
 /* =========================================================
-   HALAMAN PETUGAS UPACARA (F4.4)
-   Aksen warna SENGAJA biru (--info), bukan --pmr-red seperti
-   Piket — permintaan eksplisit PATCH F4.4: "Visual harus
-   berbeda agar pengguna memahami bahwa ini bukan modul Piket."
-   Semua override di-scope di bawah .upacara-page supaya TIDAK
-   memengaruhi .btn-primary/.tab-btn di halaman lain manapun.
+   HALAMAN PETUGAS UPACARA
+   =========================================================
+   [F5.0 — UI Polish] PATCH F4.4 sebelumnya sengaja memberi
+   halaman ini aksen biru (--info) supaya terlihat "berbeda"
+   dari Piket. Keputusan itu DIBALIK di sini: Petugas Upacara
+   sekarang memakai design system yang SAMA persis dengan
+   Piket (warna PMR merah, komponen bawaan components.css/
+   modal.css) — tidak ada lagi override warna kustom.
+
+   File ini sengaja TETAP ADA (bukan dihapus) supaya link
+   <link href="css/upacara.css"> di dashboard.html tidak perlu
+   diubah. Isinya kini hanya menyisakan satu rapihan non-warna
+   yang murni kosmetik (perataan badge di dalam judul kartu).
    ========================================================= */
 
-.upacara-page .btn-primary{
-  background:var(--info);
-  box-shadow:0 8px 24px rgba(37,99,235,0.18);
-}
-.upacara-page .btn-primary:hover{ background:#1d4ed8; }
-
-.upacara-page .tab-btn.active{ color:var(--info); }
-
-.upacara-page .page-head h1{ color:var(--pmr-red); } /* judul tetap identitas PMR */
-
 .upacara-page .card-title .badge{ vertical-align:middle; }
-
-/* Kartu ringkasan diberi aksen garis kiri biru tipis agar dari
-   sekilas pandang beda dari kartu Piket (merah) atau Keuangan
-   (hijau/merah). */
-.upacara-page .stat-card{
-  border-left:3px solid var(--info);
-}

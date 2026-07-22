@@ -306,8 +306,8 @@ service cloud.firestore {
 <!-- Scripts -->
 <script src="js/firebase-config.js"></script>
 <script src="js/data-dummy.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/firebase-db.js"></script>
+<script src="js/core/auth.js"></script>
+<script src="js/core/firebase-db.js"></script>
 <script>
 /* ── Daftar akun yang akan dibuat di Firebase Auth ── */
 const AKUN_BUAT = [
@@ -338,7 +338,7 @@ document.getElementById("btn-clear-log").addEventListener("click", () => {
   log("Log dibersihkan.", "info");
 });
 
-/* ── Cek status Firebase pada load ── */
+/* ── Auth Guard + Cek status Firebase pada load ── */
 document.addEventListener("DOMContentLoaded", () => {
   if (!FIREBASE_ENABLED) {
     statusDot.className = "status-dot gray";
@@ -348,24 +348,41 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   statusDot.className = "status-dot red";
-  statusText.textContent = "Menghubungkan ke Firebase…";
+  statusText.textContent = "Memverifikasi sesi…";
 
-  firebase.auth().onAuthStateChanged(user => {
-    if (user) {
+  /* Guard: initAuth memeriksa token Firebase dan profil Firestore.
+     Halaman ini hanya boleh diakses oleh admin. */
+  initAuth(
+    (user) => {
+      if (user.role !== "admin") {
+        /* Bukan admin — redirect ke dashboard tanpa akses setup */
+        window.location.href = "dashboard.html";
+        return;
+      }
+      /* Admin terverifikasi — inisialisasi halaman setup */
+      _initSetupPage();
+    },
+    () => {
+      /* Belum login — redirect ke login */
+      window.location.href = "login.html";
+    }
+  );
+});
+
+function _initSetupPage() {
+  firebase.auth().onAuthStateChanged(firebaseUser => {
+    if (firebaseUser) {
       statusDot.className = "status-dot green";
-      statusText.textContent = "Terhubung ke Firebase ✓ · Logged in as: " + user.email;
-      log("Koneksi Firebase berhasil.", "ok");
+      statusText.textContent = "Terhubung ke Firebase ✓ · Logged in as: " + firebaseUser.email;
+      log("Koneksi Firebase berhasil. Akses admin terverifikasi.", "ok");
       btnSeed.disabled  = false;
       btnAkun.disabled  = false;
     } else {
-      statusDot.className = "status-dot gray";
-      statusText.textContent = "Belum login ke Firebase. Jalankan melalui browser setelah deploy, atau pakai test rules sementara.";
-      log("Belum terautentikasi ke Firebase. Seed & buat akun tetap bisa dicoba jika Firestore rules = allow all.", "warn");
-      btnSeed.disabled  = false;
-      btnAkun.disabled  = false;
+      /* Firebase user hilang saat halaman terbuka — redirect ke login */
+      window.location.href = "login.html";
     }
   });
-});
+}
 
 /* ── Tombol Seed ── */
 btnSeed.addEventListener("click", async () => {

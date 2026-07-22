@@ -7,7 +7,12 @@
   grid-template-columns:1fr 1fr;
 }
 .auth-panel{
-  background:var(--pmr-red);
+  /* [F5.0 — UI Polish] Sebelumnya flat var(--pmr-red) — diberi
+     gradient tipis (token yang SUDAH ADA, bukan warna baru) agar
+     "lebih hidup" sesuai permintaan, dengan arah & pasangan warna
+     yang sama seperti gradient sidebar dashboard (--pmr-red →
+     --pmr-red-dark) supaya terasa satu design system. */
+  background:linear-gradient(160deg, var(--pmr-red) 0%, var(--pmr-red-dark) 100%);
   color:var(--white);
   position:relative;
   overflow:hidden;
@@ -26,10 +31,22 @@
   opacity:0.16;
   mask-image:radial-gradient(circle at 30% 80%, black 0%, transparent 70%);
 }
-.auth-panel-top{ position:relative; display:flex; align-items:center; gap:10px; }
+/* [F5.0] Ilustrasi tema PMR — layer dekoratif di belakang konten,
+   monokrom putih transparan (bukan warna baru) supaya tetap elegan
+   & tidak mengganggu keterbacaan teks di atasnya. */
+.auth-illustration{
+  position:absolute;
+  right:-60px; bottom:-60px;
+  width:380px; height:380px;
+  z-index:0;
+  pointer-events:none;
+}
+.auth-illustration svg{ width:100%; height:100%; display:block; }
+
+.auth-panel-top{ position:relative; z-index:1; display:flex; align-items:center; gap:10px; }
 .auth-panel-top .brand-name{ font-family:var(--font-display); font-weight:700; }
 .auth-panel-top .brand-sub{ font-size:0.72rem; color:rgba(255,255,255,0.8); }
-.auth-panel-mid{ position:relative; max-width:380px; }
+.auth-panel-mid{ position:relative; z-index:1; max-width:380px; }
 .auth-panel-mid h2{ color:var(--white); font-size:1.7rem; }
 .auth-panel-mid p{ color:rgba(255,255,255,0.85); }
 .auth-panel-quote{
@@ -39,6 +56,7 @@
   font-size:0.85rem;
   color:rgba(255,255,255,0.85);
 }
+.auth-panel-stats{ position:relative; z-index:1; display:flex; gap:28px; }
 
 .auth-form-wrap{
   display:flex;

@@ -1,14 +1,18 @@
 /* =========================================================
-   PAGES/UPACARA.JS (F4.4 — Petugas Upacara)
+   PAGES/UPACARA.JS (F4.4 — Petugas Upacara · F5.0 — UI Polish)
    =========================================================
    Konsep SAMA dengan Piket (F4.1): rotasi adil berbasis riwayat,
    lewat js/core/rotation-engine.js (F4.4) — TIDAK ada algoritma
    rotasi kedua yang ditulis ulang di sini (lihat PATCH F4.4,
-   Fitur 3). Yang berbeda sengaja HANYA: nama, tampilan (aksen
-   biru `--info`, lihat css/upacara.css), teks, collection data
-   ("upacara", terpisah dari "piket"), dan kontrol "Jumlah
-   Petugas" yang berbentuk pilihan tetap 8–15 (bukan input bebas
-   seperti Piket) sesuai PATCH F4.4.
+   Fitur 3). [F5.0] PATCH F4.4 sebelumnya juga memberi halaman ini
+   aksen biru `--info` agar "terasa beda" dari Piket — itu DIBALIK
+   di F5.0: tampilan sekarang memakai design system yang sama
+   persis dengan Piket (warna PMR merah, komponen bawaan). Yang
+   berbeda sengaja HANYA: nama, teks, collection data ("upacara",
+   terpisah dari "piket"), dan kontrol "Jumlah Petugas" yang
+   berbentuk pilihan tetap 8–15 (bukan input bebas seperti Piket)
+   sesuai PATCH F4.4 — ini keputusan fungsional, bukan visual,
+   jadi tetap dipertahankan.
 
    RBAC — disamakan persis dengan Piket (modul dengan konsep
    sama, tidak ada alasan untuk berbeda):
@@ -83,31 +87,22 @@ function _renderRingkasanUpacara() {
   const rataRata        = anggotaAktif ? (totalSlot / anggotaAktif).toFixed(1) : "0";
 
   document.getElementById("ringkasan-upacara").innerHTML = [
-    _statCardUpacara("Total Jadwal", totalJadwal, "sepanjang waktu",
+    statCard("Total Jadwal", totalJadwal, "sepanjang waktu", "neutral",
       `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21h18M5 21V7l8-4v18M13 21V11l6 2v8M9 9v.01M9 12v.01M9 15v.01"/>`),
-    _statCardUpacara("Jadwal Mendatang", jadwalMendatang, "belum terlaksana",
+    statCard("Jadwal Mendatang", jadwalMendatang, "belum terlaksana", "neutral",
       `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>`),
-    _statCardUpacara("Upacara Selesai", upacaraSelesai, "sudah terlaksana",
+    statCard("Upacara Selesai", upacaraSelesai, "sudah terlaksana", "neutral",
       `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>`),
-    _statCardUpacara("Rata-rata per Anggota", rataRata + "x", "distribusi beban",
+    statCard("Rata-rata per Anggota", rataRata + "x", "distribusi beban", "neutral",
       `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>`)
   ].join("");
 }
 
-/* Kartu statistik aksen biru — DITULIS TERPISAH dari statCard() milik
-   state.js (yang tidak punya hook warna), persis alasan yang sama
-   dengan kenapa keuangan.js menulis kartunya sendiri (warna
-   success/danger custom per kartu). */
-function _statCardUpacara(label, value, sub, svgPath) {
-  return `<div class="card stat-card">
-    <div class="stat-icon" style="background:var(--info-bg);color:var(--info)">
-      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">${svgPath}</svg>
-    </div>
-    <div class="stat-value" style="color:var(--info)">${value}</div>
-    <div class="stat-label">${label}</div>
-    <div class="stat-delta" style="color:var(--ink-soft)">${sub}</div>
-  </div>`;
-}
+/* [F5.0 — UI Polish] Sebelumnya ada _statCardUpacara() lokal dengan
+   aksen biru (--info) di sini. Dihapus supaya Upacara memakai
+   PERSIS komponen yang sama dengan Piket: statCard() bawaan
+   state.js, aksen "neutral" (merah PMR default dari .stat-icon
+   di components.css) — bukan komponen baru. */
 
 /* ─────────────────────────────────────────────────────────
    TAB 1 — JADWAL (search, filter, sort, CRUD)
@@ -210,8 +205,8 @@ function _bukaDetailPetugasUpacara(u) {
       <p style="margin-top:0;color:var(--ink-soft);font-size:0.85rem">${formatHari(u.tanggal)} · ${u.lokasi||"—"}</p>
       <div style="display:flex;flex-direction:column;gap:6px">
         ${(u.petugas||[]).map(pt => `
-          <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--info-bg);border-radius:var(--radius-sm)">
-            <div class="avatar" style="width:30px;height:30px;font-size:0.7rem;background:var(--info)">${getInisial(pt.nama)}</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--gray-100);border-radius:var(--radius-sm)">
+            <div class="avatar" style="width:30px;height:30px;font-size:0.7rem">${getInisial(pt.nama)}</div>
             <span style="font-size:0.88rem;font-weight:600">${pt.nama}</span>
           </div>`).join("") || `<p style="color:var(--ink-soft)">Belum ada petugas.</p>`}
       </div>
@@ -256,7 +251,7 @@ function _renderTabRiwayatUpacara() {
 
   const rowRiwayat = r => `<tr>
     <td><div style="display:flex;align-items:center;gap:8px">
-      <div class="avatar" style="width:28px;height:28px;font-size:0.65rem;background:var(--info)">${getInisial(r.nama)}</div>${r.nama}
+      <div class="avatar" style="width:28px;height:28px;font-size:0.65rem">${getInisial(r.nama)}</div>${r.nama}
     </div></td>
     <td>${r.kelas}</td>
     <td><strong>${r.jumlah}x</strong></td>
@@ -504,8 +499,8 @@ function _bukaModalPreviewGenerateUpacara(el, user, param, hasilAwal) {
 
         <div style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto">
           ${terpilih.map(t => `
-            <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--info-bg);border-radius:var(--radius-sm)">
-              <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;flex-shrink:0;background:var(--info)">${getInisial(t.nama)}</div>
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--gray-100);border-radius:var(--radius-sm)">
+              <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;flex-shrink:0">${getInisial(t.nama)}</div>
               <div style="flex:1;min-width:0">
                 <div style="font-weight:600;font-size:0.87rem">${t.nama}</div>
                 <div style="font-size:0.75rem;color:var(--ink-soft)">${t.alasan}</div>
