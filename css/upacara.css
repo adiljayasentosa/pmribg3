@@ -1,0 +1,27 @@
+/* =========================================================
+   HALAMAN PETUGAS UPACARA (F4.4)
+   Aksen warna SENGAJA biru (--info), bukan --pmr-red seperti
+   Piket — permintaan eksplisit PATCH F4.4: "Visual harus
+   berbeda agar pengguna memahami bahwa ini bukan modul Piket."
+   Semua override di-scope di bawah .upacara-page supaya TIDAK
+   memengaruhi .btn-primary/.tab-btn di halaman lain manapun.
+   ========================================================= */
+
+.upacara-page .btn-primary{
+  background:var(--info);
+  box-shadow:0 8px 24px rgba(37,99,235,0.18);
+}
+.upacara-page .btn-primary:hover{ background:#1d4ed8; }
+
+.upacara-page .tab-btn.active{ color:var(--info); }
+
+.upacara-page .page-head h1{ color:var(--pmr-red); } /* judul tetap identitas PMR */
+
+.upacara-page .card-title .badge{ vertical-align:middle; }
+
+/* Kartu ringkasan diberi aksen garis kiri biru tipis agar dari
+   sekilas pandang beda dari kartu Piket (merah) atau Keuangan
+   (hijau/merah). */
+.upacara-page .stat-card{
+  border-left:3px solid var(--info);
+}

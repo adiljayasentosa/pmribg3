@@ -1,0 +1,377 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ═══════════════════════════════════════════════════
+    // HELPER FUNCTIONS
+    // Terpusat di sini — menambah role baru cukup ubah
+    // array yang relevan, tidak perlu tulis ulang rules.
+    // ═══════════════════════════════════════════════════
+
+    // User sudah terautentikasi
+    function isLoggedIn() {
+      return request.auth != null;
+    }
+
+    // Cek dokumen profil ada di Firestore sebelum get()
+    // Mencegah crash jika profil belum terbentuk
+    function userDocExists() {
+      return exists(
+        /databases/$(database)/documents/users/$(request.auth.uid)
+      );
+    }
+
+    // Ambil role dari Firestore — fallback 'none' jika belum ada
+    function getRole() {
+      return userDocExists()
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : 'none';
+    }
+
+    // Pengecekan role utama — seluruh RBAC melewati fungsi ini
+    function hasAnyRole(roles) {
+      return isLoggedIn() && getRole() in roles;
+    }
+
+    // Pemilik dokumen
+    function isOwner(uid) {
+      return isLoggedIn() && request.auth.uid == uid;
+    }
+
+    // Field 'role' tidak boleh berubah saat update
+    // Perlindungan utama terhadap privilege escalation
+    function roleNotChanged() {
+      return !(
+        'role' in request.resource.data.diff(resource.data).affectedKeys()
+      );
+    }
+
+    // ── Tier shorthand ───────────────────────────────────
+    // Tambah role baru: cukup sisipkan ke array di bawah
+
+    function isAdmin() {
+      return hasAnyRole(['admin']);
+    }
+
+    function isPimpinan() {
+      return hasAnyRole(['admin', 'ketua', 'wakil']);
+    }
+
+    function isPengurus() {
+      return hasAnyRole([
+        'admin', 'ketua', 'wakil', 'sekretaris', 'bendahara', 'pj'
+      ]);
+    }
+
+
+    // ═══════════════════════════════════════════════════
+    // COLLECTION: users
+    //
+    // Profil login + role setiap pengguna.
+    // Jalur CREATE milik sendiri dihapus sepenuhnya —
+    // semua akun kini dibuat admin via setup.html
+    // dengan UID langsung sebagai Document ID.
+    // ═══════════════════════════════════════════════════
+    match /users/{uid} {
+
+      // READ: Dokumen sendiri boleh dibaca siapapun.
+      // Admin, ketua, wakil boleh baca semua profil.
+      // Wakil: view-only — tidak ada hak update profil orang lain.
+      allow read: if isLoggedIn() && (
+        isOwner(uid) ||
+        hasAnyRole(['admin', 'ketua', 'wakil'])
+      );
+
+      // CREATE: Hanya admin.
+      // Jalur isOwner dihapus — tidak ada celah escalation.
+      // Semua akun pengurus dan anggota sudah pakai UID langsung.
+      allow create: if isAdmin();
+
+      // UPDATE: Admin boleh ubah semua field termasuk role.
+      // Pengurus aktif boleh update profil sendiri,
+      // tapi field 'role' dilarang berubah (roleNotChanged).
+      // Anggota tidak boleh update — akun shared view-only.
+      allow update: if isLoggedIn() && (
+        isAdmin() ||
+        (isOwner(uid) && isPengurus() && roleNotChanged())
+      );
+
+      // DELETE: Hanya admin.
+      allow delete: if isAdmin();
+    }
+
+
+    // ═══════════════════════════════════════════════════
+    // COLLECTION: anggota
+    //
+    // Data publik: nama, divisi, jabatan, status.
+    // Field sensitif sudah dihapus sebelum rules ini aktif.
+    // ═══════════════════════════════════════════════════
+    match /anggota/{anggotaId} {
+
+      // READ: Semua user login — termasuk akun anggota shared.
+      // Aman karena field sensitif sudah tidak ada.
+      allow read: if isLoggedIn();
+
+      // CREATE & UPDATE: Admin, ketua, sekretaris.
+      allow create, update: if hasAnyRole([
+        'admin', 'ketua', 'sekretaris'
+      ]);
+
+      // DELETE: Admin dan ketua — operasi destruktif.
+      allow delete: if hasAnyRole(['admin', 'ketua']);
+    }
+
+
+    // ═══════════════════════════════════════════════════
+    // COLLECTION: kegiatan
+    //
+    // Jadwal dan program kegiatan PMR.
+    // Anggota boleh baca — perlu lihat jadwal.
+    // ═══════════════════════════════════════════════════
+    match /kegiatan/{kegiatanId} {
+
+      // READ: Semua user login, termasuk anggota.
+      allow read: if isLoggedIn();
+
+      // CREATE & UPDATE: Pengurus kecuali bendahara.
+      // PJ boleh kelola kegiatan divisinya.
+      allow create, update: if hasAnyRole([
+        'admin', 'ketua', 'wakil', 'sekretaris', 'pj'
+      ]);
+
+      // DELETE: Level pimpinan.
+      allow delete: if isPimpinan();
+    }
+
+
+    // ═══════════════════════════════════════════════════
+    // COLLECTION: keuangan
+    //
+    // Internal pengurus — anggota diblokir total.
+    // Audit trail dijaga: delete hanya admin.
+    // Ketua koreksi via update, bukan delete.
+    // ═══════════════════════════════════════════════════
+    match /keuangan/{transaksiId} {
+
+      // READ: Admin, ketua, wakil (pengawasan), bendahara.
+      allow read: if hasAnyRole([
+        'admin', 'ketua', 'wakil', 'bendahara'
+      ]);
+
+      // CREATE & UPDATE: Admin dan bendahara.
+      allow create, update: if hasAnyRole(['admin', 'bendahara']);
+
+      // DELETE: Hanya admin — menjaga integritas laporan.
+      allow delete: if isAdmin();
+    }
+
+
+    // ═══════════════════════════════════════════════════
+    // COLLECTION: presensi
+    //
+    // Administratif internal — anggota dan bendahara
+    // tidak memiliki kebutuhan operasional di sini.
+    // Batch write dari dashboard tetap kompatibel —
+    // Firestore evaluasi rules per dokumen, bukan per batch.
+    // ═══════════════════════════════════════════════════
+    match /presensi/{presensiId} {
+
+      // READ: Admin, ketua, wakil, sekretaris, pj.
+      allow read: if hasAnyRole([
+        'admin', 'ketua', 'wakil', 'sekretaris', 'pj'
+      ]);
+
+      // CREATE & UPDATE: Admin, ketua, wakil, sekretaris, pj.
+      allow create, update: if hasAnyRole([
+        'admin', 'ketua', 'wakil', 'sekretaris', 'pj'
+      ]);
+
+      // DELETE: Admin dan ketua.
+      allow delete: if hasAnyRole(['admin', 'ketua']);
+    }
+
+
+    // ═══════════════════════════════════════════════════
+    // COLLECTION: pengurus
+    //
+    // Struktur organisasi (dokumen tunggal: pengurus/struktur).
+    // Informasi publik internal — anggota boleh baca.
+    // ═══════════════════════════════════════════════════
+    match /pengurus/{docId} {
+
+      // READ: Semua user login, termasuk anggota.
+      allow read: if isLoggedIn();
+
+      // CREATE & UPDATE: Admin dan ketua.
+      // Perubahan struktur adalah keputusan strategis pimpinan.
+      allow create, update: if hasAnyRole(['admin', 'ketua']);
+
+      // DELETE: Hanya admin.
+      // pengurus/struktur adalah dokumen tunggal kritis —
+      // menghapusnya berarti menghapus seluruh struktur organisasi.
+      allow delete: if isAdmin();
+    }
+    
+     // ═══════════════════════════════════════════════════════════════
+    // COLLECTION: inventaris
+    //
+    // Data inventaris PMR.
+    // Transparan untuk seluruh anggota, tetapi hanya role tertentu
+    // yang boleh mengubah data.
+    // ═══════════════════════════════════════════════════════════════
+    match /inventaris/{itemId} {
+
+      // READ: Semua user yang login, termasuk anggota
+      allow read: if isLoggedIn();
+
+      // CREATE & UPDATE: Admin, Ketua, Wakil, PJ
+      allow create, update: if hasAnyRole([
+        'admin',
+        'ketua',
+        'wakil',
+        'pj'
+      ]);
+
+      // DELETE: Admin dan Ketua
+      allow delete: if hasAnyRole([
+        'admin',
+        'ketua'
+      ]);
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+// COLLECTION: piket
+//
+// Jadwal piket rutin PMR beserta riwayat pelaksanaannya.
+// Transparan untuk seluruh anggota agar semua mengetahui
+// jadwal tugas dan pembagian piket secara terbuka.
+// Modul ini juga menjadi sumber data algoritma Smart Fair
+// Scheduler untuk memastikan pembagian tugas berlangsung
+// adil berdasarkan riwayat piket.
+// ═══════════════════════════════════════════════════════════════
+match /piket/{jadwalId} {
+
+  // READ ───────────────────────────────────────────────────────
+  // Semua user yang login boleh melihat jadwal piket,
+  // termasuk akun anggota, karena jadwal merupakan informasi
+  // operasional yang perlu diketahui seluruh anggota.
+  allow read: if hasAnyRole([
+    'admin', 'ketua', 'wakil',
+    'sekretaris', 'bendahara',
+    'pj', 'anggota'
+  ]);
+
+  // CREATE & UPDATE ────────────────────────────────────────────
+  // Admin, ketua, wakil, sekretaris, dan PJ dapat membuat
+  // maupun memperbarui jadwal piket.
+  // Hak ini juga mencakup hasil Generate Jadwal otomatis
+  // dari Smart Fair Scheduler maupun penyesuaian manual.
+  allow create, update: if hasAnyRole([
+    'admin',
+    'ketua',
+    'wakil',
+    'sekretaris',
+    'pj'
+  ]);
+
+  // DELETE ─────────────────────────────────────────────────────
+  // Hanya admin dan ketua yang boleh menghapus jadwal.
+  // Menghapus jadwal piket berpotensi menghilangkan riwayat
+  // pembagian tugas, sehingga dibatasi pada level pimpinan.
+  allow delete: if hasAnyRole([
+    'admin',
+    'ketua'
+  ]);
+}
+
+    // ═══════════════════════════════════════════════════════════════
+    // COLLECTION: upacara                                      [F4.4]
+    //
+    // Jadwal Petugas Upacara beserta riwayat pelaksanaannya.
+    // SENGAJA MIRROR PERSIS blok "piket" di atas — modul ini punya
+    // konsep & RBAC yang identik dengan Piket (rotasi adil berbasis
+    // riwayat lewat Rotation Engine yang sama), cuma collection data
+    // terpisah. Transparan untuk seluruh anggota agar semua tahu
+    // jadwal tugas upacara secara terbuka, sama seperti Piket.
+    // ═══════════════════════════════════════════════════════════════
+    match /upacara/{jadwalId} {
+
+      // READ ───────────────────────────────────────────────────────
+      // Semua user yang login boleh melihat jadwal upacara,
+      // termasuk akun anggota — informasi operasional terbuka,
+      // identik alasan dengan Piket.
+      allow read: if hasAnyRole([
+        'admin', 'ketua', 'wakil',
+        'sekretaris', 'bendahara',
+        'pj', 'anggota'
+      ]);
+
+      // CREATE & UPDATE ────────────────────────────────────────────
+      // Admin, ketua, wakil, sekretaris, dan PJ — sama persis
+      // dengan Piket. Mencakup hasil Generate Petugas otomatis
+      // dari Rotation Engine maupun penyesuaian manual.
+      allow create, update: if hasAnyRole([
+        'admin',
+        'ketua',
+        'wakil',
+        'sekretaris',
+        'pj'
+      ]);
+
+      // DELETE ─────────────────────────────────────────────────────
+      // Hanya admin dan ketua — sama persis dengan Piket.
+      allow delete: if hasAnyRole([
+        'admin',
+        'ketua'
+      ]);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // COLLECTION: iuran                                        [F4.4]
+    //
+    // Status pembayaran iuran bulanan per anggota (Lunas/Khusus —
+    // "Belum Bayar" tidak disimpan sebagai dokumen, hanya default
+    // implisit saat dokumen untuk (anggotaId,bulan,tahun) tidak ada).
+    // Juga berisi SATU dokumen sentinel "iuran/_pengaturan" yang
+    // menyimpan nominal iuran standar (field `nominalStandar`) —
+    // SENGAJA ditaruh di collection ini, BUKAN di pengurus/struktur,
+    // supaya bendahara (yang boleh mengelola iuran) juga bisa
+    // mengubah nominal standar tanpa perlu diberi akses tulis ke
+    // struktur organisasi (yang memang sengaja dibatasi admin+ketua).
+    //
+    // Data finansial per-anggota — RBAC SENGAJA MIRROR PERSIS blok
+    // "keuangan" di atas (tier yang sama), karena:
+    //   - Setiap perubahan status Lunas/Khusus otomatis membuat/
+    //     mengubah SATU transaksi di collection keuangan (batch
+    //     write atomic) — RBAC keduanya harus sinkron atau batch
+    //     akan gagal permission-denied di tengah jalan.
+    //   - "Batalkan" (kembali ke Belum Bayar) menghapus dokumen di
+    //     KEDUA collection sekaligus dalam satu batch — karena
+    //     Rules keuangan membatasi delete hanya admin (audit trail),
+    //     delete di sini juga dibatasi admin agar batch tidak pernah
+    //     gagal separuh jalan untuk bendahara.
+    // ═══════════════════════════════════════════════════════════════
+    match /iuran/{iuranId} {
+
+      // READ: Admin, ketua, wakil (pengawasan), bendahara —
+      // identik keuangan.
+      allow read: if hasAnyRole([
+        'admin', 'ketua', 'wakil', 'bendahara'
+      ]);
+
+      // CREATE & UPDATE: Admin dan bendahara — identik keuangan.
+      // Mencakup .set(...,{merge:true}) pada iuran/_pengaturan
+      // (ubah nominal standar), yang di Firestore rules dievaluasi
+      // sebagai create ATAU update tergantung dokumen sudah ada
+      // atau belum — keduanya sudah diizinkan di sini.
+      allow create, update: if hasAnyRole(['admin', 'bendahara']);
+
+      // DELETE: Hanya admin — identik keuangan, demi konsistensi
+      // batch dengan collection keuangan (lihat catatan di atas).
+      allow delete: if isAdmin();
+    }
+
+  }
+}

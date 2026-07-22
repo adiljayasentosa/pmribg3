@@ -1,0 +1,55 @@
+# =========================================================
+# .gitignore — Website PMR WIRA UNIT
+# =========================================================
+
+# ── Dependencies ──
+# Folder modul Node (jika di kemudian hari menambah tooling/npm package)
+node_modules/
+
+# ── Firebase ──
+# File lokal & cache CLI Firebase — jangan ikut ter-commit
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.runtimeconfig.json
+
+# ── Environment & Secrets ──
+# Variabel lingkungan / kredensial — JANGAN pernah di-push ke repo
+.env
+.env.*
+!.env.example
+
+# ── Logs ──
+# Semua file log dari tools/CLI
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Build & Output ──
+# Hasil build (jika suatu saat menambah bundler/tooling) & folder cache sementara
+dist/
+build/
+.cache/
+.vercel/
+tmp/
+temp/
+
+# ── OS Files ──
+# File sampah bawaan sistem operasi (macOS & Windows)
+.DS_Store
+Thumbs.db
+
+# ── Editor / IDE ──
+# Konfigurasi editor lokal — biar tiap kontributor bebas pakai setting sendiri
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Archives ──
+# Backup/arsip project yang tidak perlu masuk version control
+*.zip
+*.rar
+*.7z

@@ -57,6 +57,16 @@
   gap:8px;
   margin-bottom:18px;
 }
+/* F3.3: jika jumlah tombol role tidak habis dibagi 3 (misal 7 role),
+   tombol terakhir akan sendirian di baris baru — pusatkan agar rapi.
+   Selector ini generik: hanya aktif saat item terakhir memang jadi
+   item pertama di baris baru (posisi ≡ 1 mod 3), jadi otomatis tidak
+   berlaku lagi jika suatu saat jumlah role berubah menjadi kelipatan 3. */
+.role-grid .role-pill:last-child:nth-child(3n+1){
+  grid-column: 1 / -1;
+  max-width: calc((100% - 16px) / 3);
+  margin: 0 auto;
+}
 .role-pill{
   border:1.5px solid var(--gray-300);
   border-radius:var(--radius-sm);

@@ -213,7 +213,7 @@ table.data-table tbody tr:hover{ background:var(--pmr-red-light); }
   to{ opacity:1; transform:translateY(0); }
 }
 
-/* ---------- Empty state ---------- */
+/* ---------- Empty state (F3.3: lebih profesional & kontekstual) ---------- */
 .empty-state{
   text-align:center;
   padding:48px 20px;
@@ -223,6 +223,102 @@ table.data-table tbody tr:hover{ background:var(--pmr-red-light); }
   width:56px; height:56px;
   margin:0 auto 14px;
   color:var(--pmr-red-soft);
+}
+.empty-state .empty-title{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:0.95rem;
+  color:var(--ink);
+  margin-bottom:4px;
+}
+.empty-state .empty-desc{
+  font-size:0.85rem;
+  max-width:320px;
+  margin:0 auto 16px;
+}
+.empty-state .btn{ margin-top:4px; }
+
+/* ---------- Loading spin (F3.3) ---------- */
+.spin-icon{ animation:spin-rotate 1s linear infinite; }
+@keyframes spin-rotate{
+  from{ transform:rotate(0deg); }
+  to{ transform:rotate(360deg); }
+}
+
+/* ---------- Quick Actions (F3.3 — Beranda) ---------- */
+.quick-action-btn{
+  display:flex; align-items:center; gap:10px;
+  padding:12px 14px;
+  border:1.5px solid var(--gray-300);
+  border-radius:var(--radius-sm);
+  background:var(--white);
+  font-size:0.85rem; font-weight:600;
+  color:var(--ink);
+  transition:border-color var(--transition), background var(--transition), transform var(--transition);
+  text-align:left;
+}
+.quick-action-btn:hover{
+  border-color:var(--pmr-red);
+  background:var(--pmr-red-light);
+  transform:translateY(-1px);
+}
+.quick-action-btn .qa-icon{
+  width:32px; height:32px; flex-shrink:0;
+  border-radius:var(--radius-sm);
+  background:var(--pmr-red-light);
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.95rem;
+}
+
+/* ---------- Activity Feed (F3.3 — Beranda) ---------- */
+.activity-feed{ display:flex; flex-direction:column; }
+.activity-item{
+  display:flex; gap:12px;
+  padding:12px 0;
+  border-bottom:1px solid var(--gray-100);
+}
+.activity-item:last-child{ border-bottom:none; }
+.activity-icon{
+  width:34px; height:34px; flex-shrink:0;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.85rem;
+  background:var(--gray-100);
+}
+.activity-icon.kegiatan{ background:var(--info-bg); }
+.activity-icon.keuangan{ background:var(--success-bg); }
+.activity-body{ flex:1; min-width:0; }
+.activity-title{ font-size:0.85rem; font-weight:600; margin-bottom:2px; }
+.activity-meta{ font-size:0.75rem; color:var(--ink-soft); }
+
+/* ---------- Reminder Panel (F4.2 — Notification Center) ----------
+   Panel informasi permanen, BUKAN popup/toast/modal. Warna sesuai
+   design system yang sudah ada — tidak ada token warna baru:
+   critical=--danger, warning=--warning, info=--info, success=--success */
+.reminder-panel{ margin-bottom:24px; }
+.reminder-list{ display:flex; flex-direction:column; gap:8px; }
+.reminder-item{
+  display:flex; align-items:flex-start; gap:10px;
+  padding:12px 14px;
+  border-radius:var(--radius-sm);
+  border-left:4px solid var(--gray-300);
+  background:var(--gray-100);
+  font-size:0.86rem;
+  cursor:pointer;
+  transition:background var(--transition), transform var(--transition);
+}
+.reminder-item:hover{ transform:translateX(2px); }
+.reminder-item.critical{ border-left-color:var(--danger);  background:var(--danger-bg); }
+.reminder-item.warning { border-left-color:var(--warning); background:var(--warning-bg); }
+.reminder-item.info    { border-left-color:var(--info);    background:var(--info-bg); }
+.reminder-item.success { border-left-color:var(--success); background:var(--success-bg); cursor:default; }
+.reminder-icon{ flex-shrink:0; font-size:0.95rem; line-height:1.3; }
+.reminder-text{ flex:1; font-weight:600; color:var(--ink); }
+.reminder-more{
+  text-align:center;
+  font-size:0.78rem;
+  color:var(--ink-soft);
+  padding-top:6px;
 }
 
 /* ---------- Grid util ---------- */

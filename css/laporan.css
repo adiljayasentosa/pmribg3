@@ -1,0 +1,116 @@
+/* =========================================================
+   HALAMAN LAPORAN (F4.3 — Report Engine)
+   Mengikuti konvensi project: satu file CSS per fitur/halaman
+   (bandingkan pengurus.css, modal.css, auth.css).
+   ========================================================= */
+
+/* ---------- Pemilih jenis laporan ---------- */
+.laporan-picker{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+  gap:14px;
+  margin-bottom:24px;
+}
+.laporan-tipe-btn{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:4px;
+  text-align:left;
+  cursor:pointer;
+  font-family:inherit;
+  transition:var(--transition);
+}
+.laporan-tipe-btn:hover{ box-shadow:var(--shadow-md); transform:translateY(-1px); }
+.laporan-tipe-btn.active{
+  border-color:var(--pmr-red);
+  background:var(--pmr-red-light);
+}
+.laporan-tipe-icon{ font-size:1.5rem; line-height:1; margin-bottom:4px; }
+.laporan-tipe-label{ font-weight:700; font-size:0.92rem; color:var(--ink); }
+.laporan-tipe-desc{ font-size:0.76rem; color:var(--ink-soft); }
+
+/* ---------- Toolbar hasil (judul + aksi) ---------- */
+.laporan-toolbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:16px;
+}
+.laporan-toolbar-title{ font-weight:700; font-size:1rem; }
+
+/* ---------- "Lembar" laporan (preview layar & cetak) ---------- */
+.laporan-sheet{
+  background:var(--white);
+  border:1px solid var(--gray-200);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-sm);
+  padding:32px;
+}
+
+.laporan-kop{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding-bottom:14px;
+  border-bottom:2px solid var(--pmr-red);
+  margin-bottom:16px;
+}
+.laporan-logo{ width:44px; height:44px; flex-shrink:0; }
+.laporan-kop-nama{
+  font-family:var(--font-display);
+  font-weight:800;
+  font-size:1.05rem;
+  color:var(--pmr-red);
+}
+.laporan-kop-sub{ font-size:0.8rem; color:var(--ink-soft); }
+
+.laporan-judul{ margin-bottom:18px; }
+.laporan-judul h2{ font-size:1.15rem; margin:0 0 4px; }
+.laporan-judul p{ margin:0; font-size:0.82rem; color:var(--ink-soft); }
+
+.laporan-summary{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-bottom:20px;
+}
+.laporan-summary-item{
+  background:var(--gray-100);
+  border-radius:var(--radius-sm);
+  padding:10px 16px;
+  min-width:120px;
+}
+.laporan-summary-value{ font-weight:700; font-size:1.05rem; color:var(--pmr-red-dark); }
+.laporan-summary-label{ font-size:0.74rem; color:var(--ink-soft); }
+
+.laporan-table th, .laporan-table td{ font-size:0.83rem; }
+
+.laporan-footer{
+  display:flex;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:22px;
+  padding-top:12px;
+  border-top:1px solid var(--gray-200);
+  font-size:0.72rem;
+  color:var(--ink-soft);
+}
+
+/* ---------- Cetak — isolasi hanya lembar laporan ----------
+   Melengkapi aturan print global di modal.css (yang sudah
+   menyembunyikan sidebar/topbar). Di sini isolasi diperluas
+   agar HANYA #laporan-preview-area yang tercetak — pemilih
+   jenis laporan & tombol aksi ikut disembunyikan. */
+@media print{
+  body *{ visibility:hidden; }
+  #laporan-preview-area, #laporan-preview-area *{ visibility:visible; }
+  #laporan-preview-area{
+    position:absolute; top:0; left:0; width:100%;
+    box-shadow:none; border:none; padding:0;
+  }
+  .laporan-picker, .laporan-toolbar{ display:none !important; }
+}

@@ -5,6 +5,7 @@
 
 const DUMMY_DATA = {
   periode: "2025/2026",
+  nominalIuranStandar: 5000, /* F4.4 Fitur 1 — default iuran bulanan mode demo */
 
   ringkasan: {
     totalAnggota: 48,
