@@ -55,4 +55,15 @@ document.addEventListener("DOMContentLoaded", () => {
   }, { threshold: 0.5 });
 
   counters.forEach((c) => observer.observe(c));
+
+  /* [F5.1] Accordion FAQ — interaksi baru, hanya untuk section FAQ
+     yang baru ditambahkan. Tidak menyentuh logic/auth/routing lain. */
+  document.querySelectorAll(".faq-q").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const item = btn.closest(".faq-item");
+      const wasOpen = item.classList.contains("open");
+      document.querySelectorAll(".faq-item.open").forEach((el) => el.classList.remove("open"));
+      if (!wasOpen) item.classList.add("open");
+    });
+  });
 });

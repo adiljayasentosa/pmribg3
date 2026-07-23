@@ -53,19 +53,17 @@ function _setLoadingState(loading) {
   const el = document.getElementById("content-area");
   if (!el) return;
   if (loading) {
-    /* F3.3: tambah class "spin-icon" agar ikon benar-benar berputar
-       selama proses autentikasi & pengambilan data — sebelumnya ikon
-       ini statis dan terkesan seperti aplikasi freeze/macet. */
-    el.innerHTML = `<div class="empty-state">
-      <div class="empty-icon spin-icon">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-        </svg>
-      </div>
-      <p class="empty-title">Menyiapkan dashboard…</p>
-      <p class="empty-desc">Menghubungkan ke server dan memuat data terbaru.</p>
-    </div>`;
+    /* [F5.1 — UI Polish] Sebelumnya spinner (ikon berputar). Diganti
+       skeleton shimmer sesuai spek F5.1 ("tanpa spinner"). Ini SATU-
+       SATUNYA jeda loading async yang nyata di app (menunggu auth +
+       DB.init() sebelum halaman pertama dirender) — begitu selesai,
+       _initDashboard() → navigateTo() menimpa isi ini dengan halaman
+       sungguhan lewat alur yang SAMA PERSIS seperti sebelumnya.
+       Bentuk skeleton dipilih berdasar location.hash — cara baca yang
+       SAMA dengan yang dipakai navigateTo() untuk `initPage` — supaya
+       bentuknya mendekati halaman yang akan benar-benar muncul. */
+    const halamanTujuan = location.hash.replace("#", "") || "beranda";
+    el.innerHTML = skeletonUntukHalaman(halamanTujuan);
   }
 }
 

@@ -32,8 +32,9 @@
 
     <nav id="nav-links" class="nav-links" aria-label="Navigasi utama">
       <a href="#tentang">Tentang</a>
-      <a href="#fitur">Fitur</a>
-      <a href="#pengurus">Pengurus</a>
+      <a href="#program">Program</a>
+      <a href="#artikel">Edukasi</a>
+      <a href="#galeri">Galeri</a>
       <a href="#kontak">Kontak</a>
     </nav>
 
@@ -58,10 +59,11 @@
           </svg>
           Palang Merah Remaja
         </div>
-        <h1>Sistem Manajemen<br/>PMR WIRA UNIT<br/>SMK IBG 3</h1>
+        <h1>Bergerak Bersama,<br/>Menolong Sepenuh Hati</h1>
         <p class="lead">
-          Platform terpadu untuk mengelola keanggotaan, kegiatan, keuangan, 
-          dan presensi Palang Merah Remaja secara efisien dan transparan.
+          PMR WIRA UNIT SMK IBG 3 berkomitmen membentuk generasi muda yang peduli,
+          tanggap, dan siap membantu sesama — lewat kegiatan, pelatihan, dan aksi
+          kemanusiaan yang nyata.
         </p>
         <div class="hero-actions">
           <a href="dashboard.html" id="btn-hero-dashboard" class="btn btn-primary">
@@ -73,32 +75,104 @@
         </div>
       </div>
 
-      <!-- Emblem lambang palang -->
-      <div class="hero-emblem" aria-hidden="true">
-        <div class="emblem-cross">
-          <div class="bar v"></div>
-          <div class="bar h"></div>
-        </div>
-        <p style="text-align:center;color:rgba(255,255,255,0.85);font-size:0.9rem;margin:0 0 18px">
-          Masa Bakti 2025/2026
-        </p>
-        <div class="hero-emblem-stats">
-          <div>
-            <div class="num"><span class="js-counter" data-target="48">0</span></div>
-            <div class="lbl">Anggota</div>
-          </div>
-          <div>
-            <div class="num"><span class="js-counter" data-target="12">0</span></div>
-            <div class="lbl">Kegiatan</div>
-          </div>
-          <div>
-            <div class="num"><span class="js-counter" data-target="87" data-suffix="%">0%</span></div>
-            <div class="lbl">Hadir</div>
-          </div>
-        </div>
+      <!-- [F5.1] Ilustrasi flat bertema PMR — pengganti emblem lama -->
+      <div class="hero-illustration-wrap" aria-hidden="true">
+        <svg viewBox="0 0 460 400" xmlns="http://www.w3.org/2000/svg">
+          <!-- Blob & dekorasi belakang -->
+          <circle cx="380" cy="80" r="110" fill="#FFFFFF" opacity="0.06"/>
+          <circle cx="60" cy="330" r="90" fill="#FFFFFF" opacity="0.06"/>
+          <g fill="#FFFFFF" opacity="0.35">
+            <path d="M40 60h9v24h-9z"/><path d="M30 69h29v9h-29z"/>
+          </g>
+          <g fill="#FFFFFF" opacity="0.25">
+            <path d="M410 260h8v20h-8z"/><path d="M401 268h26v8h-26z"/>
+          </g>
+
+          <!-- Tanaman pojok kiri bawah -->
+          <g opacity="0.9">
+            <path d="M20 400c-4-40 14-70 46-82-6 34 2 64 20 82z" fill="#FFFFFF" opacity="0.16"/>
+            <path d="M70 400c6-46-8-78-34-96 2 38-8 70-24 96z" fill="#FFFFFF" opacity="0.22"/>
+          </g>
+
+          <!-- Ambulans kecil -->
+          <g transform="translate(24,270)">
+            <rect x="0" y="18" width="118" height="46" rx="8" fill="#FFFFFF"/>
+            <rect x="84" y="0" width="34" height="46" rx="6" fill="#FFFFFF"/>
+            <rect x="92" y="10" width="18" height="18" rx="3" fill="var(--pmr-red)" opacity="0.85"/>
+            <rect x="30" y="30" width="22" height="6" rx="2" fill="var(--pmr-red)"/>
+            <rect x="38" y="22" width="6" height="22" rx="2" fill="var(--pmr-red)"/>
+            <circle cx="26" cy="66" r="12" fill="#1C1B1F" opacity="0.8"/>
+            <circle cx="96" cy="66" r="12" fill="#1C1B1F" opacity="0.8"/>
+          </g>
+
+          <!-- Relawan PMR (figur sederhana) -->
+          <g transform="translate(178,120)">
+            <circle cx="34" cy="20" r="20" fill="#FFFFFF"/>
+            <path d="M4 150c0-46 14-78 30-78s30 32 30 78z" fill="#FFFFFF"/>
+            <path d="M14 82c8-6 16-10 20-10s12 4 20 10l-6 46h-28z" fill="var(--pmr-red)" opacity="0.9"/>
+            <rect x="27" y="74" width="14" height="46" rx="4" fill="#FFFFFF"/>
+            <rect x="21" y="90" width="26" height="10" rx="3" fill="#FFFFFF"/>
+          </g>
+
+          <!-- Kotak P3K -->
+          <g transform="translate(300,190)">
+            <path d="M35 8c0-12 11-22 27-22s27 10 27 22" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+            <rect x="0" y="14" width="124" height="98" rx="16" fill="#FFFFFF"/>
+            <rect x="46" y="34" width="16" height="40" rx="4" fill="var(--pmr-red)"/>
+            <rect x="34" y="46" width="40" height="16" rx="4" fill="var(--pmr-red)"/>
+          </g>
+
+          <!-- Donor darah -->
+          <g transform="translate(230,40)">
+            <path d="M16 0C7 14 0 24 0 34a16 16 0 0032 0C32 24 25 14 16 0z" fill="#FFFFFF"/>
+            <path d="M16 15c4 6 8 11 8 17a8 8 0 01-16 0c0-6 4-11 8-17z" fill="var(--pmr-red)" opacity="0.55"/>
+          </g>
+        </svg>
       </div>
     </div>
   </section>
+
+  <!-- [F5.1] Strip statistik melayang -->
+  <div class="hero-stats-strip">
+    <div class="grid grid-4">
+      <div class="hero-stat">
+        <div class="feature-icon" style="margin-bottom:0">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </div>
+        <div>
+          <div class="num"><span class="js-counter" data-target="48">0</span>+</div>
+          <div class="lbl">Anggota Aktif</div>
+        </div>
+      </div>
+      <div class="hero-stat">
+        <div class="feature-icon" style="margin-bottom:0">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        </div>
+        <div>
+          <div class="num"><span class="js-counter" data-target="12">0</span>+</div>
+          <div class="lbl">Kegiatan Terlaksana</div>
+        </div>
+      </div>
+      <div class="hero-stat">
+        <div class="feature-icon" style="margin-bottom:0">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+        </div>
+        <div>
+          <div class="num"><span class="js-counter" data-target="500">0</span>+</div>
+          <div class="lbl">Penerima Manfaat</div>
+        </div>
+      </div>
+      <div class="hero-stat">
+        <div class="feature-icon" style="margin-bottom:0">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <div>
+          <div class="num"><span class="js-counter" data-target="1">0</span></div>
+          <div class="lbl">Tujuan Kemanusiaan</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ═══════════════════ TENTANG ═══════════════════ -->
   <section id="tentang" class="section">
@@ -146,8 +220,75 @@
     </div>
   </section>
 
+  <!-- ═══════════════════ PROGRAM KERJA ═══════════════════ -->
+  <section id="program" class="section section-alt">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Program Kerja</span>
+        <h2>Kegiatan Rutin PMR WIRA UNIT</h2>
+        <p>Program kerja tahunan yang dijalankan untuk mendukung kesiapsiagaan dan kepedulian sosial anggota.</p>
+      </div>
+      <div class="grid grid-3">
+        <div class="feature-card program-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5c3.5-4 10-2 10 3.5 0 5.5-6.5 9-10 12-3.5-3-10-6.5-10-12 0-5.5 6.5-7.5 10-3.5z"/>
+            </svg>
+          </div>
+          <h3>Donor Darah</h3>
+          <p>Kegiatan donor darah rutin bekerja sama dengan PMI cabang kota, terbuka untuk siswa dan guru.</p>
+        </div>
+        <div class="feature-card program-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </div>
+          <h3>Pelatihan Pertolongan Pertama</h3>
+          <p>Latihan PP dasar & lanjutan agar anggota siap menangani situasi darurat di sekolah maupun masyarakat.</p>
+        </div>
+        <div class="feature-card program-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+          </div>
+          <h3>Bakti Sosial</h3>
+          <p>Aksi kepedulian ke panti asuhan, desa binaan, dan korban bencana sebagai wujud nilai kemanusiaan.</p>
+        </div>
+        <div class="feature-card program-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+            </svg>
+          </div>
+          <h3>Piket UKS</h3>
+          <p>Jaga piket rutin di Unit Kesehatan Sekolah untuk penanganan pertama warga sekolah yang membutuhkan.</p>
+        </div>
+        <div class="feature-card program-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <h3>Petugas Upacara</h3>
+          <p>Rotasi bertugas dalam upacara bendera, melatih kedisiplinan dan tanggung jawab anggota.</p>
+        </div>
+        <div class="feature-card program-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422A12.083 12.083 0 0118 20.944 12.083 12.083 0 016 20.944a12.083 12.083 0 01-.16-9.422L12 14z"/>
+            </svg>
+          </div>
+          <h3>Pelatihan Kader PMR</h3>
+          <p>Pembinaan berjenjang Mula–Madya–Wira agar kaderisasi kepemimpinan PMR terus berlanjut.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ═══════════════════ FITUR ═══════════════════ -->
-  <section id="fitur" class="section section-alt">
+  <section id="fitur" class="section">
     <div class="container">
       <div class="section-head">
         <span class="eyebrow">Fitur Sistem</span>
@@ -219,6 +360,150 @@
     </div>
   </section>
 
+  <!-- ═══════════════════ ARTIKEL & EDUKASI ═══════════════════ -->
+  <section id="artikel" class="section section-alt">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Artikel &amp; Edukasi</span>
+        <h2>Bacaan Seputar Kepalangmerahan</h2>
+        <p>Artikel edukatif untuk menambah wawasan kesehatan dan kepalangmerahan anggota maupun pembaca umum.</p>
+      </div>
+      <div class="grid grid-3">
+        <article class="article-card">
+          <div class="ph-thumb">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h6M9 16h6"/></svg>
+          </div>
+          <div class="article-card-body">
+            <div class="article-meta">
+              <span class="badge badge-info">Kesehatan</span>
+              <span>21 Mei 2025</span>
+            </div>
+            <h3>5 Langkah Dasar Pertolongan Pertama yang Wajib Diketahui</h3>
+            <p>Panduan singkat menangani luka ringan, pingsan, dan cedera sebelum bantuan medis tiba.</p>
+            <a href="#" class="btn btn-outline btn-sm">Baca →</a>
+          </div>
+        </article>
+        <article class="article-card">
+          <div class="ph-thumb">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h6M9 16h6"/></svg>
+          </div>
+          <div class="article-card-body">
+            <div class="article-meta">
+              <span class="badge badge-success">Kemanusiaan</span>
+              <span>18 Mei 2025</span>
+            </div>
+            <h3>Kenapa Donor Darah Rutin Itu Penting?</h3>
+            <p>Manfaat donor darah bagi tubuh pendonor sekaligus dampaknya bagi yang membutuhkan.</p>
+            <a href="#" class="btn btn-outline btn-sm">Baca →</a>
+          </div>
+        </article>
+        <article class="article-card">
+          <div class="ph-thumb">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h6M9 16h6"/></svg>
+          </div>
+          <div class="article-card-body">
+            <div class="article-meta">
+              <span class="badge badge-warning">Kesiapsiagaan</span>
+              <span>10 Mei 2025</span>
+            </div>
+            <h3>Mengenal Sistem Rotasi Piket &amp; Petugas Upacara</h3>
+            <p>Bagaimana PMR WIRA UNIT menjaga pembagian tugas yang adil antar anggota.</p>
+            <a href="#" class="btn btn-outline btn-sm">Baca →</a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ VIDEO EDUKASI ═══════════════════ -->
+  <section id="video" class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Video Edukasi</span>
+        <h2>Belajar Lewat Tayangan Singkat</h2>
+        <p>Dokumentasi kegiatan dan video edukasi pertolongan pertama dari PMR WIRA UNIT.</p>
+      </div>
+      <div class="grid grid-3">
+        <div class="video-card">
+          <div class="ph-thumb">
+            <div class="video-play">
+              <svg viewBox="0 0 24 24" fill="#FFFFFF"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            <span class="video-duration">2:45</span>
+          </div>
+          <div class="video-card-body">
+            <div class="article-meta"><span class="badge badge-info">Tutorial</span></div>
+            <h3>Cara Membalut Luka dengan Perban Segitiga</h3>
+          </div>
+        </div>
+        <div class="video-card">
+          <div class="ph-thumb">
+            <div class="video-play">
+              <svg viewBox="0 0 24 24" fill="#FFFFFF"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            <span class="video-duration">4:10</span>
+          </div>
+          <div class="video-card-body">
+            <div class="article-meta"><span class="badge badge-success">Dokumentasi</span></div>
+            <h3>Keseruan Bakti Sosial PMR WIRA UNIT 2025</h3>
+          </div>
+        </div>
+        <div class="video-card">
+          <div class="ph-thumb">
+            <div class="video-play">
+              <svg viewBox="0 0 24 24" fill="#FFFFFF"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            <span class="video-duration">3:20</span>
+          </div>
+          <div class="video-card-body">
+            <div class="article-meta"><span class="badge badge-warning">Tutorial</span></div>
+            <h3>Langkah RJP (CPR) untuk Pemula</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ POSTER EDUKASI ═══════════════════ -->
+  <section id="poster" class="section section-alt">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Poster Edukasi</span>
+        <h2>Galeri Poster Kegiatan</h2>
+        <p>Poster edukasi & publikasi kegiatan yang dibagikan di lingkungan sekolah.</p>
+      </div>
+      <div class="poster-grid">
+        <div class="poster-card">
+          <div class="ph-thumb">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+          </div>
+          <div class="poster-card-body">
+            <h3>Donor Darah</h3>
+            <span class="badge badge-info">Kesehatan</span>
+          </div>
+        </div>
+        <div class="poster-card">
+          <div class="ph-thumb">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </div>
+          <div class="poster-card-body">
+            <h3>Pertolongan Pertama</h3>
+            <span class="badge badge-warning">Pelatihan</span>
+          </div>
+        </div>
+        <div class="poster-card">
+          <div class="ph-thumb">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          </div>
+          <div class="poster-card-body">
+            <h3>Bakti Sosial</h3>
+            <span class="badge badge-success">Kemanusiaan</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ═══════════════════ PENGURUS ═══════════════════ -->
   <section id="pengurus" class="section">
     <div class="container">
@@ -266,8 +551,101 @@
     </div>
   </section>
 
+  <!-- ═══════════════════ GALERI ═══════════════════ -->
+  <section id="galeri" class="section section-alt">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Galeri</span>
+        <h2>Dokumentasi Kegiatan</h2>
+        <p>Momen-momen kegiatan PMR WIRA UNIT sepanjang masa bakti berjalan.</p>
+      </div>
+      <div class="gallery-grid">
+        <div class="gallery-item"><div class="ph-thumb"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div></div>
+        <div class="gallery-item"><div class="ph-thumb"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div></div>
+        <div class="gallery-item"><div class="ph-thumb"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div></div>
+        <div class="gallery-item"><div class="ph-thumb"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div></div>
+        <div class="gallery-item"><div class="ph-thumb"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div></div>
+        <div class="gallery-item"><div class="ph-thumb"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div></div>
+        <div class="gallery-item"><div class="ph-thumb"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div></div>
+        <div class="gallery-item"><div class="ph-thumb"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ FAQ ═══════════════════ -->
+  <section id="faq" class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">FAQ</span>
+        <h2>Pertanyaan yang Sering Diajukan</h2>
+      </div>
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-q" type="button">
+            Siapa saja yang boleh bergabung dengan PMR WIRA UNIT?
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div class="faq-a"><p>Seluruh siswa aktif SMK IBG 3 dapat mendaftar melalui pendaftaran anggota baru yang dibuka setiap awal tahun ajaran.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" type="button">
+            Bagaimana cara masuk ke dashboard sistem ini?
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div class="faq-a"><p>Gunakan akun yang diberikan oleh Admin atau Pembina PMR melalui halaman <a href="login.html">Masuk</a> di pojok kanan atas.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" type="button">
+            Apakah data anggota dan keuangan aman?
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div class="faq-a"><p>Setiap role memiliki hak akses berbeda, dan seluruh aturan akses ditegakkan langsung di sisi server (Firestore Security Rules).</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" type="button">
+            Ke mana saya bisa bertanya lebih lanjut?
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div class="faq-a"><p>Silakan hubungi pengurus PMR lewat kontak yang tersedia di bagian bawah halaman ini.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ═══════════════════ CTA ═══════════════════ -->
   <section id="kontak" class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Kontak</span>
+        <h2>Hubungi Kami</h2>
+        <p>Ada pertanyaan seputar keanggotaan atau kegiatan? Sampaikan lewat kanal berikut.</p>
+      </div>
+      <div class="contact-grid">
+        <div class="contact-item">
+          <div class="feature-icon">
+            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+          <h3>Sekretariat</h3>
+          <p>Ruang OSIS &amp; Ekstrakurikuler, SMK IBG 3</p>
+        </div>
+        <div class="contact-item">
+          <div class="feature-icon">
+            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </div>
+          <h3>Email</h3>
+          <p>pmrwiraunit@smkibg3.sch.id</p>
+        </div>
+        <div class="contact-item">
+          <div class="feature-icon">
+            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+          </div>
+          <h3>WhatsApp Pengurus</h3>
+          <p>Tersedia untuk anggota &amp; calon anggota</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="section" style="padding-top:0">
     <div class="container">
       <div class="cta-band">
         <h2>Siap Mengakses Dashboard?</h2>
@@ -280,12 +658,43 @@
 
 <!-- ═══════════════════ FOOTER ═══════════════════ -->
 <footer class="site-footer" id="footer">
-  <div class="footer-inner">
-    <div style="display:flex;align-items:center;gap:10px">
-      <img src="assets/logo.svg" alt="" width="28" height="28"/>
-      <p>PMR WIRA UNIT · SMK IBG 3 · Masa Bakti 2025/2026</p>
+  <div class="footer-grid">
+    <div class="footer-col">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <img src="assets/logo.svg" alt="" width="30" height="30"/>
+        <div>
+          <div style="font-weight:700;font-family:var(--font-display)">PMR WIRA UNIT</div>
+          <div style="font-size:0.76rem;color:var(--ink-soft)">SMK IBG 3 · Masa Bakti 2025/2026</div>
+        </div>
+      </div>
+      <p style="font-size:0.84rem;max-width:280px">Sistem Manajemen Internal PMR — Frontend Demo</p>
+      <div class="footer-social">
+        <a href="#" aria-label="Instagram"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5" stroke-width="2"/><circle cx="12" cy="12" r="4" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg></a>
+        <a href="#" aria-label="YouTube"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="4" stroke-width="2"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg></a>
+        <a href="#" aria-label="TikTok"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" d="M9 8v8a3 3 0 103-3M9 8h3m0 0V4a4 4 0 004 4"/></svg></a>
+      </div>
     </div>
-    <p>Sistem Manajemen Internal PMR — Frontend Demo</p>
+    <div class="footer-col">
+      <h4>Navigasi</h4>
+      <ul>
+        <li><a href="#tentang">Tentang</a></li>
+        <li><a href="#program">Program Kerja</a></li>
+        <li><a href="#artikel">Edukasi</a></li>
+        <li><a href="#galeri">Galeri</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Lainnya</h4>
+      <ul>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="#kontak">Kontak</a></li>
+        <li><a href="login.html">Masuk ke Dashboard</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-inner footer-bottom">
+    <p>© 2025/2026 PMR WIRA UNIT · SMK IBG 3. Seluruh hak dilindungi.</p>
+    <p>Dibangun dengan ❤️ oleh PMR WIRA UNIT</p>
   </div>
 </footer>
 

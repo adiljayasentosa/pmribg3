@@ -64,7 +64,22 @@
   justify-content:center;
   padding:40px 24px;
 }
+/* [F5.1] Form dibungkus jadi "card" — token radius/shadow SAMA
+   persis dengan .card di components.css (dashboard), bukan nilai
+   baru. Hanya di viewport lebar (di mana .auth-panel kiri masih
+   terlihat) supaya di mobile form tetap terasa penuh-layar seperti
+   sebelumnya, bukan kartu mengambang kecil. */
 .auth-form{ width:100%; max-width:380px; }
+@media (min-width:861px){
+  .auth-form{
+    max-width:420px;
+    background:var(--white);
+    border:1px solid var(--gray-200);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-md);
+    padding:36px 40px;
+  }
+}
 .auth-form .auth-mobile-brand{ display:none; }
 .auth-form h1{ font-size:1.6rem; }
 .auth-form .auth-lead{ margin-bottom:28px; }

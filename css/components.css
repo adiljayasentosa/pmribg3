@@ -333,3 +333,104 @@ table.data-table tbody tr:hover{ background:var(--pmr-red-light); }
 @media (max-width: 560px){
   .grid-2,.grid-3,.grid-4{ grid-template-columns:1fr; }
 }
+
+/* =========================================================
+   SKELETON LOADING (F5.1 — UI Polish Final)
+   =========================================================
+   Satu sistem skeleton generik dipakai di seluruh project.
+   CSS murni, shimmer lewat background-position (BUKAN spinner,
+   BUKAN library JS). Warna memakai token abu-abu yang SUDAH ADA
+   di design system (--gray-200 → --gray-100 → --gray-200) —
+   tidak ada warna baru yang diperkenalkan.
+   Dipasangkan dengan helper generator di js/core/utils.js
+   (skCard, skStatRow, skTableRows, skList, skCalendar, skChart,
+   skProfile, skVideoGrid) supaya tiap halaman tinggal panggil,
+   bukan menulis ulang markup skeleton masing-masing.
+   ========================================================= */
+@keyframes skeleton-shimmer{
+  0%{ background-position:-420px 0; }
+  100%{ background-position:420px 0; }
+}
+.skeleton{
+  position:relative;
+  overflow:hidden;
+  background-color:var(--gray-200);
+  background-image:linear-gradient(90deg, var(--gray-200) 0%, var(--gray-100) 50%, var(--gray-200) 100%);
+  background-size:420px 100%;
+  background-repeat:no-repeat;
+  animation:skeleton-shimmer 1.4s ease-in-out infinite;
+  border-radius:6px;
+}
+@media (prefers-reduced-motion: reduce){
+  .skeleton{ animation:none; }
+}
+
+/* Bentuk dasar */
+.skeleton-text{ height:12px; margin-bottom:8px; }
+.skeleton-text:last-child{ margin-bottom:0; }
+.skeleton-text.w-25{ width:25%; }
+.skeleton-text.w-40{ width:40%; }
+.skeleton-text.w-60{ width:60%; }
+.skeleton-text.w-75{ width:75%; }
+.skeleton-text.w-100{ width:100%; }
+.skeleton-title{ height:20px; width:42%; border-radius:5px; margin-bottom:14px; }
+.skeleton-circle{ border-radius:50%; flex-shrink:0; }
+
+/* 1) Card skeleton — meniru bentuk .card / .stat-card */
+.skeleton-card{
+  background:var(--white);
+  border:1px solid var(--gray-200);
+  border-radius:var(--radius-md);
+  padding:22px;
+  box-shadow:var(--shadow-sm);
+}
+.skeleton-card .skeleton-circle{ width:42px; height:42px; margin-bottom:14px; }
+
+/* 2) Table skeleton */
+.skeleton-table-row{
+  display:flex; align-items:center; gap:16px;
+  padding:14px 4px;
+  border-bottom:1px solid var(--gray-100);
+}
+.skeleton-table-row:last-child{ border-bottom:none; }
+.skeleton-table-row .skeleton{ height:12px; flex:1; }
+
+/* 3) List skeleton (item dengan avatar bulat) */
+.skeleton-list-item{
+  display:flex; align-items:center; gap:12px;
+  padding:12px 0;
+  border-bottom:1px solid var(--gray-100);
+}
+.skeleton-list-item:last-child{ border-bottom:none; }
+.skeleton-list-item .skeleton-circle{ width:36px; height:36px; }
+.skeleton-list-item .skeleton-list-body{ flex:1; min-width:0; }
+
+/* 4) Calendar skeleton */
+.skeleton-calendar{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+.skeleton-calendar .skeleton{ aspect-ratio:1; border-radius:6px; }
+
+/* 5) Chart skeleton (bar) */
+.skeleton-chart{ display:flex; align-items:flex-end; gap:10px; height:160px; }
+.skeleton-chart .skeleton{ flex:1; border-radius:6px 6px 0 0; }
+
+/* 6) Profile skeleton */
+.skeleton-profile{ display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; padding:12px; }
+.skeleton-profile .skeleton-circle{ width:88px; height:88px; }
+
+/* 7) Video skeleton (thumbnail besar + tombol play) */
+.skeleton-video{
+  border-radius:var(--radius-md);
+  aspect-ratio:16/9;
+  display:flex; align-items:center; justify-content:center;
+}
+.skeleton-video::after{
+  content:'';
+  width:44px; height:44px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.55);
+}
+
+/* Wrapper umum: susun beberapa skeleton meniru layout halaman asli */
+.skeleton-stack{ display:flex; flex-direction:column; gap:16px; }
+.skeleton-row{ display:flex; gap:20px; }
+.skeleton-row > *{ flex:1; }
