@@ -50,3 +50,40 @@
 
   --transition: 0.2s cubic-bezier(.4,0,.2,1);
 }
+
+/* =========================================================
+   [F6.0] DARK MODE — token disiapkan, TOGGLE BELUM DIBUAT.
+   =========================================================
+   Nama variable SENGAJA sama persis dengan :root di atas —
+   semua CSS di seluruh project sudah konsisten memakai
+   var(--nama-token), bukan hex langsung, jadi begitu toggle
+   dibuat nanti, cukup set atribut ini di <html>:
+       document.documentElement.dataset.theme = "dark";
+   dan seluruh halaman otomatis ikut berubah tanpa menyentuh
+   CSS lain sama sekali. Belum di-aktifkan di mana pun sesuai
+   instruksi ("belum perlu toggle, yang penting struktur siap").
+   ========================================================= */
+[data-theme="dark"]{
+  --pmr-red:        #E5344F;
+  --pmr-red-dark:   #B71F38;
+  --pmr-red-darker: #7A1526;
+  --pmr-red-light:  #3A1620;
+  --pmr-red-soft:   #5C2430;
+
+  --white:    #1E1D21;  /* surface/card di dark mode */
+  --ink:      #F2F1F3;  /* teks utama di dark mode */
+  --ink-soft: #A8A6AD;
+  --gray-100: #141316;  /* bg halaman */
+  --gray-200: #2C2B30;  /* border */
+  --gray-300: #3D3C42;
+  --gray-400: #6E6C74;
+
+  --success:   #3DDC84; --success-bg:#12301F;
+  --warning:   #F5A742; --warning-bg:#3A2A10;
+  --danger:    #E5344F; --danger-bg: #3A1620;
+  --info:      #6699FF; --info-bg:   #16233F;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.35);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.4);
+  --shadow-lg: 0 20px 48px rgba(0,0,0,0.5);
+}

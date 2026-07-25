@@ -1,0 +1,133 @@
+/* =========================================================
+   [F6.0] CONTENT.CSS — Halaman Publik Artikel/Video/Poster/
+   Dokumentasi (list + detail).
+   =========================================================
+   Kartu (.article-card/.video-card/.poster-card/.ph-thumb) SUDAH
+   ADA di css/landing.css sejak F5.1 — sengaja dipakai ulang di
+   sini, bukan ditulis ulang, supaya Landing & halaman khusus ini
+   terlihat berasal dari satu design system yang sama persis.
+   File ini hanya menambah bagian yang belum ada: header halaman,
+   toolbar cari/filter, layout detail, galeri dokumentasi.
+   ========================================================= */
+
+.content-page{ padding-top:32px; padding-bottom:80px; }
+
+.content-header{
+  max-width:var(--container-max);
+  margin:0 auto 28px;
+  padding:0 24px;
+}
+.content-header .breadcrumb{
+  font-size:0.82rem; color:var(--ink-soft); margin-bottom:10px;
+}
+.content-header .breadcrumb a{ color:var(--pmr-red); font-weight:600; }
+.content-header h1{ font-size:1.7rem; margin-bottom:6px; }
+.content-header p{ color:var(--ink-soft); }
+
+.content-toolbar{
+  max-width:var(--container-max);
+  margin:0 auto 28px;
+  padding:0 24px;
+  display:flex; flex-wrap:wrap; gap:12px; align-items:center;
+}
+.content-toolbar .search-bar{ flex:1; min-width:220px; }
+.content-toolbar select{
+  border:1.5px solid var(--gray-300);
+  border-radius:var(--radius-sm);
+  padding:10px 14px;
+  font-size:0.85rem;
+  color:var(--ink);
+  background:var(--white);
+}
+
+.content-grid-wrap{
+  max-width:var(--container-max);
+  margin:0 auto;
+  padding:0 24px;
+}
+
+.content-empty{
+  max-width:var(--container-max);
+  margin:40px auto;
+  padding:60px 24px;
+  text-align:center;
+  color:var(--ink-soft);
+}
+.content-empty svg{ width:48px; height:48px; margin:0 auto 14px; opacity:0.4; }
+
+.content-loadmore{ text-align:center; margin-top:32px; }
+
+/* ---------- Dokumentasi: card punya jumlah foto ---------- */
+.doc-card .ph-thumb{ height:170px; }
+.doc-card-body{ padding:18px 20px; }
+.doc-card-meta{ display:flex; flex-wrap:wrap; gap:12px; font-size:0.78rem; color:var(--ink-soft); margin:8px 0 14px; }
+.doc-card-meta span{ display:inline-flex; align-items:center; gap:4px; }
+.doc-card-meta svg{ width:14px; height:14px; }
+
+/* ---------- Layout Detail (semua tipe konten) ---------- */
+.detail-wrap{
+  max-width:860px;
+  margin:0 auto;
+  padding:0 24px;
+}
+.detail-back{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:0.85rem; font-weight:600; color:var(--pmr-red);
+  margin-bottom:20px;
+}
+.detail-hero{
+  border-radius:var(--radius-lg);
+  overflow:hidden;
+  margin-bottom:24px;
+}
+.detail-hero .ph-thumb{ height:340px; }
+.detail-meta{
+  display:flex; flex-wrap:wrap; align-items:center; gap:14px;
+  font-size:0.84rem; color:var(--ink-soft);
+  margin-bottom:14px;
+}
+.detail-meta span{ display:inline-flex; align-items:center; gap:5px; }
+.detail-meta svg{ width:15px; height:15px; }
+.detail-wrap h1{ font-size:1.7rem; margin-bottom:14px; }
+.detail-body{ font-size:0.98rem; line-height:1.75; color:var(--ink); }
+.detail-body p{ margin-bottom:16px; }
+.detail-actions{ display:flex; gap:12px; margin-top:24px; flex-wrap:wrap; }
+
+/* ---------- Video player placeholder ---------- */
+.video-player{
+  position:relative;
+  border-radius:var(--radius-lg);
+  overflow:hidden;
+  aspect-ratio:16/9;
+  background:var(--ink);
+  display:flex; align-items:center; justify-content:center;
+  margin-bottom:24px;
+  color:rgba(255,255,255,0.7);
+  text-align:center;
+  padding:24px;
+}
+.video-player iframe{ width:100%; height:100%; border:0; position:absolute; inset:0; }
+
+/* ---------- Galeri foto (dokumentasi detail) ---------- */
+.detail-gallery{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin:24px 0;
+}
+.detail-gallery .ph-thumb{ aspect-ratio:1; border-radius:var(--radius-sm); }
+@media (max-width:700px){ .detail-gallery{ grid-template-columns:repeat(2,1fr); } }
+
+/* ---------- Terkait (album/video terkait) ---------- */
+.related-wrap{
+  max-width:var(--container-max);
+  margin:56px auto 0;
+  padding:32px 24px 0;
+  border-top:1px solid var(--gray-200);
+}
+.related-wrap h2{ font-size:1.15rem; margin-bottom:20px; }
+
+@media (max-width:760px){
+  .detail-hero .ph-thumb{ height:220px; }
+  .content-header h1{ font-size:1.4rem; }
+}

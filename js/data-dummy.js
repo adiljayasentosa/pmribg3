@@ -133,3 +133,128 @@ const DUMMY_DATA = {
    data ke kondisi awal tanpa reload halaman.
    ========================================================= */
 const STRUKTUR_PENGURUS_DEFAULT = JSON.parse(JSON.stringify(DUMMY_DATA.strukturPengurus));
+
+/* =========================================================
+   [F6.0 — Konten Publik] DATA DUMMY — Artikel / Video / Poster
+   / Dokumentasi.
+   =========================================================
+   SENGAJA konstanta TERPISAH dari DUMMY_DATA di atas — bukan
+   dibaca oleh _seedAppStateFromDummy() (dashboard internal),
+   jadi menambah data di sini TIDAK menyentuh perilaku dashboard
+   yang sudah ada sama sekali. Dipakai oleh js/core/content-db.js
+   sebagai sumber Mode Demo untuk halaman publik (Landing,
+   /artikel, /video, /poster, /dokumentasi).
+
+   `pjDivisi` memakai daftar divisi BARU khusus konten publik
+   (Humas & Publikasi / Dokumentasi / Pendidikan & Pelatihan) —
+   terpisah dari field `divisi` di DUMMY_DATA.anggota (yang tetap
+   dipakai apa adanya untuk program kerja PMR, tidak diubah).
+   ========================================================= */
+const DUMMY_KONTEN_PUBLIK = {
+  artikel: [
+    {
+      id: "a1", slug: "5-langkah-pertolongan-pertama",
+      judul: "5 Langkah Dasar Pertolongan Pertama yang Wajib Diketahui",
+      ringkasan: "Panduan singkat menangani luka ringan, pingsan, dan cedera sebelum bantuan medis tiba.",
+      konten: [
+        "Pertolongan pertama yang tepat dalam menit-menit awal bisa sangat menentukan kondisi korban sebelum bantuan medis profesional tiba.",
+        "1. Tetap tenang dan pastikan area sekitar aman sebelum mendekati korban.",
+        "2. Periksa kesadaran dan pernapasan korban terlebih dahulu.",
+        "3. Untuk luka ringan, bersihkan dengan air mengalir lalu tutup dengan perban steril.",
+        "4. Untuk korban pingsan, baringkan pada posisi pemulihan (recovery position).",
+        "5. Segera hubungi bantuan medis atau bawa ke fasilitas kesehatan terdekat."
+      ],
+      kategori: "Kesehatan", tanggal: "2026-05-21", pjDivisi: "Pendidikan & Pelatihan",
+      penulis: "Tim Pendidikan PMR", publish: true
+    },
+    {
+      id: "a2", slug: "kenapa-donor-darah-penting",
+      judul: "Kenapa Donor Darah Rutin Itu Penting?",
+      ringkasan: "Manfaat donor darah bagi tubuh pendonor sekaligus dampaknya bagi yang membutuhkan.",
+      konten: [
+        "Donor darah tidak hanya bermanfaat bagi penerima, tetapi juga bagi kesehatan pendonor itu sendiri.",
+        "Setiap kantong darah yang didonorkan berpotensi menyelamatkan hingga tiga nyawa berbeda.",
+        "PMI menganjurkan donor darah rutin setiap 3 bulan sekali bagi pendonor yang memenuhi syarat kesehatan."
+      ],
+      kategori: "Kemanusiaan", tanggal: "2026-05-18", pjDivisi: "Humas & Publikasi",
+      penulis: "Tim Humas PMR", publish: true
+    },
+    {
+      id: "a3", slug: "sistem-rotasi-piket-upacara",
+      judul: "Mengenal Sistem Rotasi Piket & Petugas Upacara",
+      ringkasan: "Bagaimana PMR WIRA UNIT menjaga pembagian tugas yang adil antar anggota.",
+      konten: [
+        "Pembagian jadwal piket dan petugas upacara di PMR WIRA UNIT menggunakan sistem rotasi berbasis riwayat.",
+        "Setiap anggota dipastikan mendapat giliran secara merata berdasarkan jumlah tugas yang pernah dijalani sebelumnya."
+      ],
+      kategori: "Kesiapsiagaan", tanggal: "2026-05-10", pjDivisi: "Dokumentasi",
+      penulis: "Tim Dokumentasi PMR", publish: true
+    }
+  ],
+
+  video: [
+    {
+      id: "v1", slug: "cara-membalut-luka-perban-segitiga",
+      judul: "Cara Membalut Luka dengan Perban Segitiga",
+      deskripsi: "Video ini membahas teknik dasar membalut luka menggunakan perban segitiga untuk berbagai jenis cedera ringan.",
+      durasi: "2:45", kategori: "Tutorial", tanggal: "2026-07-20",
+      pjDivisi: "Pendidikan & Pelatihan", embedUrl: "", publish: true
+    },
+    {
+      id: "v2", slug: "cpr-dasar-untuk-pemula",
+      judul: "Langkah RJP (CPR) Dasar untuk Pemula",
+      deskripsi: "Panduan langkah demi langkah melakukan resusitasi jantung paru (RJP) dasar dalam situasi darurat.",
+      durasi: "3:10", kategori: "Tutorial", tanggal: "2026-07-18",
+      pjDivisi: "Pendidikan & Pelatihan", embedUrl: "", publish: true
+    },
+    {
+      id: "v3", slug: "keseruan-bakti-sosial-2026",
+      judul: "Keseruan Bakti Sosial PMR WIRA UNIT 2026",
+      deskripsi: "Dokumentasi kegiatan bakti sosial PMR WIRA UNIT bersama warga sekitar sekolah.",
+      durasi: "4:20", kategori: "Dokumentasi", tanggal: "2026-07-15",
+      pjDivisi: "Dokumentasi", embedUrl: "", publish: true
+    }
+  ],
+
+  poster: [
+    {
+      id: "p1", slug: "donor-darah", judul: "Donor Darah",
+      deskripsi: "Ayo donorkan darahmu untuk membantu sesama. Setetes darah sangat berarti bagi mereka yang membutuhkan.",
+      kategori: "Kesehatan", tanggal: "2026-07-20", pjDivisi: "Humas & Publikasi",
+      gambarUrl: "", publish: true
+    },
+    {
+      id: "p2", slug: "cuci-tangan-pakai-sabun", judul: "Cuci Tangan Pakai Sabun",
+      deskripsi: "Membiasakan cuci tangan pakai sabun secara rutin untuk mencegah penyebaran penyakit.",
+      kategori: "Kesehatan", tanggal: "2026-07-15", pjDivisi: "Humas & Publikasi",
+      gambarUrl: "", publish: true
+    },
+    {
+      id: "p3", slug: "pertolongan-pertama-pingsan", judul: "Pertolongan Pertama Saat Pingsan",
+      deskripsi: "Langkah cepat dan tepat menangani orang yang pingsan di sekitar kita.",
+      kategori: "Pertolongan Pertama", tanggal: "2026-07-10", pjDivisi: "Pendidikan & Pelatihan",
+      gambarUrl: "", publish: true
+    }
+  ],
+
+  dokumentasi: [
+    {
+      id: "d1", slug: "bakti-sosial-2026", judul: "Bakti Sosial 2026",
+      deskripsi: "Kegiatan bakti sosial berupa pembagian sembako, pemeriksaan kesehatan gratis, dan edukasi kesehatan di lingkungan masyarakat.",
+      tanggal: "2026-07-20", pjDivisi: "Dokumentasi", jumlahFoto: 15,
+      foto: [], albumTerkait: ["d2", "d3"], publish: true
+    },
+    {
+      id: "d2", slug: "pelatihan-p3k-2026", judul: "Pelatihan P3K",
+      deskripsi: "Pelatihan pertolongan pertama dasar dan lanjutan bagi seluruh anggota PMR WIRA UNIT.",
+      tanggal: "2026-07-10", pjDivisi: "Dokumentasi", jumlahFoto: 28,
+      foto: [], albumTerkait: ["d1", "d3"], publish: true
+    },
+    {
+      id: "d3", slug: "kerja-bakti-sekolah", judul: "Kerja Bakti Sekolah",
+      deskripsi: "Kegiatan kerja bakti membersihkan lingkungan sekolah bersama seluruh anggota PMR.",
+      tanggal: "2026-07-05", pjDivisi: "Dokumentasi", jumlahFoto: 12,
+      foto: [], albumTerkait: ["d1", "d2"], publish: true
+    }
+  ]
+};

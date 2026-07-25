@@ -66,4 +66,36 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!wasOpen) item.classList.add("open");
     });
   });
+
+  /* =========================================================
+     [F6.0] LANDING DATA SOURCE — 4 section dinamis
+     =========================================================
+     Hanya berjalan di halaman yang punya kontainernya (index.html).
+     Pakai ContentDB.fetchLatestBanyak() → Promise.all() di baliknya
+     (lihat content-db.js) supaya 4 collection diambil PARALEL,
+     bukan berurutan — sesuai instruksi performa "Landing Page harus
+     cepat dimuat". Skeleton ditampilkan selama proses berlangsung. */
+  const gridLanding = {
+    artikel:     document.getElementById("landing-artikel-grid"),
+    video:       document.getElementById("landing-video-grid"),
+    poster:      document.getElementById("landing-poster-grid"),
+    dokumentasi: document.getElementById("landing-dokumentasi-grid")
+  };
+  const rendererKartu = { artikel: _kartuArtikel, video: _kartuVideo, poster: _kartuPoster, dokumentasi: _kartuDokumentasi };
+
+  if (Object.values(gridLanding).some(Boolean)) {
+    Object.entries(gridLanding).forEach(([tipe, el]) => {
+      if (el) el.innerHTML = Array.from({ length: 3 }, () => skCard({ lines: 2 })).join("");
+    });
+
+    ContentDB.fetchLatestBanyak(["artikel", "video", "poster", "dokumentasi"], 3).then((hasil) => {
+      Object.entries(gridLanding).forEach(([tipe, el]) => {
+        if (!el) return;
+        const item3 = hasil[tipe] || [];
+        el.innerHTML = item3.length
+          ? item3.map(rendererKartu[tipe]).join("")
+          : `<p style="grid-column:1/-1;text-align:center;color:var(--ink-soft);padding:24px 0">Belum ada ${tipe} yang dipublikasikan.</p>`;
+      });
+    });
+  }
 });

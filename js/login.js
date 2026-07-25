@@ -38,6 +38,17 @@ document.addEventListener("DOMContentLoaded", () => {
     btnSubmit.disabled = true;
     btnSubmit.textContent = "Masuk…";
 
+    /* [F6.0] Remember Me — HANYA mengatur persistence sesi Firebase
+       Auth (fitur bawaan Firebase, bukan RBAC/business logic baru).
+       Tidak ada efek di Mode Demo (sesi selalu tersimpan di
+       localStorage seperti sebelumnya, tidak berubah). */
+    if (FIREBASE_ENABLED) {
+      const ingat = document.getElementById("input-remember")?.checked;
+      await firebase.auth().setPersistence(
+        ingat ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION
+      );
+    }
+
     const result = await login(username, password, selectedRole);
 
     if (result.ok) {
@@ -54,6 +65,26 @@ document.addEventListener("DOMContentLoaded", () => {
     errEl.textContent = msg;
     errEl.style.display = "flex";
   }
+
+  /* [F6.0] Lupa Password — pakai fitur bawaan Firebase Auth
+     (sendPasswordResetEmail), pola email sama seperti login()
+     di auth.js ({username}@pmr-smkibg3.app). Tidak mengubah
+     Authentication yang sudah ada, hanya memanggil API tambahan. */
+  document.getElementById("btn-lupa-password")?.addEventListener("click", async () => {
+    if (!FIREBASE_ENABLED) {
+      showError("Reset password tersedia setelah aplikasi terhubung ke Firebase.");
+      return;
+    }
+    const username = (document.getElementById("input-username").value || prompt("Masukkan username akunmu:") || "").trim().toLowerCase();
+    if (!username) return;
+    try {
+      await firebase.auth().sendPasswordResetEmail(`${username}@pmr-smkibg3.app`);
+      errEl.className = "alert";
+      showError("Tautan reset password sudah dikirim. Silakan cek email terdaftar akunmu.");
+    } catch (e) {
+      showError("Gagal mengirim reset password. Pastikan username sudah benar.");
+    }
+  });
 
   /* ── Demo: isi otomatis ── */
   document.getElementById("demo-fill")?.addEventListener("click", () => {

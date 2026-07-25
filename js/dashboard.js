@@ -109,6 +109,12 @@ function _initDashboard(user) {
     inventaris: { title:"Inventaris",   render:renderInventaris },
     laporan:    { title:"Laporan",      render:renderLaporan    },
     pengurus:   { title:"Pengurus",     render:renderPengurus   },
+    /* [F6.0] Manajemen Konten Publik — BARU, murni ditambahkan,
+       tidak menyentuh entri di atas maupun di bawah. */
+    "konten-artikel":     { title:"Manajemen Artikel",     render:(el,user)=>renderKontenAdmin(el,user,"artikel") },
+    "konten-video":       { title:"Manajemen Video",       render:(el,user)=>renderKontenAdmin(el,user,"video") },
+    "konten-poster":      { title:"Manajemen Poster",      render:(el,user)=>renderKontenAdmin(el,user,"poster") },
+    "konten-dokumentasi": { title:"Manajemen Dokumentasi", render:(el,user)=>renderKontenAdmin(el,user,"dokumentasi") },
     pengaturan: { title:"Pengaturan",   render:renderPengaturan },
     profilsaya: { title:"Profil Saya",  render:renderProfilSaya }
   };
@@ -118,7 +124,13 @@ function _initDashboard(user) {
      Untuk semua role lain, blok ini tidak dieksekusi sama sekali —
      sidebar tetap identik seperti sebelum F3.2. */
   if (user.role === "anggota") {
-    const sembunyikanUntukAnggota = ["anggota", "presensi", "keuangan", "pengaturan"];
+    const sembunyikanUntukAnggota = [
+      "anggota", "presensi", "keuangan", "pengaturan",
+      /* [F6.0] Manajemen Konten Publik bukan untuk role anggota —
+         mereka melihat konten lewat halaman publik (artikel.html dst),
+         sama seperti pengunjung umum. */
+      "konten-artikel", "konten-video", "konten-poster", "konten-dokumentasi"
+    ];
     sembunyikanUntukAnggota.forEach(page => {
       const link = document.querySelector(`.sidebar-link[data-page="${page}"]`);
       if (link) link.style.display = "none";

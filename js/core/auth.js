@@ -20,14 +20,18 @@ const ROLES = {
   anggota:    { label: "Anggota PMR", badge: "badge-gray"    }
 };
 
-/** Akun demo untuk mode tanpa backend */
+/** Akun demo untuk mode tanpa backend.
+ *  [F6.0] Field `divisi` ditambahkan HANYA pada akun role "pj" —
+ *  dipakai semata oleh fitur baru Konten Publik (lihat content-db.js
+ *  & firestore.rules getDivisi()). Tidak dibaca oleh logic login/
+ *  session manapun yang sudah ada, jadi tidak mengubah perilaku lama. */
 const DUMMY_USERS = [
   { username:"admin",      password:"admin123",    role:"admin",      nama:"Admin Sistem"    },
   { username:"ketua",      password:"ketua123",    role:"ketua",      nama:"M. Arif Hidayat" },
   { username:"wakil",      password:"wakil123",    role:"wakil",      nama:"Nadia Salsabila" },
   { username:"sekretaris", password:"sekre123",    role:"sekretaris", nama:"Dewi Lestari"    },
   { username:"bendahara",  password:"bendahara123",role:"bendahara",  nama:"Putri Ramadhani" },
-  { username:"pj",         password:"pj123",       role:"pj",         nama:"Raka Pratama"    },
+  { username:"pj",         password:"pj123",       role:"pj",         nama:"Raka Pratama",    divisi:"Dokumentasi" },
   { username:"anggota",    password:"anggota123",  role:"anggota",    nama:"Anggota PMR"     }
 ];
 

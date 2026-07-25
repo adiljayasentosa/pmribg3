@@ -373,5 +373,83 @@ match /piket/{jadwalId} {
       allow delete: if isAdmin();
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // [F6.0 — Konten Publik] COLLECTIONS: artikel, video, poster,
+    // dokumentasi
+    //
+    // BARU — tidak menyentuh satupun rule di atas. Menambahkan model
+    // permission baru: "PJ Divisi" per-item (bukan per-role generik
+    // seperti collection lama). Field `divisi` di users/{uid} bersifat
+    // OPSIONAL dan HANYA dipakai oleh rule di bawah ini — tidak ada
+    // rule lama yang membacanya, jadi akun lama yang belum punya
+    // field ini tetap berjalan normal seperti sebelumnya.
+    //
+    // Model akses (sesuai permintaan):
+    //   Public (belum login)  → hanya baca item publish=true
+    //   Member (role anggota) → sama seperti Public (baca saja)
+    //   Pengurus (non-PJ)     → boleh baca draft juga (preview)
+    //   PJ Divisi             → tambah/edit/hapus HANYA milik
+    //                           divisinya sendiri (field `pjDivisi`
+    //                           pada dokumen harus == divisi PJ itu)
+    //   Admin                 → akses penuh ke semua item
+    // ═══════════════════════════════════════════════════════════════
+
+    // Divisi milik user PJ saat ini — mirror persis pola getRole().
+    // Field opsional; user lama tanpa field ini otomatis dapat ''
+    // (tidak match divisi manapun → tidak dapat hak tulis apapun,
+    // aman/fail-closed, bukan fail-open).
+    function getDivisi() {
+      return userDocExists()
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('divisi', '')
+        : '';
+    }
+
+    // PJ boleh kelola HANYA item yang pjDivisi-nya sama dengan
+    // divisinya sendiri.
+    function isPjPemilikDivisi(data) {
+      return hasAnyRole(['pj']) && data.pjDivisi == getDivisi();
+    }
+
+    // Dipakai bersama oleh keempat collection konten publik di bawah,
+    // supaya keempatnya konsisten sama persis dan mudah dirawat.
+    function bacaKontenPublik() {
+      return resource.data.get('publish', false) == true || isPengurus();
+    }
+    function tulisKontenBaru() {
+      return isAdmin() ||
+        (hasAnyRole(['pj']) && request.resource.data.pjDivisi == getDivisi());
+    }
+    function tulisKontenUbah() {
+      return isAdmin() || isPjPemilikDivisi(resource.data);
+    }
+
+    match /artikel/{artikelId} {
+      allow read:            if bacaKontenPublik();
+      allow create:          if tulisKontenBaru();
+      allow update:          if tulisKontenUbah();
+      allow delete:          if isAdmin() || isPjPemilikDivisi(resource.data);
+    }
+
+    match /video/{videoId} {
+      allow read:            if bacaKontenPublik();
+      allow create:          if tulisKontenBaru();
+      allow update:          if tulisKontenUbah();
+      allow delete:          if isAdmin() || isPjPemilikDivisi(resource.data);
+    }
+
+    match /poster/{posterId} {
+      allow read:            if bacaKontenPublik();
+      allow create:          if tulisKontenBaru();
+      allow update:          if tulisKontenUbah();
+      allow delete:          if isAdmin() || isPjPemilikDivisi(resource.data);
+    }
+
+    match /dokumentasi/{dokumentasiId} {
+      allow read:            if bacaKontenPublik();
+      allow create:          if tulisKontenBaru();
+      allow update:          if tulisKontenUbah();
+      allow delete:          if isAdmin() || isPjPemilikDivisi(resource.data);
+    }
+
   }
 }

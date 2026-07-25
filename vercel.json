@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": false,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/artikel/:slug", "destination": "/artikel.html?slug=:slug" },
+    { "source": "/video/:slug", "destination": "/video.html?slug=:slug" },
+    { "source": "/poster/:slug", "destination": "/poster.html?slug=:slug" },
+    { "source": "/dokumentasi/:slug", "destination": "/dokumentasi.html?slug=:slug" },
+    { "source": "/artikel", "destination": "/artikel.html" },
+    { "source": "/video", "destination": "/video.html" },
+    { "source": "/poster", "destination": "/poster.html" },
+    { "source": "/dokumentasi", "destination": "/dokumentasi.html" }
+  ]
+}
