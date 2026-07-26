@@ -1,0 +1,81 @@
+/* =========================================================
+   STORAGE.RULES — [F7.0 — Firebase Storage]                  BARU
+   =========================================================
+   File TERPISAH dari firestore.rules (Storage & Firestore
+   punya berkas rules sendiri-sendiri di Firebase — ini tidak
+   menyentuh firestore.rules sama sekali).
+
+   Pola getRole() SENGAJA di-mirror persis dari firestore.rules
+   supaya konsisten & mudah dirawat — lewat firestore.get() lintas
+   layanan (didukung Storage Rules v2).
+
+   Model akses (sesuai brief):
+     Public / Member (role "anggota") → hanya baca (semua gambar
+                                          memang untuk ditampilkan
+                                          di halaman publik)
+     PJ Divisi                        → upload / ganti / hapus
+     Admin                            → akses penuh
+
+   Catatan granularitas: pencocokan PJ ↔ divisi per-item SUDAH
+   ditegakkan di firestore.rules (dokumen artikel/video/poster/
+   dokumentasi memverifikasi pjDivisi). Di lapisan Storage ini
+   cukup memastikan "yang meng-upload memang admin atau PJ" —
+   sesuai brief Security yang hanya membedakan
+   Public/Member/PJ Divisi/Admin (tidak meminta pemeriksaan
+   divisi di level file Storage).
+   ========================================================= */
+
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isLoggedIn() {
+      return request.auth != null;
+    }
+
+    function getRole() {
+      return isLoggedIn()
+        ? firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role
+        : 'none';
+    }
+
+    function isAdmin() { return getRole() == 'admin'; }
+    function isPJ()    { return getRole() == 'pj'; }
+    function bolehUnggah() { return isAdmin() || isPJ(); }
+
+    /* Maksimal 10 MB per file SEBELUM kompresi di browser (jaring
+       pengaman sisi server — kompresi utama tetap di js/core/storage.js,
+       target akhir 300–700 KB). */
+    function ukuranWajar() { return request.resource.size < 10 * 1024 * 1024; }
+    function tipeGambar()  { return request.resource.contentType.matches('image/.*'); }
+
+    match /article-covers/{fileName} {
+      allow read: if true;
+      allow write: if bolehUnggah() && ukuranWajar() && tipeGambar();
+    }
+    match /posters/{fileName} {
+      allow read: if true;
+      allow write: if bolehUnggah() && ukuranWajar() && tipeGambar();
+    }
+    match /documentations/{fileName} {
+      allow read: if true;
+      allow write: if bolehUnggah() && ukuranWajar() && tipeGambar();
+    }
+    match /avatars/{fileName} {
+      allow read: if true;
+      allow write: if bolehUnggah() && ukuranWajar() && tipeGambar();
+    }
+    match /thumbnails/{fileName} {
+      allow read: if true;
+      allow write: if bolehUnggah() && ukuranWajar() && tipeGambar();
+    }
+
+    /* Folder lain di luar 5 nama di atas: tolak semua — sesuai
+       instruksi "jangan buat struktur folder kompleks", hanya
+       5 folder ini yang sah dipakai. */
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

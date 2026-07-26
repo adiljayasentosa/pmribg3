@@ -150,20 +150,24 @@ const STRUKTUR_PENGURUS_DEFAULT = JSON.parse(JSON.stringify(DUMMY_DATA.strukturP
    terpisah dari field `divisi` di DUMMY_DATA.anggota (yang tetap
    dipakai apa adanya untuk program kerja PMR, tidak diubah).
    ========================================================= */
+/* [F7.0] Gambar contoh utk Mode Demo — SVG data-URI kecil, bukan
+   file sungguhan (tak perlu upload nyata utk mencoba tampilan).
+   Dipakai HANYA pada item pertama tiap tipe supaya jalur render
+   "sudah ada gambar" dan jalur fallback "field lama tanpa gambar"
+   sama-sama teruji. */
+const _GBR_DEMO_1 = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%23C8102E'/%3E%3Ctext x='50%25' y='50%25' fill='white' font-size='22' text-anchor='middle' dy='.3em'%3EContoh Gambar%3C/text%3E%3C/svg%3E";
+const _GBR_DEMO_2 = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%232563EB'/%3E%3Ctext x='50%25' y='50%25' fill='white' font-size='22' text-anchor='middle' dy='.3em'%3EFoto Galeri%3C/text%3E%3C/svg%3E";
+
 const DUMMY_KONTEN_PUBLIK = {
   artikel: [
     {
       id: "a1", slug: "5-langkah-pertolongan-pertama",
       judul: "5 Langkah Dasar Pertolongan Pertama yang Wajib Diketahui",
       ringkasan: "Panduan singkat menangani luka ringan, pingsan, dan cedera sebelum bantuan medis tiba.",
-      konten: [
-        "Pertolongan pertama yang tepat dalam menit-menit awal bisa sangat menentukan kondisi korban sebelum bantuan medis profesional tiba.",
-        "1. Tetap tenang dan pastikan area sekitar aman sebelum mendekati korban.",
-        "2. Periksa kesadaran dan pernapasan korban terlebih dahulu.",
-        "3. Untuk luka ringan, bersihkan dengan air mengalir lalu tutup dengan perban steril.",
-        "4. Untuk korban pingsan, baringkan pada posisi pemulihan (recovery position).",
-        "5. Segera hubungi bantuan medis atau bawa ke fasilitas kesehatan terdekat."
-      ],
+      /* [F7.0] Item ini memakai skema BARU: coverImage + articleUrl
+         (bukan konten[] paragraf lagi). */
+      coverImage: _GBR_DEMO_1,
+      articleUrl: "https://www.palangmerah.org/",
       kategori: "Kesehatan", tanggal: "2026-05-21", pjDivisi: "Pendidikan & Pelatihan",
       penulis: "Tim Pendidikan PMR", publish: true
     },
@@ -171,6 +175,8 @@ const DUMMY_KONTEN_PUBLIK = {
       id: "a2", slug: "kenapa-donor-darah-penting",
       judul: "Kenapa Donor Darah Rutin Itu Penting?",
       ringkasan: "Manfaat donor darah bagi tubuh pendonor sekaligus dampaknya bagi yang membutuhkan.",
+      /* Item lama (pra-F7.0) — masih pakai konten[] paragraf, sengaja
+         DIPERTAHANKAN apa adanya untuk menguji jalur fallback baca. */
       konten: [
         "Donor darah tidak hanya bermanfaat bagi penerima, tetapi juga bagi kesehatan pendonor itu sendiri.",
         "Setiap kantong darah yang didonorkan berpotensi menyelamatkan hingga tiga nyawa berbeda.",
@@ -198,14 +204,16 @@ const DUMMY_KONTEN_PUBLIK = {
       judul: "Cara Membalut Luka dengan Perban Segitiga",
       deskripsi: "Video ini membahas teknik dasar membalut luka menggunakan perban segitiga untuk berbagai jenis cedera ringan.",
       durasi: "2:45", kategori: "Tutorial", tanggal: "2026-07-20",
-      pjDivisi: "Pendidikan & Pelatihan", embedUrl: "", publish: true
+      pjDivisi: "Pendidikan & Pelatihan",
+      /* [F7.0] Skema baru: videoUrl (bukan embedUrl) + thumbnailUrl */
+      videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", thumbnailUrl: "", publish: true
     },
     {
       id: "v2", slug: "cpr-dasar-untuk-pemula",
       judul: "Langkah RJP (CPR) Dasar untuk Pemula",
       deskripsi: "Panduan langkah demi langkah melakukan resusitasi jantung paru (RJP) dasar dalam situasi darurat.",
       durasi: "3:10", kategori: "Tutorial", tanggal: "2026-07-18",
-      pjDivisi: "Pendidikan & Pelatihan", embedUrl: "", publish: true
+      pjDivisi: "Pendidikan & Pelatihan", embedUrl: "", publish: true /* field lama, uji fallback */
     },
     {
       id: "v3", slug: "keseruan-bakti-sosial-2026",
@@ -221,13 +229,13 @@ const DUMMY_KONTEN_PUBLIK = {
       id: "p1", slug: "donor-darah", judul: "Donor Darah",
       deskripsi: "Ayo donorkan darahmu untuk membantu sesama. Setetes darah sangat berarti bagi mereka yang membutuhkan.",
       kategori: "Kesehatan", tanggal: "2026-07-20", pjDivisi: "Humas & Publikasi",
-      gambarUrl: "", publish: true
+      imageUrl: _GBR_DEMO_1, publish: true /* [F7.0] field baru */
     },
     {
       id: "p2", slug: "cuci-tangan-pakai-sabun", judul: "Cuci Tangan Pakai Sabun",
       deskripsi: "Membiasakan cuci tangan pakai sabun secara rutin untuk mencegah penyebaran penyakit.",
       kategori: "Kesehatan", tanggal: "2026-07-15", pjDivisi: "Humas & Publikasi",
-      gambarUrl: "", publish: true
+      gambarUrl: "", publish: true /* field lama, uji fallback */
     },
     {
       id: "p3", slug: "pertolongan-pertama-pingsan", judul: "Pertolongan Pertama Saat Pingsan",
@@ -241,13 +249,17 @@ const DUMMY_KONTEN_PUBLIK = {
     {
       id: "d1", slug: "bakti-sosial-2026", judul: "Bakti Sosial 2026",
       deskripsi: "Kegiatan bakti sosial berupa pembagian sembako, pemeriksaan kesehatan gratis, dan edukasi kesehatan di lingkungan masyarakat.",
-      tanggal: "2026-07-20", pjDivisi: "Dokumentasi", jumlahFoto: 15,
-      foto: [], albumTerkait: ["d2", "d3"], publish: true
+      tanggal: "2026-07-20", pjDivisi: "Dokumentasi",
+      /* [F7.0] Skema baru: coverImage + images[] (photoCount otomatis
+         dari images.length, tidak diinput manual lagi) */
+      coverImage: _GBR_DEMO_1,
+      images: [_GBR_DEMO_2, _GBR_DEMO_2, _GBR_DEMO_2], photoCount: 3,
+      albumTerkait: ["d2", "d3"], publish: true
     },
     {
       id: "d2", slug: "pelatihan-p3k-2026", judul: "Pelatihan P3K",
       deskripsi: "Pelatihan pertolongan pertama dasar dan lanjutan bagi seluruh anggota PMR WIRA UNIT.",
-      tanggal: "2026-07-10", pjDivisi: "Dokumentasi", jumlahFoto: 28,
+      tanggal: "2026-07-10", pjDivisi: "Dokumentasi", jumlahFoto: 28, /* field lama, uji fallback */
       foto: [], albumTerkait: ["d1", "d3"], publish: true
     },
     {

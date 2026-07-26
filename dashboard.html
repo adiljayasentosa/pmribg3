@@ -15,11 +15,15 @@
   <link rel="stylesheet" href="css/pengurus.css"/>
   <link rel="stylesheet" href="css/laporan.css"/>
   <link rel="stylesheet" href="css/upacara.css"/>
+  <!-- [F7.0] Style widget upload (Manajemen Konten) -->
+  <link rel="stylesheet" href="css/content.css"/>
 
   <!-- Firebase SDK (compat) — dimuat sebelum firebase-config.js -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <!-- [F7.0] Firebase Storage SDK — untuk upload gambar Konten Publik -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
   <!-- F4.3 — jsPDF + AutoTable (khusus tombol "Unduh PDF" di halaman Laporan).
        URL diverifikasi lewat fetch langsung (200, bukan 404) sebelum dipasang.
@@ -273,6 +277,7 @@
 <script src="js/core/utils.js"></script>
 <script src="js/core/firebase-db.js"></script>
 <script src="js/core/content-db.js"></script>
+<script src="js/core/storage.js"></script>
 <script src="js/core/modal.js"></script>
 <script src="js/core/state.js"></script>
 <script src="js/core/report-engine.js"></script>

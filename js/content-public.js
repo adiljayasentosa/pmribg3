@@ -32,10 +32,26 @@ function _slugDariUrl() {
   return new URLSearchParams(location.search).get("slug");
 }
 
+/* [F7.0] Tampilkan <img> asli bila ada URL (hasil upload Firebase
+   Storage), atau ikon flat placeholder bila belum ada gambar —
+   "Jangan gunakan placeholder merah polos... jika gambar tersedia
+   gunakan gambar asli sebagai thumbnail." */
+function _thumbHTML(url, ikonFallback) {
+  return url ? `<img src="${url}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover"/>` : ikonFallback;
+}
+
+/* [F7.0] Bangun src iframe embed dari URL YouTube mentah (watch?v=,
+   youtu.be/, atau embed/ — semua bentuk diterima di form admin). */
+function _ytEmbedSrc(url) {
+  if (!url) return null;
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{6,})/);
+  return m ? `https://www.youtube.com/embed/${m[1]}` : (url.includes("youtube.com/embed") ? url : null);
+}
+
 /* ---------- Kartu daftar per tipe ---------- */
 function _kartuArtikel(item) {
   return `<article class="article-card">
-    <div class="ph-thumb">${item.thumbnail ? "" : _IKON.dokumen}</div>
+    <div class="ph-thumb">${_thumbHTML(item.coverImage, _IKON.dokumen)}</div>
     <div class="article-card-body">
       <div class="article-meta"><span class="badge badge-info">${item.kategori}</span><span>${formatTanggal(item.tanggal)}</span></div>
       <h3>${item.judul}</h3>
@@ -45,11 +61,13 @@ function _kartuArtikel(item) {
   </article>`;
 }
 function _kartuVideo(item) {
+  const thumb = item.thumbnailUrl || (_idYtDariItem(item) ? `https://img.youtube.com/vi/${_idYtDariItem(item)}/hqdefault.jpg` : "");
   return `<div class="video-card">
     <a href="video.html?slug=${item.slug}" aria-label="${item.judul}">
       <div class="ph-thumb">
+        ${_thumbHTML(thumb, "")}
         <div class="video-play">${_IKON.play}</div>
-        <span class="video-duration">${item.durasi}</span>
+        <span class="video-duration">${item.durasi || ""}</span>
       </div>
     </a>
     <div class="video-card-body">
@@ -59,10 +77,17 @@ function _kartuVideo(item) {
     </div>
   </div>`;
 }
+function _idYtDariItem(item) { return _idYoutubeDariUrlPublik(item.videoUrl); }
+function _idYoutubeDariUrlPublik(url) {
+  if (!url) return null;
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{6,})/);
+  return m ? m[1] : null;
+}
 function _kartuPoster(item) {
+  const gambar = item.imageUrl || item.gambarUrl; // fallback field lama
   return `<div class="poster-card">
     <a href="poster.html?slug=${item.slug}" aria-label="${item.judul}">
-      <div class="ph-thumb">${_IKON.gambar}</div>
+      <div class="ph-thumb">${_thumbHTML(gambar, _IKON.gambar)}</div>
     </a>
     <div class="poster-card-body">
       <h3>${item.judul}</h3>
@@ -72,15 +97,16 @@ function _kartuPoster(item) {
   </div>`;
 }
 function _kartuDokumentasi(item) {
+  const jumlahFoto = item.photoCount ?? item.images?.length ?? item.jumlahFoto ?? 0;
   return `<div class="article-card doc-card">
     <a href="dokumentasi.html?slug=${item.slug}" aria-label="${item.judul}">
-      <div class="ph-thumb">${_IKON.gambar}</div>
+      <div class="ph-thumb">${_thumbHTML(item.coverImage, _IKON.gambar)}</div>
     </a>
     <div class="doc-card-body">
       <h3>${item.judul}</h3>
       <div class="doc-card-meta">
         <span>${_IKON.kalender} ${formatTanggal(item.tanggal)}</span>
-        <span>${_IKON.gambar} ${item.jumlahFoto} Foto</span>
+        <span>${_IKON.gambar} ${jumlahFoto} Foto</span>
         <span>${_IKON.user} ${item.pjDivisi}</span>
       </div>
       <a href="dokumentasi.html?slug=${item.slug}" class="btn btn-outline btn-sm">Lihat Selengkapnya →</a>
@@ -177,25 +203,40 @@ function _tampilkanNotFound(root, tipe) {
 }
 
 function _renderDetailArtikel(root, item) {
+  /* [F7.0] Artikel kini hanya metadata + link keluar (articleUrl).
+     Fallback ke item.konten (paragraf lama) HANYA bila artikel ini
+     dibuat sebelum migrasi F7.0 dan belum py articleUrl — supaya
+     artikel lama tetap tampil normal, tidak rusak. */
+  const punyaLinkBaru = !!item.articleUrl;
+  const punyaKontenLama = !punyaLinkBaru && Array.isArray(item.konten) && item.konten.length;
+
   root.innerHTML = `<div class="detail-wrap">
     <a href="artikel.html" class="detail-back">← Kembali ke Artikel</a>
-    <div class="detail-hero"><div class="ph-thumb" style="height:280px">${_IKON.dokumen}</div></div>
+    <div class="detail-hero"><div class="ph-thumb" style="height:280px">${_thumbHTML(item.coverImage, _IKON.dokumen)}</div></div>
     <div class="detail-meta">
       <span class="badge badge-info">${item.kategori}</span>
       <span>${_IKON.kalender} ${formatTanggal(item.tanggal)}</span>
       ${item.penulis ? `<span>${_IKON.user} ${item.penulis}</span>` : ""}
     </div>
     <h1>${item.judul}</h1>
-    <div class="detail-body">${item.konten.map(p => `<p>${p}</p>`).join("")}</div>
+    <div class="detail-body">
+      <p>${item.ringkasan || ""}</p>
+      ${punyaKontenLama ? item.konten.map(p => `<p>${p}</p>`).join("") : ""}
+    </div>
+    ${punyaLinkBaru ? `
+      <div class="detail-actions">
+        <a href="${item.articleUrl}" target="_blank" rel="noopener" class="btn btn-primary">Baca Artikel Lengkap →</a>
+      </div>` : ""}
   </div>`;
 }
 
 function _renderDetailVideo(root, item) {
+  const embedSrc = _ytEmbedSrc(item.videoUrl) || _ytEmbedSrc(item.embedUrl);
   root.innerHTML = `<div class="detail-wrap">
     <a href="video.html" class="detail-back">← Kembali ke Video</a>
     <div class="video-player">
-      ${item.embedUrl
-        ? `<iframe src="${item.embedUrl}" allowfullscreen title="${item.judul}"></iframe>`
+      ${embedSrc
+        ? `<iframe src="${embedSrc}" allowfullscreen title="${item.judul}"></iframe>`
         : `<div>${_IKON.gambar}<p style="margin-top:10px">Video akan tersedia setelah diunggah oleh PJ Divisi.</p></div>`}
     </div>
     <div class="detail-meta">
@@ -220,9 +261,10 @@ function _renderDetailVideo(root, item) {
 }
 
 function _renderDetailPoster(root, item) {
+  const gambar = item.imageUrl || item.gambarUrl;
   root.innerHTML = `<div class="detail-wrap">
     <a href="poster.html" class="detail-back">← Kembali ke Poster</a>
-    <div class="detail-hero"><div class="ph-thumb" style="height:420px">${_IKON.gambar}</div></div>
+    <div class="detail-hero"><div class="ph-thumb" style="height:420px">${_thumbHTML(gambar, _IKON.gambar)}</div></div>
     <div class="detail-meta">
       <span class="badge badge-warning">${item.kategori}</span>
       <span>${_IKON.kalender} ${formatTanggal(item.tanggal)}</span>
@@ -237,9 +279,9 @@ function _renderDetailPoster(root, item) {
   </div>`;
 
   document.getElementById("btn-download-poster")?.addEventListener("click", () => {
-    if (item.gambarUrl) {
+    if (gambar) {
       const a = document.createElement("a");
-      a.href = item.gambarUrl; a.download = item.judul;
+      a.href = gambar; a.download = item.judul; a.target = "_blank";
       a.click();
     } else {
       alert("Gambar poster resolusi tinggi belum diunggah oleh PJ Divisi.");
@@ -257,12 +299,15 @@ function _renderDetailPoster(root, item) {
 }
 
 function _renderDetailDokumentasi(root, item) {
+  const galeri = (item.images?.length ? item.images : item.foto) || [];
+  const jumlahFoto = item.photoCount ?? galeri.length ?? item.jumlahFoto ?? 0;
+
   root.innerHTML = `<div class="detail-wrap">
     <a href="dokumentasi.html" class="detail-back">← Kembali ke Dokumentasi</a>
-    <div class="detail-hero"><div class="ph-thumb" style="height:280px">${_IKON.gambar}</div></div>
+    <div class="detail-hero"><div class="ph-thumb" style="height:280px">${_thumbHTML(item.coverImage, _IKON.gambar)}</div></div>
     <div class="detail-meta">
       <span>${_IKON.kalender} ${formatTanggal(item.tanggal)}</span>
-      <span>${_IKON.gambar} ${item.jumlahFoto} Foto</span>
+      <span>${_IKON.gambar} ${jumlahFoto} Foto</span>
       <span>${_IKON.user} ${item.pjDivisi}</span>
     </div>
     <h1>${item.judul}</h1>
@@ -270,7 +315,9 @@ function _renderDetailDokumentasi(root, item) {
 
     <h2 style="font-size:1.05rem;margin:28px 0 14px">Galeri Foto</h2>
     <div class="detail-gallery">
-      ${Array.from({ length: Math.min(item.jumlahFoto || 0, 8) }, () => `<div class="ph-thumb">${_IKON.gambar}</div>`).join("")}
+      ${galeri.length
+        ? galeri.map(url => `<div class="ph-thumb">${_thumbHTML(url, _IKON.gambar)}</div>`).join("")
+        : `<p style="grid-column:1/-1;color:var(--ink-soft);font-size:0.85rem">Galeri foto belum diunggah.</p>`}
     </div>
 
     <div id="album-terkait"></div>

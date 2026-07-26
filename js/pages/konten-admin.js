@@ -147,8 +147,21 @@ function _skeletonBarisTabel(n) {
     `<tr><td colspan="5"><div class="skeleton skeleton-text w-75" style="margin:6px 0"></div></td></tr>`).join("");
 }
 
+/* [F7.0] Ambil ID video YouTube dari berbagai bentuk URL (watch?v=,
+   youtu.be/, embed/) — dipakai untuk membangun URL embed pemutar DAN
+   thumbnail otomatis bila PJ tidak meng-upload thumbnail sendiri. */
+function _idYoutubeDariUrl(url) {
+  if (!url) return null;
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{6,})/);
+  return m ? m[1] : null;
+}
+
 /* ─────────────────────────────────────────────────────────
    MODAL FORM — field menyesuaikan tipe konten
+   [F7.0] Input URL gambar manual (Poster/Dokumentasi) & textarea
+   panjang (Artikel) DIHAPUS TOTAL — diganti upload widget lewat
+   js/core/storage.js. SATU widget yang sama dipakai di keempat
+   form (initUploadWidget), tidak ada kode upload berbeda-beda.
 ───────────────────────────────────────────────────────── */
 function _bukaFormKonten(tipe, cfg, data, user, onSimpan) {
   const isEdit = !!data;
@@ -160,25 +173,33 @@ function _bukaFormKonten(tipe, cfg, data, user, onSimpan) {
         <input id="f-k-ringkasan" type="text" value="${data?.ringkasan || ""}" placeholder="Ringkasan singkat untuk kartu artikel">
       </div>
       <div class="field" style="grid-column:1/-1">
-        <label>Isi Artikel <span style="color:var(--ink-soft);font-weight:400">(satu paragraf per baris)</span></label>
-        <textarea id="f-k-konten" rows="6" placeholder="Paragraf 1...&#10;Paragraf 2...">${(data?.konten || []).join("\n")}</textarea>
+        <label>Link Artikel <span style="color:var(--ink-soft);font-weight:400">(halaman HTML internal, Google Docs, atau URL lain)</span></label>
+        <input id="f-k-articleurl" type="text" value="${data?.articleUrl || ""}" placeholder="https://... atau /artikel/nama-file.html">
       </div>
       <div class="field">
         <label>Penulis</label>
         <input id="f-k-penulis" type="text" value="${data?.penulis || ""}" placeholder="Nama penulis">
+      </div>
+      <div class="field" style="grid-column:1/-1">
+        <label>Cover Artikel</label>
+        <div id="f-k-cover-widget"></div>
       </div>`,
     video: `
       <div class="field" style="grid-column:1/-1">
         <label>Deskripsi</label>
         <input id="f-k-deskripsi" type="text" value="${data?.deskripsi || ""}">
       </div>
+      <div class="field" style="grid-column:1/-1">
+        <label>URL YouTube</label>
+        <input id="f-k-videourl" type="text" value="${data?.videoUrl || data?.embedUrl || ""}" placeholder="https://www.youtube.com/watch?v=...">
+      </div>
       <div class="field">
         <label>Durasi</label>
         <input id="f-k-durasi" type="text" value="${data?.durasi || ""}" placeholder="3:45">
       </div>
-      <div class="field">
-        <label>URL Embed <span style="color:var(--ink-soft);font-weight:400">(opsional)</span></label>
-        <input id="f-k-embed" type="text" value="${data?.embedUrl || ""}" placeholder="https://www.youtube.com/embed/...">
+      <div class="field" style="grid-column:1/-1">
+        <label>Upload Thumbnail <span style="color:var(--ink-soft);font-weight:400">(opsional — kosongkan untuk pakai thumbnail YouTube otomatis)</span></label>
+        <div id="f-k-thumb-widget"></div>
       </div>`,
     poster: `
       <div class="field" style="grid-column:1/-1">
@@ -186,22 +207,27 @@ function _bukaFormKonten(tipe, cfg, data, user, onSimpan) {
         <input id="f-k-deskripsi" type="text" value="${data?.deskripsi || ""}">
       </div>
       <div class="field" style="grid-column:1/-1">
-        <label>URL Gambar Poster <span style="color:var(--ink-soft);font-weight:400">(opsional — kosongkan utk placeholder)</span></label>
-        <input id="f-k-gambar" type="text" value="${data?.gambarUrl || ""}" placeholder="https://...">
+        <label>Upload Poster</label>
+        <div id="f-k-cover-widget"></div>
       </div>`,
     dokumentasi: `
       <div class="field" style="grid-column:1/-1">
         <label>Deskripsi</label>
         <input id="f-k-deskripsi" type="text" value="${data?.deskripsi || ""}">
       </div>
-      <div class="field">
-        <label>Jumlah Foto</label>
-        <input id="f-k-jumlahfoto" type="number" min="0" value="${data?.jumlahFoto ?? 0}">
+      <div class="field" style="grid-column:1/-1">
+        <label>Upload Cover</label>
+        <div id="f-k-cover-widget"></div>
+      </div>
+      <div class="field" style="grid-column:1/-1">
+        <label>Upload Galeri Foto <span style="color:var(--ink-soft);font-weight:400">(bisa pilih banyak sekaligus)</span></label>
+        <div id="f-k-gallery-widget"></div>
       </div>`
   }[tipe];
 
   Modal.buka({
     judul: isEdit ? `Edit ${cfg.label}` : `Tambah ${cfg.label} Baru`,
+    ukuran: "modal-lg",
     konten: `
       <div class="grid grid-2">
         <div class="field" style="grid-column:1/-1">
@@ -237,17 +263,24 @@ function _bukaFormKonten(tipe, cfg, data, user, onSimpan) {
       {
         label: isEdit ? "Simpan" : "Tambah", kelas: "btn-primary", id: "m-simpan-konten", onClick: () => {
           const judul = document.getElementById("f-k-judul").value.trim();
-          if (!judul) {
-            const err = document.getElementById("form-konten-err");
-            err.textContent = "Judul tidak boleh kosong."; err.style.display = "flex"; return;
-          }
+          const err = document.getElementById("form-konten-err");
+          const tampilkanError = (msg) => { err.textContent = msg; err.style.display = "flex"; };
+
+          if (!judul) { tampilkanError("Judul tidak boleh kosong."); return; }
+
           const pjDivisi = document.getElementById("f-k-pjdivisi").value;
           /* Pengaman sisi klien — pencocokan sesungguhnya tetap di
              firestore.rules (tulisKontenBaru/tulisKontenUbah). */
           if (user.role === "pj" && user.divisi !== pjDivisi) {
-            const err = document.getElementById("form-konten-err");
-            err.textContent = `Sebagai PJ Divisi ${user.divisi}, kamu hanya bisa mengelola konten dengan PJ Divisi yang sama.`;
-            err.style.display = "flex"; return;
+            tampilkanError(`Sebagai PJ Divisi ${user.divisi}, kamu hanya bisa mengelola konten dengan PJ Divisi yang sama.`);
+            return;
+          }
+
+          /* [F7.0] Jangan simpan selagi ada upload yang masih berjalan */
+          const widgetAktif = [widgetCover, widgetThumb, widgetGaleri].filter(Boolean);
+          if (widgetAktif.some(w => w.isUploading())) {
+            tampilkanError("Masih ada gambar yang sedang diunggah — tunggu sebentar lagi.");
+            return;
           }
 
           const slugDasar = judul.toLowerCase().trim()
@@ -261,23 +294,31 @@ function _bukaFormKonten(tipe, cfg, data, user, onSimpan) {
             publish: document.getElementById("f-k-publish").checked
           };
           if (cfg.kategoriOpsi.length) payload.kategori = document.getElementById("f-k-kategori").value;
+
           if (tipe === "artikel") {
             payload.ringkasan = document.getElementById("f-k-ringkasan").value.trim();
-            payload.konten = document.getElementById("f-k-konten").value.split("\n").map(s => s.trim()).filter(Boolean);
+            payload.articleUrl = document.getElementById("f-k-articleurl").value.trim();
             payload.penulis = document.getElementById("f-k-penulis").value.trim();
+            payload.coverImage = widgetCover.getUrls()[0] || data?.coverImage || "";
           }
           if (tipe === "video") {
+            const videoUrl = document.getElementById("f-k-videourl").value.trim();
             payload.deskripsi = document.getElementById("f-k-deskripsi").value.trim();
             payload.durasi = document.getElementById("f-k-durasi").value.trim();
-            payload.embedUrl = document.getElementById("f-k-embed").value.trim();
+            payload.videoUrl = videoUrl;
+            const idYt = _idYoutubeDariUrl(videoUrl);
+            const thumbUpload = widgetThumb.getUrls()[0];
+            payload.thumbnailUrl = thumbUpload || (idYt ? `https://img.youtube.com/vi/${idYt}/hqdefault.jpg` : (data?.thumbnailUrl || ""));
           }
           if (tipe === "poster") {
             payload.deskripsi = document.getElementById("f-k-deskripsi").value.trim();
-            payload.gambarUrl = document.getElementById("f-k-gambar").value.trim();
+            payload.imageUrl = widgetCover.getUrls()[0] || data?.imageUrl || "";
           }
           if (tipe === "dokumentasi") {
             payload.deskripsi = document.getElementById("f-k-deskripsi").value.trim();
-            payload.jumlahFoto = +document.getElementById("f-k-jumlahfoto").value || 0;
+            payload.coverImage = widgetCover.getUrls()[0] || data?.coverImage || "";
+            payload.images = widgetGaleri.getUrls();
+            payload.photoCount = payload.images.length;
           }
 
           _jalankanSimpan("m-simpan-konten", async () => {
@@ -291,4 +332,44 @@ function _bukaFormKonten(tipe, cfg, data, user, onSimpan) {
       }
     ]
   });
+
+  /* [F7.0] Widget upload dipasang SETELAH Modal.buka() supaya elemen
+     kontainernya sudah ada di DOM (Modal.buka() mengisi innerHTML
+     secara sinkron). SATU pemanggilan initUploadWidget() yang sama
+     dipakai untuk cover di keempat tipe — tidak ada kode berbeda. */
+  let widgetCover = null, widgetThumb = null, widgetGaleri = null;
+
+  if (tipe === "artikel") {
+    widgetCover = initUploadWidget(document.getElementById("f-k-cover-widget"), {
+      folder: "article-covers", multiple: false,
+      existingUrls: data?.coverImage ? [data.coverImage] : [],
+      label: "Seret cover artikel ke sini atau klik untuk pilih"
+    });
+  }
+  if (tipe === "video") {
+    widgetThumb = initUploadWidget(document.getElementById("f-k-thumb-widget"), {
+      folder: "thumbnails", multiple: false,
+      existingUrls: (data?.thumbnailUrl && !data.thumbnailUrl.includes("img.youtube.com")) ? [data.thumbnailUrl] : [],
+      label: "Seret thumbnail ke sini atau klik untuk pilih (opsional)"
+    });
+  }
+  if (tipe === "poster") {
+    widgetCover = initUploadWidget(document.getElementById("f-k-cover-widget"), {
+      folder: "posters", multiple: false,
+      existingUrls: data?.imageUrl ? [data.imageUrl] : (data?.gambarUrl ? [data.gambarUrl] : []),
+      label: "Seret gambar poster ke sini atau klik untuk pilih"
+    });
+  }
+  if (tipe === "dokumentasi") {
+    widgetCover = initUploadWidget(document.getElementById("f-k-cover-widget"), {
+      folder: "documentations", multiple: false,
+      existingUrls: data?.coverImage ? [data.coverImage] : [],
+      label: "Seret cover ke sini atau klik untuk pilih"
+    });
+    widgetGaleri = initUploadWidget(document.getElementById("f-k-gallery-widget"), {
+      folder: "documentations", multiple: true,
+      existingUrls: data?.images?.length ? data.images : (data?.foto || []),
+      label: "Seret banyak foto ke sini atau klik untuk pilih"
+    });
+  }
 }
