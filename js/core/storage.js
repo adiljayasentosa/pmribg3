@@ -1,23 +1,40 @@
 /* =========================================================
-   STORAGE.JS — [F7.0 — Firebase Storage]                     BARU
+   STORAGE.JS — [F8.0 — Migrasi ke ImageKit]
    =========================================================
    SATU helper dipakai oleh SEMUA form yang mengunggah gambar
    (Poster, Video-thumbnail, Artikel-cover, Dokumentasi cover
    & galeri). Tidak ada kode upload lain yang ditulis terpisah
    di halaman manapun — sesuai instruksi.
 
-   Dual-mode, mengikuti pola content-db.js persis:
-     Mode Firebase (FIREBASE_ENABLED=true) : upload sungguhan ke
-                    Firebase Storage, dengan compress+resize+WebP
-                    di browser sebelum dikirim (Canvas API murni,
-                    tanpa library tambahan).
-     Mode Demo     (FIREBASE_ENABLED=false): pakai
-                    URL.createObjectURL() (blob lokal di memori
-                    tab) supaya form & preview tetap bisa dicoba
-                    tanpa koneksi Firebase — hilang saat refresh,
-                    sama seperti perilaku Mode Demo lain di app ini.
+   [F8.0] Backend upload dipindah dari Firebase Storage (project
+   masih Spark/free plan) ke ImageKit. KONTRAK FUNGSI PUBLIK
+   (uploadImage, uploadMultipleImages, deleteImage, replaceImage,
+   compressImage, initUploadWidget) TIDAK BERUBAH SAMA SEKALI —
+   supaya js/pages/konten-admin.js dan keempat form (Poster/
+   Video/Artikel/Dokumentasi) nol perubahan.
 
-   Struktur folder Storage (SENGAJA flat, sesuai instruksi
+   Alur upload (browser → ImageKit langsung, sesuai arsitektur
+   yang diminta):
+     1. fetch GET /api/imagekit-auth  → server hitung signature
+        pakai IMAGEKIT_PRIVATE_KEY (privateKey TIDAK PERNAH
+        dikirim ke browser — lihat api/imagekit-auth.js)
+     2. Browser POST file + token/expire/signature LANGSUNG ke
+        upload.imagekit.io (XMLHttpRequest, supaya progress asli
+        & bisa dibatalkan — fetch() tidak punya progress event)
+     3. ImageKit balas {url, fileId} → url disimpan ke Firestore,
+        fileId disimpan sebagai "path" (field lama, cuma
+        maknanya bergeser jadi "handle untuk hapus")
+
+   Kompresi (Canvas API murni: resize, WebP bila didukung,
+   target 300–700 KB) SAMA SEKALI TIDAK BERUBAH — tidak
+   bergantung ke Firebase maupun ImageKit.
+
+   Mode Demo (FIREBASE_ENABLED=false): tetap pakai
+   URL.createObjectURL() (blob lokal), TIDAK memanggil ImageKit
+   sama sekali — konsisten dengan pola dual-mode yang sudah ada
+   di seluruh app ini (content-db.js, dst).
+
+   Struktur folder ImageKit (SENGAJA flat, sesuai instruksi
    "jangan buat struktur folder kompleks"):
      article-covers/  posters/  documentations/  avatars/  thumbnails/
    ========================================================= */
@@ -101,7 +118,7 @@ function _canvasKeBlob(canvas, mime, kualitas) {
 }
 
 /* ─────────────────────────────────────────────────────────
-   UPLOAD / DELETE / REPLACE
+   UPLOAD / DELETE / REPLACE — [F8.0] backend ImageKit
 ───────────────────────────────────────────────────────── */
 
 /** Simulasi progress halus di Mode Demo supaya UX widget tetap konsisten
@@ -118,6 +135,73 @@ function _simulasiProgress(onProgress, dibatalkanFn) {
   });
 }
 
+/* Cache parameter otentikasi sebentar (token ImageKit berlaku 10 menit)
+ * supaya upload beberapa file sekaligus (galeri Dokumentasi) tidak
+ * memanggil /api/imagekit-auth berkali-kali tanpa perlu. Token baru
+ * selalu diambil kalau sudah tidak ada / mendekati kedaluwarsa. */
+let _authImageKitCache = null;
+async function _ambilAuthImageKit() {
+  if (_authImageKitCache && _authImageKitCache.expire - Math.floor(Date.now() / 1000) > 30) {
+    return _authImageKitCache;
+  }
+  const resp = await fetch("/api/imagekit-auth");
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error || "Gagal mengambil otentikasi ImageKit.");
+  }
+  _authImageKitCache = await resp.json();
+  return _authImageKitCache;
+}
+
+/** Upload satu file langsung ke ImageKit lewat XMLHttpRequest (bukan
+ *  fetch — supaya dapat progress asli via xhr.upload.onprogress dan
+ *  bisa dibatalkan via xhr.abort()). Return { promise, cancel }. */
+function _uploadKeImageKit(file, folder, onProgress) {
+  let xhr = null;
+  let dibatalkan = false;
+  const kontrol = { cancel: () => { dibatalkan = true; xhr?.abort(); } };
+
+  kontrol.promise = (async () => {
+    const auth = await _ambilAuthImageKit();
+    if (dibatalkan) throw new Error("DIBATALKAN");
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("fileName", _slugifyNamaFile(file.name));
+    formData.append("folder", `/${folder}`);
+    formData.append("useUniqueFileName", "true");
+    formData.append("publicKey", auth.publicKey);
+    formData.append("signature", auth.signature);
+    formData.append("expire", auth.expire);
+    formData.append("token", auth.token);
+
+    return new Promise((resolve, reject) => {
+      xhr = new XMLHttpRequest();
+      xhr.open("POST", "https://upload.imagekit.io/api/v1/files/upload");
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) onProgress?.(Math.round((e.loaded / e.total) * 100));
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            /* `path` dipakai sebagai handle utk deleteImage() nanti —
+               di ImageKit itu adalah fileId (BUKAN url/filePath). */
+            resolve({ url: data.url, path: data.fileId });
+          } catch (e) { reject(new Error("Respons ImageKit tidak valid.")); }
+        } else {
+          reject(new Error(`Upload ke ImageKit gagal (status ${xhr.status}).`));
+        }
+      };
+      xhr.onerror = () => reject(new Error("Koneksi ke ImageKit gagal."));
+      xhr.onabort = () => reject(new Error("DIBATALKAN"));
+      xhr.send(formData);
+    });
+  })();
+
+  return kontrol;
+}
+
 /** Upload satu gambar. Return { promise, cancel } — bukan Promise
  *  langsung — supaya pemanggil bisa membatalkan upload yang sedang
  *  berjalan (tombol "Batal" di widget). */
@@ -125,35 +209,24 @@ function uploadImage(file, folder, opts = {}) {
   _cekFolderStorage(folder);
   const { onProgress, compress = true } = opts;
   let dibatalkan = false;
-  const kontrol = { cancel: () => { dibatalkan = true; } };
+  const kontrolLuar = { cancel: () => { dibatalkan = true; } };
 
-  kontrol.promise = (async () => {
+  kontrolLuar.promise = (async () => {
     const fileFinal = compress ? await compressImage(file) : file;
     if (dibatalkan) throw new Error("DIBATALKAN");
 
     if (!FIREBASE_ENABLED) {
       await _simulasiProgress(onProgress, () => dibatalkan);
       if (dibatalkan) throw new Error("DIBATALKAN");
-      return { url: URL.createObjectURL(fileFinal), path: `${folder}/demo-${Date.now()}-${_slugifyNamaFile(fileFinal.name)}` };
+      return { url: URL.createObjectURL(fileFinal), path: `demo-${Date.now()}-${_slugifyNamaFile(fileFinal.name)}` };
     }
 
-    const path = `${folder}/${Date.now()}-${_slugifyNamaFile(fileFinal.name)}`;
-    const ref = firebase.storage().ref(path);
-    const task = ref.put(fileFinal, { contentType: fileFinal.type });
-    kontrol.cancel = () => task.cancel();
-
-    return new Promise((resolve, reject) => {
-      task.on("state_changed",
-        (snap) => onProgress?.(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
-        (err) => reject(err.code === "storage/canceled" ? new Error("DIBATALKAN") : err),
-        async () => {
-          try { resolve({ url: await task.snapshot.ref.getDownloadURL(), path }); }
-          catch (e) { reject(e); }
-        });
-    });
+    const kontrolDalam = _uploadKeImageKit(fileFinal, folder, onProgress);
+    kontrolLuar.cancel = kontrolDalam.cancel;
+    return kontrolDalam.promise;
   })();
 
-  return kontrol;
+  return kontrolLuar;
 }
 
 /** Upload banyak gambar sekaligus (mis. galeri Dokumentasi).
@@ -178,15 +251,28 @@ function uploadMultipleImages(files, folder, opts = {}) {
   };
 }
 
-/** Hapus satu file dari Storage (aman dipanggil dengan URL atau path). */
+/** Hapus satu file. `pathAtauUrl` di sini adalah fileId ImageKit
+ *  (lihat komentar di _uploadKeImageKit) — bukan URL. Panggil lewat
+ *  api/imagekit-delete.js karena Delete API ImageKit wajib private
+ *  key, tidak boleh dipanggil langsung dari browser. */
 async function deleteImage(pathAtauUrl) {
   if (!pathAtauUrl || !FIREBASE_ENABLED) return; // blob: URL lokal di Mode Demo tak perlu dihapus dari server
-  if (pathAtauUrl.startsWith("blob:")) return;
+  if (pathAtauUrl.startsWith("blob:") || pathAtauUrl.startsWith("http") || pathAtauUrl.startsWith("demo-")) {
+    /* URL lama (mis. dari data sebelum migrasi F8.0) atau path Mode
+       Demo — tidak ada fileId ImageKit yang bisa dihapus, lewati
+       dengan aman daripada gagal/error ke pengguna. */
+    return;
+  }
   try {
-    const ref = pathAtauUrl.startsWith("http")
-      ? firebase.storage().refFromURL(pathAtauUrl)
-      : firebase.storage().ref(pathAtauUrl);
-    await ref.delete();
+    const resp = await fetch("/api/imagekit-delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fileId: pathAtauUrl })
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      console.warn("[StorageHelper] Gagal menghapus file di ImageKit:", err.error || resp.status);
+    }
   } catch (e) {
     console.warn("[StorageHelper] Gagal menghapus file (mungkin sudah tidak ada):", e.message);
   }
