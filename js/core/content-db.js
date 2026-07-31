@@ -48,7 +48,20 @@ function _urutTerbaru(list) {
 
 const ContentDB = {
 
-  /** 3 (atau n) item terbaru yang publish=true — dipakai Landing. */
+  /** 3 (atau n) item terbaru yang publish=true — dipakai Landing.
+   *
+   * [FIX — Composite Index] Sengaja TIDAK memakai .orderBy("tanggal") di
+   * query Firestore. Kombinasi where("publish","==",true) + orderBy(field
+   * lain) itu wajib punya composite index manual di Firebase Console —
+   * kalau belum dibuat, query gagal (FAILED_PRECONDITION) dan sebelumnya
+   * error itu tertelan try/catch sehingga halaman publik terlihat kosong
+   * padahal datanya ada (lihat bukti: dashboard admin "1 Terbit" tapi
+   * video.html "Belum ada video").
+   * Query dengan HANYA where() (equality, tanpa orderBy) tidak butuh
+   * composite index apapun — jadi ambil semua yang publish=true dulu,
+   * lalu urutkan di JS pakai _urutTerbaru() (fungsi yang sama yang sudah
+   * dipakai Mode Demo, jadi hasil urutannya identik / tidak ada perubahan
+   * perilaku). */
   async fetchLatest(koleksi, n = 3) {
     _cekKoleksi(koleksi);
     if (!FIREBASE_ENABLED) {
@@ -57,12 +70,20 @@ const ContentDB = {
     try {
       const snap = await firebase.firestore().collection(koleksi)
         .where("publish", "==", true)
-        .orderBy("tanggal", "desc")
-        .limit(n)
         .get();
-      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const hasil = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      return _urutTerbaru(hasil).slice(0, n);
     } catch (e) {
-      console.error(`[ContentDB] Gagal memuat '${koleksi}' (fetchLatest):`, e);
+      console.error(
+        `[ContentDB] GAGAL memuat koleksi '${koleksi}' (fetchLatest). ` +
+        `Kode: ${e.code || "tidak diketahui"} — Pesan: ${e.message}. ` +
+        (e.code === "failed-precondition"
+          ? "Kemungkinan besar Firestore Rules menolak query ini, atau ada masalah index — cek link index di pesan error Firestore asli di atas jika ada."
+          : e.code === "permission-denied"
+            ? "Firestore Rules menolak akses baca ke koleksi ini untuk request tanpa login. Cek firestore.rules."
+            : "Cek koneksi Firestore / konfigurasi firebase-config.js."),
+        e
+      );
       return [];
     }
   },
@@ -79,12 +100,24 @@ const ContentDB = {
       return list;
     }
     try {
+      /* [FIX — Composite Index] Sama seperti fetchLatest(): TIDAK pakai
+         .orderBy() di Firestore. Beberapa where() equality (publish +
+         kategori) BOLEH digabung tanpa composite index selama tidak ada
+         orderBy pada field berbeda — urutan tetap dijamin sama lewat
+         _urutTerbaru() di JS. */
       let q = firebase.firestore().collection(koleksi).where("publish", "==", true);
       if (kategori) q = q.where("kategori", "==", kategori);
-      const snap = await q.orderBy("tanggal", "desc").get();
-      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const snap = await q.get();
+      return _urutTerbaru(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (e) {
-      console.error(`[ContentDB] Gagal memuat '${koleksi}' (fetchAll):`, e);
+      console.error(
+        `[ContentDB] GAGAL memuat koleksi '${koleksi}' (fetchAll, kategori=${kategori || "-"}). ` +
+        `Kode: ${e.code || "tidak diketahui"} — Pesan: ${e.message}. ` +
+        (e.code === "permission-denied"
+          ? "Firestore Rules menolak akses baca ke koleksi ini untuk request tanpa login. Cek firestore.rules."
+          : "Cek Firestore Console / firebase-config.js untuk detail lebih lanjut."),
+        e
+      );
       return [];
     }
   },
@@ -96,11 +129,17 @@ const ContentDB = {
       return _demoData(koleksi).find(x => x.slug === slug && x.publish) || null;
     }
     try {
+      /* Dua where() equality (slug + publish) TANPA orderBy — aman, tidak
+         butuh composite index (lihat catatan di fetchLatest di atas). */
       const snap = await firebase.firestore().collection(koleksi)
         .where("slug", "==", slug).where("publish", "==", true).limit(1).get();
       return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
     } catch (e) {
-      console.error(`[ContentDB] Gagal memuat '${koleksi}' (fetchBySlug):`, e);
+      console.error(
+        `[ContentDB] GAGAL memuat koleksi '${koleksi}' (fetchBySlug, slug=${slug}). ` +
+        `Kode: ${e.code || "tidak diketahui"} — Pesan: ${e.message}.`,
+        e
+      );
       return null;
     }
   },
@@ -113,10 +152,17 @@ const ContentDB = {
       return _urutTerbaru(_demoData(koleksi));
     }
     try {
+      /* orderBy() TUNGGAL tanpa where() — single-field index otomatis,
+         tidak butuh composite index. Ini sebabnya dashboard admin sudah
+         berhasil sejak awal walau halaman publik gagal. */
       const snap = await firebase.firestore().collection(koleksi).orderBy("tanggal", "desc").get();
       return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     } catch (e) {
-      console.error(`[ContentDB] Gagal memuat '${koleksi}' (fetchAllUntukAdmin):`, e);
+      console.error(
+        `[ContentDB] GAGAL memuat koleksi '${koleksi}' (fetchAllUntukAdmin). ` +
+        `Kode: ${e.code || "tidak diketahui"} — Pesan: ${e.message}.`,
+        e
+      );
       return [];
     }
   },

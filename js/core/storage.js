@@ -135,22 +135,34 @@ function _simulasiProgress(onProgress, dibatalkanFn) {
   });
 }
 
-/* Cache parameter otentikasi sebentar (token ImageKit berlaku 10 menit)
- * supaya upload beberapa file sekaligus (galeri Dokumentasi) tidak
- * memanggil /api/imagekit-auth berkali-kali tanpa perlu. Token baru
- * selalu diambil kalau sudah tidak ada / mendekati kedaluwarsa. */
-let _authImageKitCache = null;
+/* [FIX — HTTP 400 ImageKit] SEBELUMNYA parameter otentikasi (token,
+ * signature, expire) di-cache selama ±10 menit dan dipakai ULANG untuk
+ * banyak file sekaligus (mis. galeri Dokumentasi lewat
+ * uploadMultipleImages()) maupun saat retry setelah upload gagal.
+ *
+ * Ini yang menyebabkan HTTP 400 dari ImageKit: parameter `token` di
+ * Upload API ImageKit bersifat SEKALI PAKAI (single-use) — dipakai
+ * ImageKit untuk mencegah request yang sama diproses dua kali. Begitu
+ * satu file berhasil/gagal upload dengan token tertentu, token itu
+ * "terpakai", dan file KEDUA yang memakai token cache yang sama akan
+ * ditolak ImageKit dengan 400 Bad Request. (Sumber: dokumentasi resmi
+ * ImageKit — "If you send a token that has been used before, you'll
+ * get a validation error" / "Even if your previous request resulted in
+ * an error, you should always send a new token".)
+ *
+ * Perbaikan: SELALU minta token/signature/expire BARU dari
+ * /api/imagekit-auth untuk SETIAP percobaan upload — tidak ada cache
+ * sama sekali. Endpoint ini ringan (hanya hitung HMAC di server, tidak
+ * ada I/O ke database), jadi memanggilnya per-file tidak jadi masalah
+ * performa, dan ini justru satu-satunya cara yang sesuai spesifikasi
+ * resmi ImageKit. */
 async function _ambilAuthImageKit() {
-  if (_authImageKitCache && _authImageKitCache.expire - Math.floor(Date.now() / 1000) > 30) {
-    return _authImageKitCache;
-  }
   const resp = await fetch("/api/imagekit-auth");
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
-    throw new Error(err.error || "Gagal mengambil otentikasi ImageKit.");
+    throw new Error(err.error || `Gagal mengambil otentikasi ImageKit (status ${resp.status}).`);
   }
-  _authImageKitCache = await resp.json();
-  return _authImageKitCache;
+  return resp.json();
 }
 
 /** Upload satu file langsung ke ImageKit lewat XMLHttpRequest (bukan
@@ -190,7 +202,18 @@ function _uploadKeImageKit(file, folder, onProgress) {
             resolve({ url: data.url, path: data.fileId });
           } catch (e) { reject(new Error("Respons ImageKit tidak valid.")); }
         } else {
-          reject(new Error(`Upload ke ImageKit gagal (status ${xhr.status}).`));
+          /* [FIX] Sebelumnya pesan error hanya "status 400" tanpa alasan
+             — sekarang ambil field `message` dari body respons ImageKit
+             (format resminya: {"message": "...", "help": "..."}) supaya
+             penyebab pastinya (signature salah, token dipakai ulang,
+             file terlalu besar, dst.) langsung terlihat di Console. */
+          let pesan = `Upload ke ImageKit gagal (status ${xhr.status}).`;
+          try {
+            const body = JSON.parse(xhr.responseText);
+            if (body?.message) pesan += ` Pesan dari ImageKit: "${body.message}"`;
+          } catch (_) { /* respons bukan JSON, pakai pesan default di atas */ }
+          console.error(`[StorageHelper] ${pesan}`, xhr.responseText);
+          reject(new Error(pesan));
         }
       };
       xhr.onerror = () => reject(new Error("Koneksi ke ImageKit gagal."));
