@@ -282,6 +282,15 @@ function _bukaFormKonten(tipe, cfg, data, user, onSimpan) {
             tampilkanError("Masih ada gambar yang sedang diunggah — tunggu sebentar lagi.");
             return;
           }
+          /* [FIX — Dokumentasi 0 Foto] SEBELUMNYA gambar yang gagal
+             diunggah (badge "⚠ Gagal") tidak menghalangi tombol
+             Tambah/Simpan — hasilnya data tersimpan dengan cover/galeri
+             kosong tanpa peringatan (persis gejala "thumbnail tidak
+             muncul, 0 Foto" di halaman publik). Sekarang diblokir. */
+          if (widgetAktif.some(w => w.hasError())) {
+            tampilkanError("Ada gambar yang gagal diunggah (tanda \"⚠ Gagal\") — hapus gambar itu (ikon 🗑) atau unggah ulang sebelum menyimpan.");
+            return;
+          }
 
           const slugDasar = judul.toLowerCase().trim()
             .replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");

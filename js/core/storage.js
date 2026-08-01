@@ -357,7 +357,12 @@ function initUploadWidget(container, opts) {
   return {
     getUrls: () => items.filter(x => x.status === "done").map(x => x.url),
     getPaths: () => items.filter(x => x.status === "done" && x.path).map(x => x.path),
-    isUploading: () => items.some(x => x.status === "uploading")
+    isUploading: () => items.some(x => x.status === "uploading"),
+    /* [FIX — Dokumentasi 0 Foto] Sebelumnya tidak ada cara bagi kode
+       pemanggil untuk tahu ada item yang gagal upload (status "error")
+       — akibatnya form bisa disimpan dengan galeri/cover kosong tanpa
+       peringatan apapun (lihat konten-admin.js). */
+    hasError: () => items.some(x => x.status === "error")
   };
 }
 

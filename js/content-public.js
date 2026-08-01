@@ -96,11 +96,31 @@ function _kartuPoster(item) {
     </div>
   </div>`;
 }
+/* [FIX — Dokumentasi: thumbnail & jumlah foto tidak muncul]
+   Dipakai bersama oleh _kartuDokumentasi() dan _renderDetailDokumentasi()
+   supaya SATU sumber kebenaran untuk resolusi nama field — tidak ada
+   duplikasi logika fallback di dua tempat.
+
+   Field standar project ini adalah `coverImage` (cover) dan `images`
+   (array galeri) — itu yang dipakai konten-admin.js saat menyimpan.
+   Fungsi ini menambahkan fallback ke variasi nama field lama/tidak
+   konsisten (photos, foto, gambar, media, imageUrls, dst.) supaya data
+   lama tetap tampil tanpa perlu migrasi database. */
+function _resolveDokumentasiMedia(item) {
+  const cover =
+    item.coverImage || item.imageUrl || item.gambarUrl || item.thumbnailUrl || "";
+  const galeriMentah =
+    item.images || item.foto || item.photos || item.gambar || item.media || item.imageUrls || [];
+  const galeri = Array.isArray(galeriMentah) ? galeriMentah.filter(Boolean) : [];
+  const jumlahFoto = item.photoCount ?? item.jumlahFoto ?? galeri.length;
+  return { cover, galeri, jumlahFoto };
+}
+
 function _kartuDokumentasi(item) {
-  const jumlahFoto = item.photoCount ?? item.images?.length ?? item.jumlahFoto ?? 0;
+  const { cover, jumlahFoto } = _resolveDokumentasiMedia(item);
   return `<div class="article-card doc-card">
     <a href="dokumentasi.html?slug=${item.slug}" aria-label="${item.judul}">
-      <div class="ph-thumb">${_thumbHTML(item.coverImage, _IKON.gambar)}</div>
+      <div class="ph-thumb">${_thumbHTML(cover, _IKON.gambar)}</div>
     </a>
     <div class="doc-card-body">
       <h3>${item.judul}</h3>
@@ -299,12 +319,11 @@ function _renderDetailPoster(root, item) {
 }
 
 function _renderDetailDokumentasi(root, item) {
-  const galeri = (item.images?.length ? item.images : item.foto) || [];
-  const jumlahFoto = item.photoCount ?? galeri.length ?? item.jumlahFoto ?? 0;
+  const { cover, galeri, jumlahFoto } = _resolveDokumentasiMedia(item);
 
   root.innerHTML = `<div class="detail-wrap">
     <a href="dokumentasi.html" class="detail-back">← Kembali ke Dokumentasi</a>
-    <div class="detail-hero"><div class="ph-thumb" style="height:280px">${_thumbHTML(item.coverImage, _IKON.gambar)}</div></div>
+    <div class="detail-hero"><div class="ph-thumb" style="height:280px">${_thumbHTML(cover, _IKON.gambar)}</div></div>
     <div class="detail-meta">
       <span>${_IKON.kalender} ${formatTanggal(item.tanggal)}</span>
       <span>${_IKON.gambar} ${jumlahFoto} Foto</span>

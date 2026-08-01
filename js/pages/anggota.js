@@ -123,7 +123,21 @@ function bukaDetailAnggota(a) {
 
 function bukaFormAnggota(data, onSimpan) {
   const isEdit = !!data;
-  const divisiList = ["Pertolongan Pertama","Kesehatan Remaja","Kepemimpinan","Bakti Masyarakat"];
+  /* [FIX — Divisi Anggota] SATU-SATUNYA sumber pilihan divisi anggota di
+     seluruh project (sudah ditelusuri: tidak ada daftar lain yang perlu
+     diubah). Sesuai kebutuhan organisasi saat ini, divisi hanya ada 2. */
+  const divisiList = ["Pertolongan Pertama", "Tandu"];
+
+  /* [FIX — Divisi Anggota, data lama] Kalau anggota yang sedang di-edit
+     masih punya nilai divisi LAMA (mis. "Kesehatan Remaja") yang sudah
+     tidak ada di daftar baru, JANGAN dihilangkan dari dropdown — kalau
+     tidak, begitu admin menyimpan (walau cuma ubah field lain), <select>
+     otomatis jatuh ke opsi pertama dan diam-diam mengganti divisi
+     anggota itu tanpa sepengetahuan admin. Nilai lama tetap ditampilkan
+     apa adanya (bukan migrasi data) sampai admin sengaja menggantinya. */
+  const divisiOpsi = (data?.divisi && !divisiList.includes(data.divisi))
+    ? [...divisiList, data.divisi]
+    : divisiList;
 
   Modal.buka({
     judul: isEdit?"Edit Anggota":"Tambah Anggota Baru",
@@ -140,7 +154,7 @@ function bukaFormAnggota(data, onSimpan) {
         <div class="field">
           <label>Divisi</label>
           <select id="f-divisi">
-            ${divisiList.map(d=>`<option ${data?.divisi===d?"selected":""}>${d}</option>`).join("")}
+            ${divisiOpsi.map(d=>`<option ${data?.divisi===d?"selected":""}>${d}</option>`).join("")}
           </select>
         </div>
         <div class="field">
