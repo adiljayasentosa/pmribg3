@@ -112,7 +112,20 @@ function _resolveDokumentasiMedia(item) {
   const galeriMentah =
     item.images || item.foto || item.photos || item.gambar || item.media || item.imageUrls || [];
   const galeri = Array.isArray(galeriMentah) ? galeriMentah.filter(Boolean) : [];
-  const jumlahFoto = item.photoCount ?? item.jumlahFoto ?? galeri.length;
+  /* [FIX — "0 Foto" padahal galeri ada isinya]
+     SEBELUMNYA urutannya `item.photoCount ?? ... ?? galeri.length` — itu
+     bug: konten-admin.js SELALU menulis `photoCount` sebagai angka
+     eksplisit (termasuk 0) saat simpan, dan `??` tidak "tembus" ke
+     fallback berikutnya untuk nilai 0 (hanya untuk null/undefined).
+     Jadi kalau photoCount kebetulan tersimpan 0, jumlah foto akan SELALU
+     tampil 0 walau array `galeri` di atas (hasil resolusi field foto/
+     images/photos/dst.) sebenarnya berisi banyak URL.
+     Sekarang jumlah foto SELALU dihitung dari galeri.length dulu —
+     angka yang ditampilkan jadi konsisten dengan foto yang benar-benar
+     dirender di grid galeri. photoCount/jumlahFoto cuma dipakai sebagai
+     jalan terakhir kalau memang tidak ada array foto yang bisa dibaca
+     sama sekali (skenario data sangat lama). */
+  const jumlahFoto = galeri.length > 0 ? galeri.length : (item.photoCount ?? item.jumlahFoto ?? 0);
   return { cover, galeri, jumlahFoto };
 }
 
