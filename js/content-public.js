@@ -18,14 +18,24 @@ const _IKON = {
   download: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>`,
   share: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342a3 3 0 100-2.684m0 2.684a3 3 0 100 2.684m0-2.684L15.316 17.316m0-10.632a3 3 0 102.684 4.632 3 3 0 00-2.684-4.632zm0 10.632a3 3 0 102.684-4.632"/></svg>`,
   play: `<svg viewBox="0 0 24 24" fill="#FFFFFF"><path d="M8 5v14l11-7z"/></svg>`,
-  panah: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>`
+  panah: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>`,
+  jam: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
 };
 
+/* [Redesign] Estimasi waktu baca — dihitung MURNI di client dari teks
+   ringkasan yang sudah ada (bukan field baru di Firestore, bukan
+   perubahan skema data). ~200 kata/menit, dibulatkan, minimal 1 menit. */
+function _estimasiBaca(teks) {
+  const jumlahKata = (teks || "").trim().split(/\s+/).filter(Boolean).length;
+  const menit = Math.max(1, Math.round(jumlahKata / 200));
+  return `${menit} min baca`;
+}
+
 const _KONFIG_TIPE = {
-  artikel:     { label: "Artikel",     labelSatuan: "artikel",     ph: _IKON.dokumen, tombolDetail: "Baca" },
-  video:       { label: "Video",       labelSatuan: "video",       ph: _IKON.gambar,  tombolDetail: "Tonton" },
-  poster:      { label: "Poster",      labelSatuan: "poster",      ph: _IKON.gambar,  tombolDetail: "Lihat" },
-  dokumentasi: { label: "Dokumentasi", labelSatuan: "dokumentasi", ph: _IKON.gambar,  tombolDetail: "Lihat Selengkapnya" }
+  artikel:     { label: "Artikel",     labelSatuan: "artikel",     ph: _IKON.dokumen, tombolDetail: "Lihat Selengkapnya", chipSemua: "Semua" },
+  video:       { label: "Video",       labelSatuan: "video",       ph: _IKON.gambar,  tombolDetail: "Tonton",             chipSemua: "Semua" },
+  poster:      { label: "Poster",      labelSatuan: "poster",      ph: _IKON.gambar,  tombolDetail: "Lihat",              chipSemua: "Semua" },
+  dokumentasi: { label: "Dokumentasi", labelSatuan: "dokumentasi", ph: _IKON.gambar,  tombolDetail: "Lihat Galeri",       chipSemua: "Semua Kegiatan" }
 };
 
 function _slugDariUrl() {
@@ -53,10 +63,13 @@ function _kartuArtikel(item) {
   return `<article class="article-card">
     <div class="ph-thumb">${_thumbHTML(item.coverImage, _IKON.dokumen)}</div>
     <div class="article-card-body">
-      <div class="article-meta"><span class="badge badge-info">${item.kategori}</span><span>${formatTanggal(item.tanggal)}</span></div>
+      <div class="article-meta"><span class="badge badge-red">${item.kategori}</span><span>${formatTanggal(item.tanggal)}</span></div>
       <h3>${item.judul}</h3>
       <p>${item.ringkasan}</p>
-      <a href="artikel.html?slug=${item.slug}" class="btn btn-outline btn-sm">Baca →</a>
+      <div class="article-card-foot">
+        <span class="read-time">${_IKON.jam} ${_estimasiBaca(item.ringkasan)}</span>
+        <a href="artikel.html?slug=${item.slug}" class="btn btn-outline btn-sm">Lihat Selengkapnya →</a>
+      </div>
     </div>
   </article>`;
 }
@@ -71,7 +84,7 @@ function _kartuVideo(item) {
       </div>
     </a>
     <div class="video-card-body">
-      <div class="article-meta"><span class="badge badge-info">${item.kategori}</span><span>${formatTanggal(item.tanggal)}</span></div>
+      <div class="article-meta"><span class="badge badge-red">${item.kategori}</span><span>${formatTanggal(item.tanggal)}</span></div>
       <h3>${item.judul}</h3>
       <a href="video.html?slug=${item.slug}" class="btn btn-outline btn-sm">Tonton →</a>
     </div>
@@ -90,9 +103,9 @@ function _kartuPoster(item) {
       <div class="ph-thumb">${_thumbHTML(gambar, _IKON.gambar)}</div>
     </a>
     <div class="poster-card-body">
+      <span class="badge badge-red">${item.kategori}</span>
       <h3>${item.judul}</h3>
-      <span class="badge badge-warning">${item.kategori}</span>
-      <a href="poster.html?slug=${item.slug}" class="btn btn-outline btn-sm" style="display:block;text-align:center;margin-top:12px">Lihat</a>
+      <a href="poster.html?slug=${item.slug}" class="btn btn-outline btn-sm btn-block">Lihat</a>
     </div>
   </div>`;
 }
@@ -140,9 +153,8 @@ function _kartuDokumentasi(item) {
       <div class="doc-card-meta">
         <span>${_IKON.kalender} ${formatTanggal(item.tanggal)}</span>
         <span>${_IKON.gambar} ${jumlahFoto} Foto</span>
-        <span>${_IKON.user} ${item.pjDivisi}</span>
       </div>
-      <a href="dokumentasi.html?slug=${item.slug}" class="btn btn-outline btn-sm">Lihat Selengkapnya →</a>
+      <a href="dokumentasi.html?slug=${item.slug}" class="btn btn-outline btn-sm">Lihat Galeri →</a>
     </div>
   </div>`;
 }
@@ -160,47 +172,53 @@ function _skeletonKartu(tipe, n = 6) {
 async function initContentListPage(tipe) {
   const cfg = _KONFIG_TIPE[tipe];
   const wrap = document.getElementById("content-grid");
-  const inputSearch = document.getElementById("content-search");
-  const selectKategori = document.getElementById("content-kategori");
+  const chipWrap = document.getElementById("content-kategori-chips");
   if (!wrap) return;
 
   wrap.innerHTML = _skeletonKartu(tipe);
 
   const semua = await ContentDB.fetchAll(tipe);
 
-  /* Isi filter kategori dari data yang benar-benar ada */
-  if (selectKategori) {
-    const kategoriUnik = [...new Set(semua.map(x => x.kategori).filter(Boolean))];
-    kategoriUnik.forEach(k => {
-      const opt = document.createElement("option");
-      opt.value = k; opt.textContent = k;
-      selectKategori.appendChild(opt);
+  /* Kategori chip diisi dari data yang benar-benar ada — sama seperti
+     select dulu (kategoriUnik), cuma dirender sebagai tombol, bukan
+     <option>. */
+  const kategoriUnik = [...new Set(semua.map(x => x.kategori).filter(Boolean))];
+  let kategoriAktif = "";
+
+  function renderChips() {
+    if (!chipWrap) return;
+    const daftar = [{ nilai: "", label: cfg.chipSemua }, ...kategoriUnik.map(k => ({ nilai: k, label: k }))];
+    chipWrap.innerHTML = daftar.map(({ nilai, label }) =>
+      `<button type="button" class="chip${nilai === kategoriAktif ? " chip-active" : ""}" data-kategori="${nilai}">${label}</button>`
+    ).join("");
+    chipWrap.querySelectorAll(".chip").forEach(btn => {
+      btn.addEventListener("click", () => {
+        kategoriAktif = btn.dataset.kategori;
+        renderChips();
+        render();
+      });
     });
   }
 
   function render() {
-    const q = (inputSearch?.value || "").toLowerCase().trim();
-    const kat = selectKategori?.value || "";
-    const hasil = semua.filter(x => {
-      const cocokQ = !q || x.judul.toLowerCase().includes(q);
-      const cocokKat = !kat || x.kategori === kat;
-      return cocokQ && cocokKat;
-    });
+    /* [Redesign] Predikat filter TIDAK berubah dari sebelumnya
+       (x.kategori === kat) — hanya sumber nilai `kat` yang berubah,
+       dari selectKategori.value menjadi kategoriAktif (state chip). */
+    const hasil = semua.filter(x => !kategoriAktif || x.kategori === kategoriAktif);
 
     if (!hasil.length) {
       wrap.innerHTML = `<div class="content-empty">
         ${_IKON.dokumen}
         <p><strong>Belum ada ${cfg.labelSatuan}</strong></p>
-        <p>Coba ubah kata kunci pencarian atau kategori.</p>
+        <p>Coba pilih kategori lain.</p>
       </div>`;
       return;
     }
     wrap.innerHTML = `<div class="grid grid-3">${hasil.map(_RENDER_KARTU[tipe]).join("")}</div>`;
   }
 
+  renderChips();
   render();
-  inputSearch?.addEventListener("input", render);
-  selectKategori?.addEventListener("change", render);
 }
 
 /* =========================================================

@@ -59,10 +59,10 @@
 
 /* ---------- Dokumentasi: card punya jumlah foto ---------- */
 .doc-card .ph-thumb{ height:170px; }
-.doc-card-body{ padding:18px 20px; }
+.doc-card-body{ padding:20px; }
 .doc-card-meta{ display:flex; flex-wrap:wrap; gap:12px; font-size:0.78rem; color:var(--ink-soft); margin:8px 0 14px; }
 .doc-card-meta span{ display:inline-flex; align-items:center; gap:4px; }
-.doc-card-meta svg{ width:14px; height:14px; }
+.doc-card-meta svg{ width:14px; height:14px; flex-shrink:0; }
 
 /* ---------- Layout Detail (semua tipe konten) ---------- */
 .detail-wrap{
@@ -210,4 +210,91 @@
   font-size:0.72rem; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
   box-shadow:var(--shadow-sm);
+}
+
+/* =========================================================
+   [REDESIGN — Halaman Publik] Chip Kategori, Section Label,
+   Tombol Kembali, Fade-in.
+   =========================================================
+   SEMUANYA di-scope di bawah `.content-page` (class yang HANYA
+   dipakai artikel.html/video.html/poster.html/dokumentasi.html)
+   supaya walau file ini juga dimuat oleh dashboard.html (untuk
+   .upload-*), TIDAK ADA satupun aturan di bawah ini yang bisa
+   mengenai elemen Dashboard — dashboard.html tidak punya elemen
+   ber-class .content-page sama sekali.
+
+   Token warna baru (--cp-*) sengaja LOKAL di sini, bukan diletakkan
+   di variables.css (:root) — supaya nilai hex persis dari brief
+   (#C1121F / #F8F9FA / #E5E7EB / #111827) tidak "menimpa" token
+   global --pmr-red/--gray-100/--gray-200/--ink yang dipakai luas
+   di Dashboard & halaman lain. */
+.content-page{
+  --cp-primary: #C1121F;
+  --cp-bg: #F8F9FA;
+  --cp-border: #E5E7EB;
+  --cp-text: #111827;
+  --cp-chip-bg: #EEF0F2;
+  background:var(--cp-bg);
+  animation:cp-fade-in 0.4s ease both;
+}
+@keyframes cp-fade-in{
+  from{ opacity:0; transform:translateY(10px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+@media (prefers-reduced-motion: reduce){
+  .content-page{ animation:none; }
+  .content-page *{ animation:none !important; transition:none !important; }
+}
+
+/* ---------- Chip Kategori (ganti dropdown) ---------- */
+.content-page .chip-row{
+  display:flex; flex-wrap:wrap; gap:10px;
+  max-width:var(--container-max);
+  margin:0 auto 32px;
+  padding:0 24px;
+}
+.content-page .chip{
+  padding:9px 18px;
+  border-radius:999px;
+  border:none;
+  background:var(--cp-chip-bg);
+  color:var(--cp-text);
+  font-family:var(--font-body);
+  font-size:0.85rem;
+  font-weight:600;
+  cursor:pointer;
+  transition:background 0.3s ease, color 0.3s ease, transform 0.3s ease;
+}
+.content-page .chip:hover{ background:var(--pmr-red-light); color:var(--cp-primary); }
+.content-page .chip:active{ transform:scale(0.96); }
+.content-page .chip.chip-active{ background:var(--cp-primary); color:var(--white); }
+.content-page .chip.chip-active:hover{ background:var(--cp-primary); }
+.content-page .chip:focus-visible{ outline:2px solid var(--cp-primary); outline-offset:2px; }
+
+/* ---------- Section label ("Konten Terbaru") ---------- */
+.content-page .section-label{
+  display:flex; align-items:center; gap:8px;
+  max-width:var(--container-max);
+  margin:0 auto 18px;
+  padding:0 24px;
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:1.05rem;
+  color:var(--cp-text);
+}
+
+/* ---------- Tombol "Kembali ke Halaman Utama" ---------- */
+.content-page .content-back-home{
+  max-width:var(--container-max);
+  margin:36px auto 0;
+  padding:0 24px;
+}
+/* Sesuai brief: tombol outline merah → penuh merah + teks putih saat
+   hover. Di-scope ke .content-page supaya tombol outline lain di
+   Dashboard/Login TIDAK ikut berubah perilaku hover-nya. */
+.content-page .btn-outline:hover{ background:var(--cp-primary); border-color:var(--cp-primary); color:var(--white); }
+
+/* ---------- Responsive: chip & section-label mengikuti grid ---------- */
+@media (max-width:560px){
+  .content-page .chip{ padding:8px 15px; font-size:0.8rem; }
 }
