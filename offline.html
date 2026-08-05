@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sedang Offline — PMR WIRA UNIT</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml"/>
+  <link rel="manifest" href="/manifest.json"/>
+  <meta name="theme-color" content="#C8102E"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="stylesheet" href="css/variables.css"/>
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/components.css"/>
+  <style>
+    .offline-wrap{
+      min-height:100dvh; display:flex; align-items:center; justify-content:center;
+      padding:24px; text-align:center;
+    }
+    .offline-card{ max-width:420px; width:100%; }
+    .offline-icon{ width:64px; height:64px; margin:0 auto 16px; opacity:.85; }
+    .offline-links{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:16px; }
+  </style>
+</head>
+<body>
+  <div class="offline-wrap">
+    <div class="card offline-card">
+      <img class="offline-icon" src="assets/logo.svg" alt="PMR WIRA UNIT" width="64" height="64"/>
+      <h2 style="margin:0 0 8px">Anda sedang offline</h2>
+      <p style="color:var(--gray-600,#666); margin:0 0 20px">
+        Halaman yang ingin Anda buka belum pernah dimuat sebelumnya, jadi belum tersimpan untuk mode offline.
+        Konten yang <strong>pernah dibuka sebelumnya</strong> (Beranda, Artikel, Poster, Dokumentasi, Video) tetap bisa diakses.
+      </p>
+      <button class="btn btn-primary btn-block" onclick="location.reload()">Coba Lagi</button>
+      <div class="offline-links">
+        <a class="btn btn-outline btn-sm" href="/index.html">Beranda</a>
+        <a class="btn btn-outline btn-sm" href="/artikel.html">Artikel</a>
+        <a class="btn btn-outline btn-sm" href="/poster.html">Poster</a>
+        <a class="btn btn-outline btn-sm" href="/dokumentasi.html">Dokumentasi</a>
+        <a class="btn btn-outline btn-sm" href="/video.html">Video</a>
+      </div>
+    </div>
+  </div>
+  <script src="js/pwa-register.js"></script>
+</body>
+</html>

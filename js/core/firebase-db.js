@@ -28,6 +28,19 @@
 const ROLE_AKSES_KEUANGAN = ['admin', 'ketua', 'wakil', 'bendahara'];
 const ROLE_AKSES_PRESENSI = ['admin', 'ketua', 'wakil', 'sekretaris', 'pj'];
 
+/* [Phase 2 — PWA] Helper read-only: laporkan ke UI apakah snapshot
+   Firestore yang baru diterima berasal dari cache lokal (offline/
+   belum sinkron) atau dari server. TIDAK mengubah data/query apa pun
+   — hanya membaca snap.metadata.fromCache lalu dispatch custom event
+   yang didengarkan js/pwa-register.js untuk indikator UI. */
+function _laporkanStatusCache(snap) {
+  try {
+    window.dispatchEvent(new CustomEvent("pmr:firestore-cache-status", {
+      detail: { fromCache: !!(snap && snap.metadata && snap.metadata.fromCache) }
+    }));
+  } catch (e) { /* no-op kalau CustomEvent tidak didukung */ }
+}
+
 /**
  * Fetch satu collection dengan error handling untuk kegagalan
  * OPERASIONAL (koneksi putus, timeout, dsb) — BUKAN untuk
@@ -212,22 +225,27 @@ const DB = {
     /* anggota, kegiatan, inventaris — boleh di-listen SEMUA role yang login */
     this._listeners.push(
       fdb.collection("anggota").orderBy("nama").onSnapshot(snap => {
+        _laporkanStatusCache(snap);
         AppState.anggota = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         _hitungRingkasan(); _reRenderPage();
       }),
       fdb.collection("kegiatan").orderBy("tanggal", "desc").onSnapshot(snap => {
+        _laporkanStatusCache(snap);
         AppState.kegiatan = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         _hitungRingkasan(); _reRenderPage();
       }),
       fdb.collection("inventaris").orderBy("nama").onSnapshot(snap => {
+        _laporkanStatusCache(snap);
         AppState.inventaris = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         _reRenderPage();
       }),
       fdb.collection("piket").orderBy("tanggal", "desc").onSnapshot(snap => {
+        _laporkanStatusCache(snap);
         AppState.piket = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         _reRenderPage();
       }),
       fdb.collection("upacara").orderBy("tanggal", "desc").onSnapshot(snap => {
+        _laporkanStatusCache(snap);
         AppState.upacara = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         _reRenderPage();
       })
@@ -240,10 +258,12 @@ const DB = {
     if (ROLE_AKSES_KEUANGAN.includes(role)) {
       this._listeners.push(
         fdb.collection("keuangan").orderBy("tanggal", "desc").onSnapshot(snap => {
+          _laporkanStatusCache(snap);
           AppState.keuangan = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           _hitungRingkasan(); _reRenderPage();
         }),
         fdb.collection("iuran").onSnapshot(snap => {
+          _laporkanStatusCache(snap);
           const semua = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           const pengaturan = semua.find(d => d.id === "_pengaturan");
           AppState.nominalIuranStandar = pengaturan?.nominalStandar || 5000;
@@ -257,6 +277,7 @@ const DB = {
     if (ROLE_AKSES_PRESENSI.includes(role)) {
       this._listeners.push(
         fdb.collection("presensi").onSnapshot(snap => {
+          _laporkanStatusCache(snap);
           AppState.presensiHistory = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           _hitungRingkasan(); _reRenderPage();
         })

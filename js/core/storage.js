@@ -420,6 +420,17 @@ function _pasangEventWidget(container, folder, multiple, getItems, setItems, ren
 }
 
 function _tanganiFileWidget(fileList, folder, multiple, getItems, setItems, render, getReplaceTarget, setReplaceTargetVal, onChange) {
+  /* [Phase 2 — PWA] Upload ImageKit wajib online (butuh /api/imagekit-auth
+     + endpoint upload.imagekit.io). Blokir di titik tunggal ini SEBELUM
+     compressImage/uploadImage dipanggil sama sekali — logic upload di
+     bawah TIDAK diubah, hanya tidak dijalankan saat offline. */
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    if (typeof tampilToast === "function") {
+      tampilToast("Upload gambar butuh koneksi internet. Sambungkan internet lalu coba lagi.", "error");
+    }
+    return;
+  }
+
   const files = Array.from(fileList).filter(f => f.type.startsWith("image/"));
   if (!files.length) return;
 
