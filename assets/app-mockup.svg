@@ -1,0 +1,52 @@
+<svg viewBox="0 0 380 420" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="pmrMockupTitle">
+  <title id="pmrMockupTitle">Pratinjau aplikasi Android PMR WIRA UNIT</title>
+
+  <!-- Bentuk dekoratif mengambang -->
+  <circle cx="60" cy="70" r="46" fill="#FDEEF0"/>
+  <circle cx="330" cy="330" r="64" fill="#F6CCD3" opacity="0.6"/>
+  <circle cx="340" cy="60" r="18" fill="#C8102E" opacity="0.15"/>
+  <rect x="18" y="300" width="34" height="34" rx="10" fill="#C8102E" opacity="0.12"/>
+
+  <!-- Badge Android mengambang -->
+  <g transform="translate(292,150)">
+    <circle cx="26" cy="26" r="26" fill="#FFFFFF"/>
+    <circle cx="26" cy="26" r="26" fill="none" stroke="#F6CCD3" stroke-width="1.5"/>
+    <path d="M16 20.5c0-4.4 4.5-8 10-8s10 3.6 10 8v9a2 2 0 01-2 2h-1v3.2a1.8 1.8 0 01-3.6 0V31.5h-6.8v3.2a1.8 1.8 0 01-3.6 0V31.5H18a2 2 0 01-2-2v-9z" fill="#1E8E3E"/>
+    <circle cx="21.5" cy="19" r="1.4" fill="#FFFFFF"/>
+    <circle cx="30.5" cy="19" r="1.4" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Bingkai ponsel -->
+  <rect x="95" y="24" width="188" height="380" rx="34" fill="#1C1B1F"/>
+  <rect x="103" y="34" width="172" height="360" rx="26" fill="#FFFFFF"/>
+  <!-- speaker -->
+  <rect x="168" y="42" width="44" height="5" rx="2.5" fill="#3A3940"/>
+
+  <!-- Header mini app (mereplika header situs) -->
+  <rect x="103" y="34" width="172" height="58" rx="0" fill="#C8102E"/>
+  <path d="M103 34h172v46c0 6.6-5.4 12-12 12H115c-6.6 0-12-5.4-12-12V34z" fill="#C8102E"/>
+  <circle cx="126" cy="63" r="11" fill="#FFFFFF"/>
+  <path d="M126 57.5c-3 0-5.5 2.4-5.5 5.4 0 4 5.5 8.6 5.5 8.6s5.5-4.6 5.5-8.6c0-3-2.5-5.4-5.5-5.4z" fill="#C8102E"/>
+  <rect x="145" y="58" width="70" height="6" rx="3" fill="#FDEEF0"/>
+  <rect x="145" y="68" width="46" height="5" rx="2.5" fill="#F6CCD3"/>
+
+  <!-- Konten mini: kartu-kartu isi (mereplika card artikel) -->
+  <rect x="115" y="106" width="148" height="64" rx="12" fill="#F7F6F8"/>
+  <rect x="127" y="118" width="60" height="8" rx="4" fill="#D8D6DC"/>
+  <rect x="127" y="132" width="100" height="6" rx="3" fill="#EDEBEF"/>
+  <rect x="127" y="144" width="80" height="6" rx="3" fill="#EDEBEF"/>
+
+  <rect x="115" y="180" width="70" height="70" rx="12" fill="#FDEEF0"/>
+  <rect x="193" y="180" width="70" height="70" rx="12" fill="#F7F6F8"/>
+  <rect x="127" y="228" width="46" height="6" rx="3" fill="#F6CCD3"/>
+  <rect x="205" y="228" width="46" height="6" rx="3" fill="#D8D6DC"/>
+
+  <rect x="115" y="262" width="148" height="42" rx="12" fill="#C8102E"/>
+  <rect x="131" y="278" width="90" height="10" rx="5" fill="#FFFFFF"/>
+
+  <!-- Bottom nav mini -->
+  <rect x="103" y="358" width="172" height="36" rx="0" fill="#FFFFFF"/>
+  <circle cx="145" cy="376" r="6" fill="#C8102E"/>
+  <circle cx="189" cy="376" r="6" fill="#D8D6DC"/>
+  <circle cx="233" cy="376" r="6" fill="#D8D6DC"/>
+</svg>

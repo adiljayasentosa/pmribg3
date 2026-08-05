@@ -430,3 +430,84 @@
 
 /* ---------- Program Kerja ---------- */
 .program-card .feature-icon{ background:var(--pmr-red); color:var(--white); }
+
+/* =========================================================
+   APLIKASI ANDROID — Download Section (Phase 3)
+   Reuse: .card, .badge/.badge-red, .btn, .feature-icon
+   ========================================================= */
+.app-download-grid{
+  display:grid;
+  grid-template-columns:1fr 1.15fr;
+  gap:56px;
+  align-items:center;
+}
+@media (max-width: 900px){
+  .app-download-grid{ grid-template-columns:1fr; gap:36px; }
+}
+
+.app-mockup-col{ display:flex; justify-content:center; }
+.app-mockup-col img{
+  width:100%;
+  max-width:280px;
+  filter:drop-shadow(var(--shadow-lg));
+  animation:app-mockup-float 5s ease-in-out infinite;
+}
+@keyframes app-mockup-float{
+  0%,100%{ transform:translateY(0); }
+  50%{ transform:translateY(-10px); }
+}
+
+.app-download-badge{ margin-bottom:16px; }
+.app-download-content h2{ font-size:clamp(1.5rem,2.8vw,2rem); margin-bottom:10px; }
+.app-download-content > p.lead{ color:var(--ink-soft); margin-bottom:24px; }
+
+.app-feature-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-bottom:26px;
+}
+@media (max-width: 560px){
+  .app-feature-grid{ grid-template-columns:1fr; }
+}
+.app-feature-mini{
+  display:flex; align-items:center; gap:10px;
+  padding:12px 14px;
+}
+.app-feature-mini .feature-icon{
+  width:36px; height:36px; margin-bottom:0; flex-shrink:0;
+}
+.app-feature-mini .feature-icon svg{ width:18px; height:18px; }
+.app-feature-mini span{ font-size:0.85rem; font-weight:600; }
+
+.app-info-list{ margin-bottom:26px; }
+.app-info-row{
+  display:flex; justify-content:space-between;
+  font-size:0.88rem; padding:7px 0;
+  border-bottom:1px dashed var(--gray-200);
+}
+.app-info-row:last-child{ border-bottom:none; }
+.app-info-row strong{ color:var(--ink); }
+
+.app-download-actions{ display:flex; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
+
+.app-note-card{
+  background:var(--gray-100);
+  display:flex; align-items:flex-start; gap:12px;
+  font-size:0.85rem; color:var(--ink-soft);
+}
+.app-note-card .app-note-icon{
+  width:30px; height:30px; border-radius:50%;
+  background:var(--info-bg); color:var(--info);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.app-note-card .app-note-icon svg{ width:16px; height:16px; }
+
+/* Reveal-on-scroll — HANYA berlaku untuk section ini (scoped),
+   tidak menyentuh animasi/section lain yang sudah ada. */
+.app-reveal{ opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease; }
+.app-reveal.is-visible{ opacity:1; transform:translateY(0); }
+
+/* Modal install-guide (dipakai di dalam Modal.buka konten) */
+.app-install-steps{ margin:0 0 4px; padding-left:20px; }
+.app-install-steps li{ margin-bottom:8px; font-size:0.92rem; }

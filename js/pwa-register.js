@@ -18,14 +18,14 @@
       position:fixed; left:50%; bottom:20px; transform:translate(-50%,0);
       background:#1f1f1f; color:#fff; padding:12px 16px; border-radius:10px;
       display:flex; align-items:center; gap:12px; font-size:0.92rem;
-      box-shadow:0 6px 20px rgba(0,0,0,.25); z-index:9999; max-width:92vw;
+      box-shadow:0 6px 20px rgba(0,0,0,.25); z-index:150; max-width:92vw;
     }
     #pmr-snackbar button{
       background:#C8102E; color:#fff; border:none; border-radius:6px;
       padding:6px 12px; font-size:0.85rem; cursor:pointer; white-space:nowrap;
     }
     #pmr-net-badge{
-      position:fixed; right:12px; bottom:12px; z-index:9998;
+      position:fixed; right:12px; bottom:12px; z-index:140;
       font-size:0.75rem; padding:4px 10px; border-radius:999px;
       background:#e8e8e8; color:#444; box-shadow:0 2px 6px rgba(0,0,0,.15);
       display:flex; align-items:center; gap:6px; transition:opacity .2s;

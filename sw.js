@@ -74,6 +74,7 @@ const PRECACHE_URLS = [
   "/css/components.css",
   "/css/landing.css",
   "/css/content.css",
+  "/css/modal.css",
 
   // JS yang dipakai halaman publik
   "/js/firebase-config.js",
@@ -83,10 +84,13 @@ const PRECACHE_URLS = [
   "/js/core/content-db.js",
   "/js/content-public.js",
   "/js/landing.js",
+  "/js/core/modal.js",
+  "/js/app-download.js",
   "/js/pwa-register.js",
 
   // Aset & manifest
   "/assets/logo.svg",
+  "/assets/app-mockup.svg",
   "/assets/icons/icon-192.png",
   "/assets/icons/icon-512.png",
   "/assets/icons/icon-maskable-192.png",
