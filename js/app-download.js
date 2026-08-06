@@ -7,7 +7,7 @@
    ========================================================= */
 
 /* ── Konfigurasi: ganti URL ini kalau link Google Drive berubah ── */
-const APK_DOWNLOAD_URL = "https://drive.google.com/uc?export=download&id=GANTI_DENGAN_FILE_ID_ANDA";
+const APK_DOWNLOAD_URL = "https://drive.google.com/file/d/16FtP3Lq33pcNqY3LJRwPc37Wbd42wYaG/view?usp=drive_link";
 
 document.addEventListener("DOMContentLoaded", () => {
   const btnDownload = document.getElementById("btn-app-download");
