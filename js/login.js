@@ -38,15 +38,18 @@ document.addEventListener("DOMContentLoaded", () => {
     btnSubmit.disabled = true;
     btnSubmit.textContent = "Masuk…";
 
-    /* [F6.0] Remember Me — HANYA mengatur persistence sesi Firebase
-       Auth (fitur bawaan Firebase, bukan RBAC/business logic baru).
-       Tidak ada efek di Mode Demo (sesi selalu tersimpan di
-       localStorage seperti sebelumnya, tidak berubah). */
+    /* [P0 HOTFIX] Sesi HARUS selalu LOCAL, apa pun status checkbox
+       "Ingat saya". Sebelumnya kode ini men-set SESSION persistence
+       kalau checkbox tidak dicentang (dan checkbox tidak dicentang
+       secara default di login.html) — SESSION tidak bertahan saat
+       proses TWA di-kill & dibuka ulang oleh Android, jadi user yang
+       tidak sengaja mencentang "Ingat saya" ter-logout sendiri setiap
+       kali reopen app. Ini melanggar aturan P0: "Logout harus jadi
+       satu-satunya aksi yang menghapus autentikasi". Checkbox "Ingat
+       saya" dibiarkan ada di UI (tidak redesign), tapi sudah tidak
+       memengaruhi persistence lagi. */
     if (FIREBASE_ENABLED) {
-      const ingat = document.getElementById("input-remember")?.checked;
-      await firebase.auth().setPersistence(
-        ingat ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION
-      );
+      await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     }
 
     const result = await login(username, password, selectedRole);
