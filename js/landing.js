@@ -10,7 +10,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (user && btnDashboard) {
     btnDashboard.textContent = "Buka Dashboard";
     btnDashboard.href = "dashboard.html";
-    btnLogin && (btnLogin.style.display = "none");
   }
 
   /* Mobile nav toggle */
