@@ -29,29 +29,55 @@ let _iuranTahunTerpilih = new Date().getFullYear();
 /**
  * Hitung rekap pembayaran iuran untuk satu bulan/tahun.
  * Anggota TANPA record iuran dianggap "Belum Bayar" (default
- * implisit — lihat komentar desain di DB.iuran, firebase-db.js).
+ * implisit — lihat _normalisasiIuranRecord, core/firebase-db.js).
+ *
+ * [F4.5 — Cicilan] Setiap baris sekarang punya target/dibayar/sisa
+ * (via _normalisasiIuranRecord, satu sumber kebenaran yang sama
+ * dipakai DB.iuran saat menulis). Field LAMA (statusIuran, nominalIuran,
+ * jumlahSudahBayar, jumlahBelumBayar, totalTunggakan) SENGAJA
+ * dipertahankan persis nama & bentuknya — report-engine.js (Laporan
+ * Keuangan) membaca field-field ini langsung, jangan diganti nama
+ * supaya Laporan tidak rusak (lihat exportCSV/kolom Laporan Keuangan).
+ * "Sudah bayar" pada ringkasan lama = LUNAS penuh (bukan cicilan
+ * sebagian) — perilaku biner ini dipertahankan sesuai definisi lama.
  */
 function _hitungRekapIuran(bulan, tahun) {
+  const targetStandar = AppState.nominalIuranStandar || 0;
   const baris = AppState.anggota
     .filter(a => a.status === "Aktif")
     .map(a => {
       const rec = AppState.iuran.find(r => r.anggotaId === a.id && r.bulan === bulan && r.tahun === tahun);
-      return { ...a, statusIuran: rec ? rec.status : "Belum Bayar", nominalIuran: rec ? rec.nominal : 0 };
+      const n = _normalisasiIuranRecord(rec, targetStandar);
+      return {
+        ...a,
+        statusIuran: n.status,             // dipertahankan utk report-engine.js
+        nominalIuran: n.totalDibayar,      // dipertahankan utk report-engine.js (kini = total kumulatif)
+        target: n.target,
+        dibayar: n.totalDibayar,
+        sisa: n.sisa,
+        riwayatPembayaran: n.riwayatPembayaran
+      };
     })
     .sort((a,b) => a.nama.localeCompare(b.nama));
 
-  const sudahBayar = baris.filter(b => b.statusIuran !== "Belum Bayar");
-  const totalPemasukan = sudahBayar.reduce((s,b) => s + b.nominalIuran, 0);
-  const jumlahBelum = baris.length - sudahBayar.length;
+  const sudahLunas  = baris.filter(b => b.statusIuran === "Lunas");
+  const belumLunas  = baris.filter(b => b.statusIuran === "Belum Lunas");
+
+  const totalPemasukan   = baris.reduce((s,b) => s + b.dibayar, 0);
+  const totalTargetSemua = baris.reduce((s,b) => s + b.target, 0);
+  const totalKekurangan  = baris.reduce((s,b) => s + b.sisa, 0);
 
   return {
     baris,
-    totalAnggota:    baris.length,
-    jumlahSudahBayar: sudahBayar.length,
-    jumlahBelumBayar: jumlahBelum,
-    persentase:      baris.length ? Math.round((sudahBayar.length / baris.length) * 100) : 0,
+    totalAnggota:     baris.length,
+    jumlahSudahBayar: sudahLunas.length,
+    jumlahBelumBayar: baris.length - sudahLunas.length,
+    jumlahBelumLunas: belumLunas.length,   // BARU — sedang mencicil (subset dari jumlahBelumBayar)
+    persentase:       baris.length ? Math.round((sudahLunas.length / baris.length) * 100) : 0,
     totalPemasukan,
-    totalTunggakan:  jumlahBelum * (AppState.nominalIuranStandar || 0)
+    totalTunggakan:   totalKekurangan,     // nama lama dipertahankan (report-engine.js) — nilainya kini akumulasi sisa yg lebih akurat
+    totalTargetSemua,                      // BARU
+    totalKekurangan                        // BARU — alias eksplisit, dipakai UI baru
   };
 }
 
@@ -282,10 +308,10 @@ function _renderTabPembayaranIuran(el, user, canEdit) {
     </div>
   </div>
 
-  <div class="grid grid-4" style="margin-bottom:20px">
+  <div class="grid grid-5" style="margin-bottom:20px">
     <div class="card stat-card">
       <div class="stat-value">${rekap.jumlahSudahBayar}/${rekap.totalAnggota}</div>
-      <div class="stat-label">Sudah Membayar</div>
+      <div class="stat-label">Sudah Lunas</div>
       <div class="stat-delta" style="color:var(--ink-soft)">${rekap.persentase}% dari anggota aktif</div>
     </div>
     <div class="card stat-card">
@@ -295,7 +321,17 @@ function _renderTabPembayaranIuran(el, user, canEdit) {
         </svg>
       </div>
       <div class="stat-value" style="color:var(--warning)">${rekap.jumlahBelumBayar}</div>
-      <div class="stat-label">Belum Membayar</div>
+      <div class="stat-label">Belum Lunas</div>
+      <div class="stat-delta" style="color:var(--ink-soft)">termasuk ${rekap.jumlahBelumLunas} sedang mencicil</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-icon">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m-6 4h6m-6 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/>
+        </svg>
+      </div>
+      <div class="stat-value">${formatRupiah(rekap.totalTargetSemua)}</div>
+      <div class="stat-label">Total Target Seluruh Anggota</div>
     </div>
     <div class="card stat-card">
       <div class="stat-icon" style="background:var(--success-bg);color:var(--success)">
@@ -304,7 +340,7 @@ function _renderTabPembayaranIuran(el, user, canEdit) {
         </svg>
       </div>
       <div class="stat-value" style="color:var(--success)">${formatRupiah(rekap.totalPemasukan)}</div>
-      <div class="stat-label">Pemasukan Iuran Bulan Ini</div>
+      <div class="stat-label">Total Terkumpul</div>
     </div>
     <div class="card stat-card">
       <div class="stat-icon" style="background:var(--danger-bg);color:var(--danger)">
@@ -312,8 +348,8 @@ function _renderTabPembayaranIuran(el, user, canEdit) {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
         </svg>
       </div>
-      <div class="stat-value" style="color:var(--danger)">${formatRupiah(rekap.totalTunggakan)}</div>
-      <div class="stat-label">Total Tunggakan</div>
+      <div class="stat-value" style="color:var(--danger)">${formatRupiah(rekap.totalKekurangan)}</div>
+      <div class="stat-label">Total Kekurangan</div>
     </div>
   </div>
 
@@ -328,7 +364,7 @@ function _renderTabPembayaranIuran(el, user, canEdit) {
     </div>
     <div class="table-wrap">
       <table class="data-table">
-        <thead><tr><th>Nama</th><th>Kelas</th><th>Status</th><th>Nominal</th>${canEdit?"<th>Aksi</th>":""}</tr></thead>
+        <thead><tr><th>Nama</th><th>Kelas</th><th>Target</th><th>Dibayar</th><th>Sisa</th><th>Status</th>${canEdit?"<th>Aksi</th>":""}</tr></thead>
         <tbody id="tb-iuran"></tbody>
       </table>
     </div>
@@ -339,11 +375,14 @@ function _renderTabPembayaranIuran(el, user, canEdit) {
       <div class="avatar" style="width:28px;height:28px;font-size:0.65rem">${getInisial(b.nama)}</div>${b.nama}
     </div></td>
     <td>${b.kelas}</td>
+    <td>${formatRupiah(b.target)}</td>
+    <td>${b.dibayar ? formatRupiah(b.dibayar) : "—"}</td>
+    <td>${b.sisa>0 ? formatRupiah(b.sisa) : "—"}</td>
     <td>${statusBadge(b.statusIuran)}</td>
-    <td>${b.nominalIuran ? formatRupiah(b.nominalIuran) : "—"}</td>
     ${canEdit?`<td><div style="display:flex;gap:6px;flex-wrap:wrap">
-      <button class="btn btn-ghost btn-sm btn-tandai-lunas" data-id="${b.id}" title="Tandai sudah bayar sesuai nominal standar">✓ Lunas</button>
-      <button class="btn btn-ghost btn-sm btn-nominal-khusus" data-id="${b.id}" title="Catat pembayaran dengan nominal berbeda">Rp Khusus</button>
+      ${b.sisa>0?`<button class="btn btn-ghost btn-sm btn-tandai-lunas" data-id="${b.id}" title="Lunasi sisa tagihan sekaligus (${formatRupiah(b.sisa)})">✓ Lunas</button>`:""}
+      ${b.sisa>0?`<button class="btn btn-ghost btn-sm btn-catat-pembayaran" data-id="${b.id}" title="Catat pembayaran — bisa cicilan/sebagian">+ Bayar</button>`:""}
+      ${b.riwayatPembayaran.length>0?`<button class="btn btn-ghost btn-sm btn-riwayat-iuran" data-id="${b.id}" title="Lihat riwayat pembayaran">Riwayat</button>`:""}
       ${canHapusIuran && b.statusIuran!=="Belum Bayar"?`<button class="btn btn-ghost btn-sm btn-batalkan-iuran" data-id="${b.id}" title="Kembalikan ke Belum Bayar" style="color:var(--danger)">↺</button>`:""}
     </div></td>`:""}
   </tr>`;
@@ -373,30 +412,36 @@ function _renderTabPembayaranIuran(el, user, canEdit) {
     if (!id) return;
     const a = AppState.anggota.find(x => x.id === id);
     if (!a) return;
+    const baris = rekap.baris.find(x => x.id === id);
 
     if (e.target.closest(".btn-tandai-lunas")) {
-      await DB.iuran.setStatus({
-        anggotaId:id, anggotaNama:a.nama, bulan:_iuranBulanTerpilih, tahun:_iuranTahunTerpilih,
-        status:"Lunas", nominal: AppState.nominalIuranStandar
-      });
-      if (!FIREBASE_ENABLED) _renderTabPembayaranIuran(el, user, canEdit);
-      tampilToast(`${a.nama} ditandai sudah membayar.`, "success");
-    }
-
-    if (e.target.closest(".btn-nominal-khusus")) {
-      const existing = AppState.iuran.find(r => r.anggotaId===id && r.bulan===_iuranBulanTerpilih && r.tahun===_iuranTahunTerpilih);
-      _bukaModalNominalKhusus(a, existing, async (nominal) => {
-        await DB.iuran.setStatus({
-          anggotaId:id, anggotaNama:a.nama, bulan:_iuranBulanTerpilih, tahun:_iuranTahunTerpilih,
-          status:"Khusus", nominal
+      try {
+        await DB.iuran.lunasiSisa({
+          anggotaId:id, anggotaNama:a.nama, bulan:_iuranBulanTerpilih, tahun:_iuranTahunTerpilih
         });
         if (!FIREBASE_ENABLED) _renderTabPembayaranIuran(el, user, canEdit);
-        tampilToast(`Pembayaran khusus ${a.nama} dicatat.`, "success");
+        tampilToast(`${a.nama} dilunasi.`, "success");
+      } catch (err) {
+        tampilToast("Gagal melunasi: " + err.message, "danger");
+      }
+    }
+
+    if (e.target.closest(".btn-catat-pembayaran")) {
+      _bukaModalCatatPembayaran(a, baris, async (nominalBayar) => {
+        await DB.iuran.tambahPembayaran({
+          anggotaId:id, anggotaNama:a.nama, bulan:_iuranBulanTerpilih, tahun:_iuranTahunTerpilih, nominalBayar
+        });
+        if (!FIREBASE_ENABLED) _renderTabPembayaranIuran(el, user, canEdit);
+        tampilToast(`Pembayaran ${a.nama} dicatat.`, "success");
       });
+    }
+
+    if (e.target.closest(".btn-riwayat-iuran")) {
+      _bukaModalRiwayatIuran(a, baris);
     }
 
     if (e.target.closest(".btn-batalkan-iuran") && canHapusIuran) {
-      Modal.konfirmasi(`Kembalikan status <strong>${a.nama}</strong> ke "Belum Bayar"? Transaksi kas terkait ikut dihapus.`, async () => {
+      Modal.konfirmasi(`Kembalikan status <strong>${a.nama}</strong> ke "Belum Bayar"? Transaksi kas terkait ikut dihapus (seluruh riwayat cicilan bulan ini ikut hilang).`, async () => {
         await DB.iuran.batalkan(id, _iuranBulanTerpilih, _iuranTahunTerpilih);
         if (!FIREBASE_ENABLED) _renderTabPembayaranIuran(el, user, canEdit);
         tampilToast(`Status ${a.nama} dikembalikan ke Belum Bayar.`, "default");
@@ -405,32 +450,73 @@ function _renderTabPembayaranIuran(el, user, canEdit) {
   });
 }
 
-function _bukaModalNominalKhusus(anggota, existing, onSimpan) {
+/** [F4.5] Modal catat pembayaran — bisa cicilan/sebagian ATAU langsung
+ *  lunas sekaligus (nominal = sisa penuh). Validasi batas atas (sisa)
+ *  dilakukan di sini (UX cepat) DAN di DB.iuran.tambahPembayaran()
+ *  (sumber kebenaran — mencegah race/bypass). */
+function _bukaModalCatatPembayaran(anggota, baris, onSimpan) {
+  const sisa = baris.sisa;
   Modal.buka({
-    judul: `Nominal Khusus — ${anggota.nama}`,
+    judul: `Catat Pembayaran — ${anggota.nama}`,
     konten: `
+      <div class="detail-info-grid" style="margin-top:0;margin-bottom:14px">
+        <div class="detail-info-item"><div class="lbl">Target</div><div class="val">${formatRupiah(baris.target)}</div></div>
+        <div class="detail-info-item"><div class="lbl">Sudah Dibayar</div><div class="val">${formatRupiah(baris.dibayar)}</div></div>
+        <div class="detail-info-item"><div class="lbl">Sisa</div><div class="val" style="color:var(--danger)">${formatRupiah(sisa)}</div></div>
+      </div>
       <p style="margin-top:0;color:var(--ink-soft);font-size:0.85rem">
-        Dipakai apabila pembayaran tidak sesuai nominal standar
-        (${formatRupiah(AppState.nominalIuranStandar)}) — mis. dispensasi, cicilan, atau kelebihan bayar.
+        Bisa diisi sebagian (cicilan) atau sekaligus lunas — maksimal sesuai sisa tagihan di atas.
       </p>
       <div class="field">
-        <label>Nominal Dibayar (Rp)</label>
-        <input id="f-nominal-khusus" type="number" min="0" value="${existing?.nominal||""}" placeholder="Contoh: 2000">
+        <label>Nominal Dibayar Sekarang (Rp)</label>
+        <input id="f-nominal-bayar" type="number" min="1" max="${sisa}" value="" placeholder="Contoh: 3000">
       </div>
-      <div id="err-nominal-khusus" class="alert alert-danger" style="display:none"></div>`,
+      <div id="err-nominal-bayar" class="alert alert-danger" style="display:none"></div>`,
     aksi: [
-      { label:"Batal", kelas:"btn-ghost", id:"m-batal-nominal-khusus", onClick:()=>Modal.tutup() },
-      { label:"Simpan", kelas:"btn-primary", id:"m-simpan-nominal-khusus", onClick:()=>{
-        const nominal = +document.getElementById("f-nominal-khusus").value;
+      { label:"Batal", kelas:"btn-ghost", id:"m-batal-nominal-bayar", onClick:()=>Modal.tutup() },
+      { label:"Simpan", kelas:"btn-primary", id:"m-simpan-nominal-bayar", onClick:()=>{
+        const nominal = +document.getElementById("f-nominal-bayar").value;
+        const err = document.getElementById("err-nominal-bayar");
         if (!nominal || nominal <= 0) {
-          const err = document.getElementById("err-nominal-khusus");
           err.textContent = "Nominal harus lebih dari 0."; err.style.display = "flex"; return;
         }
-        _jalankanSimpan("m-simpan-nominal-khusus", async () => {
+        if (nominal > sisa) {
+          err.textContent = `Nominal melebihi sisa tagihan (${formatRupiah(sisa)}).`; err.style.display = "flex"; return;
+        }
+        err.style.display = "none";
+        _jalankanSimpan("m-simpan-nominal-bayar", async () => {
           await onSimpan(nominal);
           Modal.tutup();
         });
       }}
     ]
+  });
+}
+
+/** [F4.5] Modal read-only riwayat pembayaran per anggota/bulan. Untuk
+ *  data lama (sebelum fitur cicilan) riwayat memang kosong — tombol
+ *  "Riwayat" tidak akan tampil sama sekali di kasus itu (lihat rowIuran),
+ *  jadi modal ini hanya pernah dibuka saat riwayat ada isinya. */
+function _bukaModalRiwayatIuran(anggota, baris) {
+  Modal.buka({
+    judul: `Riwayat Pembayaran — ${anggota.nama}`,
+    konten: `
+      <div class="detail-info-grid" style="margin-top:0">
+        <div class="detail-info-item"><div class="lbl">Target</div><div class="val">${formatRupiah(baris.target)}</div></div>
+        <div class="detail-info-item"><div class="lbl">Sudah Dibayar</div><div class="val">${formatRupiah(baris.dibayar)}</div></div>
+        <div class="detail-info-item"><div class="lbl">Sisa</div><div class="val">${baris.sisa>0?formatRupiah(baris.sisa):"—"}</div></div>
+        <div class="detail-info-item"><div class="lbl">Status</div><div class="val">${statusBadge(baris.statusIuran)}</div></div>
+      </div>
+      <div style="font-weight:700;font-size:0.85rem;margin:14px 0 10px">Riwayat Pembayaran</div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Tanggal</th><th>Nominal</th></tr></thead>
+          <tbody>${baris.riwayatPembayaran.map(r=>`<tr>
+            <td>${formatTanggal(r.tanggal)}</td>
+            <td>${formatRupiah(r.nominal)}</td>
+          </tr>`).join("")}</tbody>
+        </table>
+      </div>`,
+    aksi:[{label:"Tutup",kelas:"btn-primary",id:"modal-tutup-riwayat-iuran",onClick:()=>Modal.tutup()}]
   });
 }

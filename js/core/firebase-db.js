@@ -62,6 +62,39 @@ async function _fetchAman(fetchFn, namaCollection) {
   }
 }
 
+/**
+ * [F4.5 — Iuran Cicilan] Normalisasi SATU record iuran (atau ketiadaannya)
+ * jadi bentuk seragam {target, totalDibayar, sisa, status, riwayatPembayaran}
+ * — dipakai bersama oleh DB.iuran (write) dan _hitungRekapIuran di
+ * keuangan.js (read), supaya logikanya SATU sumber kebenaran, tidak
+ * dobel/berisiko beda hasil.
+ *
+ * 3 kasus:
+ *  1) rec tidak ada sama sekali → "Belum Bayar" implisit, target =
+ *     nominal standar SAAT INI (bulan itu belum pernah dibuat record-nya).
+ *  2) rec sudah punya field baru (totalDibayar !== undefined) → dibaca
+ *     apa adanya.
+ *  3) rec masih format LAMA (sebelum fitur cicilan — hanya {status,nominal})
+ *     → nominal yang sudah dibayar dulu dianggap SEKALIGUS jadi target,
+ *     supaya pembayaran lama yang sudah dianggap selesai oleh admin saat
+ *     itu tidak tiba-tiba surut jadi "Belum Lunas" hanya gara-gara nominal
+ *     standar berubah belakangan atau field baru belum ada.
+ */
+function _normalisasiIuranRecord(rec, targetDefault) {
+  if (!rec) {
+    return { target: targetDefault, totalDibayar: 0, sisa: targetDefault, status: "Belum Bayar", riwayatPembayaran: [] };
+  }
+  if (rec.totalDibayar !== undefined) {
+    const target = rec.target ?? targetDefault;
+    const totalDibayar = rec.totalDibayar;
+    const sisa = Math.max(0, target - totalDibayar);
+    const status = totalDibayar >= target ? "Lunas" : "Belum Lunas";
+    return { target, totalDibayar, sisa, status, riwayatPembayaran: rec.riwayatPembayaran || [] };
+  }
+  const legacyTarget = rec.nominal || targetDefault;
+  return { target: legacyTarget, totalDibayar: rec.nominal || 0, sisa: 0, status: "Lunas", riwayatPembayaran: [] };
+}
+
 /* ─────────────────────────────────────────────────────────
    AppState — runtime store seluruh aplikasi.
    Render functions membaca AppState, bukan langsung ke Firestore.
@@ -80,9 +113,10 @@ const AppState = {
   inventaris:       [],
   piket:            [],
   upacara:          [],   /* F4.4 Fitur 2 */
-  iuran:            [],   /* F4.4 Fitur 1 — hanya menyimpan status "Lunas"/"Khusus";
+  iuran:            [],   /* F4.4/F4.5 — record berisi target, totalDibayar (akumulasi
+                              cicilan), status ("Lunas"/"Belum Lunas"), riwayatPembayaran;
                               absennya record untuk (anggotaId,bulan,tahun) berarti
-                              "Belum Bayar" (default implisit, lihat DB.iuran) */
+                              "Belum Bayar" (default implisit — lihat _normalisasiIuranRecord) */
   nominalIuranStandar: 5000 /* F4.4 Fitur 1 — default, bisa diubah admin/bendahara
                                 lewat DB.iuran.setNominalStandar() */
 };
@@ -507,39 +541,79 @@ const DB = {
     }
   },
 
-  /* ──────────────────── IURAN / PEMBAYARAN BULANAN (F4.4 Fitur 1) ────────────────────
-     Desain: record iuran HANYA dibuat untuk status "Lunas"/"Khusus".
-     Absennya record untuk (anggotaId,bulan,tahun) berarti "Belum Bayar"
-     secara implisit — tidak perlu menulis N record kosong tiap bulan
-     untuk semua anggota. Rekap Pembayaran (keuangan.js) membaca "Belum
-     Bayar" sebagai default saat tidak menemukan record.
+  /* ──────────────────── IURAN / PEMBAYARAN BULANAN (F4.4 Fitur 1, + F4.5 Cicilan) ────────────────────
+     Desain: record iuran HANYA dibuat untuk pembayaran (parsial atau
+     lunas). Absennya record untuk (anggotaId,bulan,tahun) berarti
+     "Belum Bayar" secara implisit — tidak perlu menulis N record kosong
+     tiap bulan untuk semua anggota. Rekap Pembayaran (keuangan.js)
+     membaca "Belum Bayar" sebagai default saat tidak menemukan record.
 
-     SINKRONISASI KE BUKU KAS (Fitur 1.C): setiap kali status diset ke
-     Lunas/Khusus, SATU transaksi "Masuk" dibuat/diperbarui otomatis di
-     collection keuangan, ditandai `sumber:"iuran"` (lihat keuangan.js —
-     entri berlabel ini diblokir dari edit/hapus langsung di tab Buku
-     Kas, supaya tidak pernah desync dari record iuran-nya). Kedua tulis
-     (iuran + keuangan) dilakukan dalam SATU batch Firestore agar atomic
-     — pola yang sama dengan DB.presensi.simpan() di atas. */
+     [F4.5 — Cicilan] Record menyimpan `target` (nominal yang WAJIB
+     dibayar bulan itu, disalin dari nominalIuranStandar SAAT pembayaran
+     PERTAMA dibuat — supaya kalau nominal standar berubah belakangan,
+     bulan-bulan lama tidak ikut berubah targetnya), `totalDibayar`
+     (akumulasi seluruh pembayaran), dan `riwayatPembayaran` (array
+     {tanggal, nominal} — satu entri per kali bayar). Status dihitung
+     dari totalDibayar vs target: "Lunas" (>=target) atau "Belum Lunas"
+     (>0 tapi <target).
+
+     KOMPATIBILITAS DATA LAMA: record dari SEBELUM fitur cicilan hanya
+     punya {status:"Lunas"/"Khusus", nominal}. Field itu TIDAK dihapus/
+     dimigrasikan — kode baca (_normalisasiIuranRecord di keuangan.js)
+     memperlakukan `nominal` lama sebagai totalDibayar SEKALIGUS target
+     (nominal yang waktu itu dibayar dianggap sudah menutup kewajiban
+     bulan itu, sesuai keputusan admin saat itu) — jadi record lama
+     otomatis tetap tampil "Lunas", tidak pernah surut jadi "Belum
+     Lunas" hanya karena field baru belum ada.
+
+     SINKRONISASI KE BUKU KAS (Fitur 1.C, TIDAK berubah oleh F4.5):
+     TETAP satu transaksi "Masuk" per (anggota,bulan,tahun) di collection
+     keuangan, ditandai `sumber:"iuran"` — setiap kali ada pembayaran
+     baru (termasuk cicilan), transaksi itu di-UPDATE jumlahnya jadi
+     totalDibayar TERBARU (bukan baris baru per cicilan — sesuai
+     keputusan project). Kedua tulis (iuran + keuangan) tetap dalam
+     SATU batch Firestore agar atomic — pola sama dengan sebelumnya. */
   iuran: {
-    async setStatus({ anggotaId, anggotaNama, bulan, tahun, status, nominal }) {
+    /** Catat SATU kali pembayaran (bisa parsial/cicilan, bisa juga
+     *  langsung lunas sekaligus) — MENAMBAH ke total yang sudah dibayar,
+     *  BUKAN mengganti. Menolak (throw Error) jika nominalBayar akan
+     *  membuat total melebihi target — project ini belum punya
+     *  mekanisme kelebihan bayar, jadi ini murni pencegahan. */
+    async tambahPembayaran({ anggotaId, anggotaNama, bulan, tahun, nominalBayar }) {
+      if (!nominalBayar || nominalBayar <= 0) {
+        throw new Error("Nominal pembayaran harus lebih dari 0.");
+      }
+
       const existing = AppState.iuran.find(r =>
         r.anggotaId === anggotaId && r.bulan === bulan && r.tahun === tahun);
+      const n = _normalisasiIuranRecord(existing, AppState.nominalIuranStandar);
+
+      if (nominalBayar > n.sisa) {
+        throw new Error(`Pembayaran (${formatRupiah(nominalBayar)}) melebihi sisa tagihan (${formatRupiah(n.sisa)}). Project ini belum punya mekanisme kelebihan bayar.`);
+      }
+
+      const tanggalBayar = new Date().toISOString().split("T")[0];
+      const totalDibayarBaru = n.totalDibayar + nominalBayar;
+      const riwayatBaru = [...n.riwayatPembayaran, { tanggal: tanggalBayar, nominal: nominalBayar }];
+      const statusBaru = totalDibayarBaru >= n.target ? "Lunas" : "Belum Lunas";
       const uraian = `Iuran Bulanan — ${anggotaNama} — ${formatBulanTahun(bulan, tahun)}`;
       const dataKeuangan = {
-        tanggal: new Date().toISOString().split("T")[0],
-        uraian, jenis: "Masuk", jumlah: nominal, sumber: "iuran"
+        tanggal: tanggalBayar, uraian, jenis: "Masuk", jumlah: totalDibayarBaru, sumber: "iuran"
+      };
+      const dataIuranBaru = {
+        status: statusBaru, target: n.target,
+        totalDibayar: totalDibayarBaru, riwayatPembayaran: riwayatBaru
       };
 
       if (!FIREBASE_ENABLED) {
         if (existing) {
           await DB.keuangan.update(existing.keuanganId, dataKeuangan);
           const idx = AppState.iuran.findIndex(r => r.id === existing.id);
-          AppState.iuran[idx] = { ...existing, status, nominal };
+          AppState.iuran[idx] = { ...existing, ...dataIuranBaru };
         } else {
           const keuanganId = await DB.keuangan.tambah(dataKeuangan);
           const id = String(Math.max(0, ...AppState.iuran.map(x => +x.id || 0)) + 1);
-          AppState.iuran.push({ id, anggotaId, bulan, tahun, status, nominal, keuanganId });
+          AppState.iuran.push({ id, anggotaId, bulan, tahun, ...dataIuranBaru, keuanganId });
         }
         return;
       }
@@ -548,14 +622,27 @@ const DB = {
       const batch = fdb.batch();
       if (existing) {
         batch.update(fdb.collection("keuangan").doc(existing.keuanganId), dataKeuangan);
-        batch.update(fdb.collection("iuran").doc(existing.id), { status, nominal });
+        batch.update(fdb.collection("iuran").doc(existing.id), dataIuranBaru);
       } else {
         const refKeuangan = fdb.collection("keuangan").doc();
         batch.set(refKeuangan, dataKeuangan);
         const refIuran = fdb.collection("iuran").doc();
-        batch.set(refIuran, { anggotaId, bulan, tahun, status, nominal, keuanganId: refKeuangan.id });
+        batch.set(refIuran, { anggotaId, bulan, tahun, ...dataIuranBaru, keuanganId: refKeuangan.id });
       }
       await batch.commit();
+    },
+
+    /** Shortcut satu-klik: lunasi SISA tagihan bulan ini (pengganti
+     *  perilaku tombol "✓ Lunas" versi lama) — tetap lewat
+     *  tambahPembayaran() supaya tercatat sebagai satu entri riwayat
+     *  dan konsisten dengan alur cicilan. Tidak melakukan apa-apa jika
+     *  sudah Lunas (sisa 0). */
+    async lunasiSisa({ anggotaId, anggotaNama, bulan, tahun }) {
+      const existing = AppState.iuran.find(r =>
+        r.anggotaId === anggotaId && r.bulan === bulan && r.tahun === tahun);
+      const n = _normalisasiIuranRecord(existing, AppState.nominalIuranStandar);
+      if (n.sisa <= 0) return;
+      await DB.iuran.tambahPembayaran({ anggotaId, anggotaNama, bulan, tahun, nominalBayar: n.sisa });
     },
 
     /** Kembalikan ke "Belum Bayar" (implisit) — hapus record iuran DAN
