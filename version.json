@@ -1,5 +1,5 @@
 {
   "_comment": "SUMBER TUNGGAL versi aplikasi. Dipakai bersama oleh Service Worker (sw.js), Web App Manifest (manifest.json), dan nanti APK (Phase 3, twa-manifest.json). Jangan edit versi di tempat lain secara manual satu-satu — jalankan `node scripts/sync-version.js` setelah mengubah file ini, lalu deploy.",
-  "version": "1.0.0",
-  "versionCode": 1
+  "version": "1.0.1",
+  "versionCode": 2
 }

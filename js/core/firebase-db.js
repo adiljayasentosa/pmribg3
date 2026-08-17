@@ -620,16 +620,47 @@ const DB = {
 
       const fdb = firebase.firestore();
       const batch = fdb.batch();
+      let refIuranId, refKeuanganId;
       if (existing) {
-        batch.update(fdb.collection("keuangan").doc(existing.keuanganId), dataKeuangan);
-        batch.update(fdb.collection("iuran").doc(existing.id), dataIuranBaru);
+        refIuranId = existing.id;
+        refKeuanganId = existing.keuanganId;
+        batch.update(fdb.collection("keuangan").doc(refKeuanganId), dataKeuangan);
+        batch.update(fdb.collection("iuran").doc(refIuranId), dataIuranBaru);
       } else {
         const refKeuangan = fdb.collection("keuangan").doc();
         batch.set(refKeuangan, dataKeuangan);
         const refIuran = fdb.collection("iuran").doc();
         batch.set(refIuran, { anggotaId, bulan, tahun, ...dataIuranBaru, keuanganId: refKeuangan.id });
+        refIuranId = refIuran.id;
+        refKeuanganId = refKeuangan.id;
       }
       await batch.commit();
+
+      /* [Hotfix race condition] Update AppState.iuran secara
+         OPTIMISTIS & SINKRON segera setelah commit berhasil — supaya
+         panggilan tambahPembayaran() BERIKUTNYA (mis. cicilan kedua
+         yang diklik segera setelah yang pertama) langsung menemukan
+         `existing` yang benar lewat AppState.iuran.find() di atas,
+         TANPA menunggu listener onSnapshot() yang asinkron (ada jeda
+         walau biasanya singkat). Tanpa ini, panggilan kedua bisa
+         gagal menemukan `existing` dan malah membuat dokumen iuran
+         BARU yang terpisah alih-alih menambah ke totalDibayar yang
+         sudah ada — itu akar masalah bug "pembayaran kedua tidak
+         menambah total, seolah transaksi sebelumnya berdiri sendiri".
+
+         onSnapshot TETAP jadi sumber kebenaran akhir (menangani
+         perubahan dari sesi/perangkat lain) — begitu snapshot-nya
+         tiba, ia menimpa AppState.iuran lagi dengan data server yang
+         sesungguhnya; hasilnya idempotent karena data yang baru saja
+         di-commit ini SAMA dengan yang tersimpan di Firestore. */
+      if (existing) {
+        const idx = AppState.iuran.findIndex(r => r.id === refIuranId);
+        if (idx !== -1) AppState.iuran[idx] = { ...existing, ...dataIuranBaru };
+      } else {
+        AppState.iuran.push({
+          id: refIuranId, anggotaId, bulan, tahun, ...dataIuranBaru, keuanganId: refKeuanganId
+        });
+      }
     },
 
     /** Shortcut satu-klik: lunasi SISA tagihan bulan ini (pengganti
