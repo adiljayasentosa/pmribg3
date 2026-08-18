@@ -37,17 +37,33 @@
 
    Tanpa env var ini ter-set, endpoint mengembalikan 500 (bukan
    crash) — fitur lain di aplikasi tetap berjalan normal.
+
+   [HOTFIX] Sempat pakai classic namespace API (`require("firebase-
+   admin")` + `admin.apps`/`admin.initializeApp`/`admin.credential.
+   cert`/`admin.auth()`/`admin.firestore()`), tapi di runtime Vercel
+   project ini objek yang dikembalikan require() tidak punya properti
+   `.apps` seperti yang diharapkan (`TypeError: Cannot read properties
+   of undefined (reading 'length')` persis di baris pengecekan
+   `admin.apps.length` — dikonfirmasi dari Vercel Runtime Logs).
+   Diganti ke MODULAR API (`firebase-admin/app`, `/auth`, `/firestore`)
+   — pola resmi yang sekarang direkomendasikan Firebase, tidak
+   bergantung pada bentuk objek namespace classic yang bermasalah di
+   lingkungan bundling Vercel ini. Logic verifikasi token, cek role,
+   whitelist collection, dan validasi lain TIDAK berubah — murni cara
+   memanggil SDK-nya saja.
    ========================================================= */
 
-const admin = require("firebase-admin");
+const { initializeApp, cert, getApps } = require("firebase-admin/app");
+const { getAuth } = require("firebase-admin/auth");
+const { getFirestore } = require("firebase-admin/firestore");
 
 /* Inisialisasi SEKALI per instance server — Vercel bisa memakai
    ulang ("warm") container yang sama antar-request; initializeApp()
    kedua kali pada instance yang sama akan error kalau tidak dijaga. */
-if (!admin.apps.length && process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+if (!getApps().length && process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
   try {
     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-    admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+    initializeApp({ credential: cert(serviceAccount) });
   } catch (e) {
     console.error("[api/backup-verify] FIREBASE_SERVICE_ACCOUNT_KEY tidak valid:", e.message);
   }
@@ -72,7 +88,7 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: "Method tidak diizinkan. Gunakan POST." });
   }
 
-  if (!admin.apps.length) {
+  if (!getApps().length) {
     return res.status(500).json({ error: "Konfigurasi backend (FIREBASE_SERVICE_ACCOUNT_KEY) belum lengkap di server." });
   }
 
@@ -88,7 +104,7 @@ module.exports = async function handler(req, res) {
        sendiri. */
     let decoded;
     try {
-      decoded = await admin.auth().verifyIdToken(idToken, true);
+      decoded = await getAuth().verifyIdToken(idToken, true);
     } catch (e) {
       return res.status(401).json({ error: "Sesi tidak valid, silakan login ulang." });
     }
@@ -97,7 +113,7 @@ module.exports = async function handler(req, res) {
        kebenaran role di project ini (identik dengan yang dipakai
        firestore.rules & auth.js di client), BUKAN dari custom claim
        token (project ini tidak memakainya). */
-    const userDoc = await admin.firestore().collection("users").doc(decoded.uid).get();
+    const userDoc = await getFirestore().collection("users").doc(decoded.uid).get();
     const role = userDoc.exists ? userDoc.data().role : null;
     if (role !== "admin") {
       return res.status(403).json({ error: "Hanya admin yang boleh membuat backup." });
@@ -107,7 +123,7 @@ module.exports = async function handler(req, res) {
        server (bypass firestore.rules lewat service account — sengaja,
        supaya admin yang memang berhak tidak terhambat Rules yang
        dirancang untuk membatasi role LAIN, bukan admin). */
-    const fdb = admin.firestore();
+    const fdb = getFirestore();
     const collections = {};
     await Promise.all(KOLEKSI_BACKUP.map(async (nama) => {
       const snap = await fdb.collection(nama).get();
