@@ -93,6 +93,26 @@ function _initDashboard(user) {
   ));
   overlay.addEventListener("click", closeSidebar);
 
+  /* ── Toggle Expanded ↔ Mini (desktop) ──
+     Murni preferensi tampilan lokal, disimpan di localStorage supaya
+     state-nya dipertahankan saat pindah halaman maupun reload. Tidak
+     menyentuh Firebase/Firestore sama sekali. */
+  const btnCollapse = document.getElementById("btn-collapse-sidebar");
+  if (btnCollapse) {
+    if (localStorage.getItem("pmr_sidebar_collapsed") === "1") {
+      sidebar.classList.add("collapsed");
+      btnCollapse.setAttribute("aria-label", "Perluas sidebar");
+      btnCollapse.title = "Perluas sidebar";
+    }
+    btnCollapse.addEventListener("click", () => {
+      const isCollapsed = sidebar.classList.toggle("collapsed");
+      localStorage.setItem("pmr_sidebar_collapsed", isCollapsed ? "1" : "0");
+      const label = isCollapsed ? "Perluas sidebar" : "Ciutkan sidebar";
+      btnCollapse.setAttribute("aria-label", label);
+      btnCollapse.title = label;
+    });
+  }
+
   /* ── Navigasi SPA-lite ── */
   const contentArea = document.getElementById("content-area");
   const navLinks    = document.querySelectorAll(".sidebar-link[data-page]");
@@ -131,9 +151,13 @@ function _initDashboard(user) {
          sama seperti pengunjung umum. */
       "konten-artikel", "konten-video", "konten-poster", "konten-dokumentasi"
     ];
+    /* querySelectorAll (bukan querySelector) — beberapa data-page kini
+       punya 2 elemen (sidebar + shortcut Bottom Navigation mobile),
+       keduanya harus ikut disembunyikan untuk role "anggota". */
     sembunyikanUntukAnggota.forEach(page => {
-      const link = document.querySelector(`.sidebar-link[data-page="${page}"]`);
-      if (link) link.style.display = "none";
+      document.querySelectorAll(`.sidebar-link[data-page="${page}"]`).forEach(link => {
+        link.style.display = "none";
+      });
     });
     const linkProfil = document.querySelector('.sidebar-link[data-page="profilsaya"]');
     if (linkProfil) linkProfil.style.display = "";
