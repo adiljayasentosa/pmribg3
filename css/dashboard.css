@@ -49,18 +49,26 @@
 .sidebar-brand .brand-name{ font-family:var(--font-display); font-weight:700; font-size:0.92rem; line-height:1.25; color:var(--white); white-space:nowrap; }
 .sidebar-brand .brand-sub{ font-size:0.68rem; color:rgba(255,255,255,0.72); white-space:nowrap; }
 
-/* Toggle Expanded ↔ Mini (desktop only) */
+/* Toggle Expanded ↔ Mini (desktop only) — handle BULAT MENGAMBANG di
+   tepi kanan sidebar, posisinya tetap sama persis baik saat expanded
+   maupun mini karena position:absolute relatif ke .sidebar (bukan ikut
+   alur .sidebar-brand) — jadi TIDAK memakan ruang tata letak apa pun. */
 .sidebar-collapse-btn{
-  flex-shrink:0;
-  width:28px; height:28px;
-  border:none; border-radius:var(--radius-sm);
-  background:rgba(255,255,255,0.14);
-  color:var(--white);
+  position:absolute;
+  top:84px; right:-13px;
+  transform:translateY(-50%);
+  width:26px; height:26px;
+  border:2px solid var(--pmr-red-dark);
+  border-radius:50%;
+  background:var(--white);
+  color:var(--pmr-red-dark);
   display:flex; align-items:center; justify-content:center;
   cursor:pointer;
-  transition:background var(--transition), transform var(--transition);
+  box-shadow:var(--shadow-sm);
+  transition:background var(--transition);
+  z-index:61;
 }
-.sidebar-collapse-btn:hover{ background:rgba(255,255,255,0.26); }
+.sidebar-collapse-btn:hover{ background:var(--gray-100); }
 .sidebar-collapse-btn svg{ transition:transform var(--transition); }
 .sidebar.collapsed .sidebar-collapse-btn svg{ transform:rotate(180deg); }
 
@@ -82,8 +90,17 @@
 .sidebar-nav{
   flex:1;
   overflow-y:auto;
+  overflow-x:hidden;
   padding:6px 12px 14px;
+  /* Scrollbar tipis & minimalis (bukan bawaan browser yang tebal +
+     ada tombol panah atas/bawah) */
+  scrollbar-width:thin;
+  scrollbar-color:rgba(255,255,255,0.3) transparent;
 }
+.sidebar-nav::-webkit-scrollbar{ width:5px; }
+.sidebar-nav::-webkit-scrollbar-track{ background:transparent; }
+.sidebar-nav::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.3); border-radius:999px; }
+.sidebar-nav::-webkit-scrollbar-thumb:hover{ background:rgba(255,255,255,0.5); }
 /* Menu: icon putih, text putih */
 .sidebar-nav .nav-section-label{
   font-size:0.68rem;
@@ -144,18 +161,11 @@
 .sidebar-link-btn{ appearance:none; }
 
 /* ---------- Mode Mini / Collapsed (desktop) ---------- */
-.sidebar.collapsed{ width:var(--sidebar-width-collapsed); overflow-x:hidden; }
+.sidebar.collapsed{ width:var(--sidebar-width-collapsed); }
 .sidebar.collapsed .sidebar-brand-text{
   opacity:0; max-width:0; min-width:0; margin:0; pointer-events:none;
 }
-/* Brand di-stack VERTIKAL saat mini (logo di atas, tombol toggle di
-   bawahnya) — kalau tetap sejajar horizontal, logo+tombol+gap tidak
-   muat di lebar 76px dan tombolnya jadi terdorong keluar/tak terlihat. */
-.sidebar.collapsed .sidebar-brand{
-  flex-direction:column;
-  gap:10px;
-  padding:16px 8px;
-}
+.sidebar.collapsed .sidebar-brand{ justify-content:center; padding:22px 8px; }
 .sidebar.collapsed .sidebar-user{ padding:12px 8px; justify-content:center; }
 .sidebar.collapsed .sidebar-user > div:last-child{ display:none; }
 .sidebar.collapsed .nav-section-label{ opacity:0; height:0; padding:0; margin:0; overflow:hidden; }
@@ -301,10 +311,10 @@
   .sidebar-overlay.open{ display:block; }
   /* Mode mini tidak berlaku di mobile — sidebar mobile selalu jadi
      drawer penuh (expanded) saat dibuka */
-  .sidebar.collapsed{ width:var(--sidebar-width); overflow-x:visible; }
+  .sidebar.collapsed{ width:var(--sidebar-width); }
   .sidebar.collapsed .sidebar-brand-text,
   .sidebar.collapsed .sidebar-link-label{ opacity:1; max-width:200px; min-width:0; margin:0; pointer-events:auto; }
-  .sidebar.collapsed .sidebar-brand{ flex-direction:row; gap:12px; padding:22px 20px; }
+  .sidebar.collapsed .sidebar-brand{ justify-content:flex-start; padding:22px 20px; }
   .sidebar.collapsed .sidebar-user{ padding:12px 14px; justify-content:flex-start; }
   .sidebar.collapsed .sidebar-user > div:last-child{ display:block; }
   .sidebar.collapsed .nav-section-label{ opacity:1; height:auto; padding:14px 12px 6px; margin:0; overflow:visible; }

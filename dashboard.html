@@ -95,13 +95,17 @@
         <div class="brand-name">PMR WIRA UNIT</div>
         <div class="brand-sub">SMK IBG 3 · 2025/2026</div>
       </div>
-      <!-- Toggle Expanded ↔ Mini — DESKTOP saja, disembunyikan di mobile via CSS -->
-      <button id="btn-collapse-sidebar" class="sidebar-collapse-btn" aria-label="Ciutkan sidebar" title="Ciutkan sidebar">
-        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
-        </svg>
-      </button>
     </div>
+
+    <!-- Toggle Expanded ↔ Mini — handle mengambang di tepi sidebar,
+         DESKTOP saja (disembunyikan di mobile via CSS). Sengaja di luar
+         .sidebar-brand supaya TIDAK makan ruang tata letak sama sekali,
+         baik saat expanded maupun mini. -->
+    <button id="btn-collapse-sidebar" class="sidebar-collapse-btn" aria-label="Ciutkan sidebar" title="Ciutkan sidebar">
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+      </svg>
+    </button>
 
     <!-- Info user -->
     <div class="sidebar-user">
