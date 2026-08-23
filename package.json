@@ -3,7 +3,7 @@
   "private": true,
   "description": "Dependency backend Vercel Serverless Functions (api/). Website utamanya sendiri tetap murni HTML/CSS/JS statis tanpa build step — package.json ini HANYA supaya Vercel bisa install firebase-admin untuk api/backup-verify.js.",
   "engines": {
-    "node": ">=20"
+    "node": "24.x"
   },
   "dependencies": {
     "firebase-admin": "^14.0.0"
