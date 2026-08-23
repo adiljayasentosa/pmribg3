@@ -120,10 +120,15 @@
 .sidebar-link.active svg{ color:var(--pmr-red); }
 
 /* Label menu — disembunyikan smooth saat sidebar mini (lihat blok
-   .sidebar.collapsed di bawah), normal di mode expanded */
+   .sidebar.collapsed di bawah), normal di mode expanded.
+   min-width:0 WAJIB ada: tanpa ini, flex item secara default tetap
+   mereservasi lebar kontennya (min-width:auto bawaan browser) walau
+   sudah diberi max-width:0 — itulah penyebab overflow horizontal
+   (scrollbar bawah) & tombol toggle "terdorong" keluar saat mini. */
 .sidebar-link-label{
   white-space:nowrap;
   overflow:hidden;
+  min-width:0;
   transition:opacity var(--transition), max-width var(--transition), margin var(--transition);
   max-width:200px;
 }
@@ -139,17 +144,32 @@
 .sidebar-link-btn{ appearance:none; }
 
 /* ---------- Mode Mini / Collapsed (desktop) ---------- */
-.sidebar.collapsed{ width:var(--sidebar-width-collapsed); }
+.sidebar.collapsed{ width:var(--sidebar-width-collapsed); overflow-x:hidden; }
 .sidebar.collapsed .sidebar-brand-text{
-  opacity:0; max-width:0; margin:0; pointer-events:none;
+  opacity:0; max-width:0; min-width:0; margin:0; pointer-events:none;
 }
-.sidebar.collapsed .sidebar-brand{ padding-left:16px; padding-right:12px; }
+/* Brand di-stack VERTIKAL saat mini (logo di atas, tombol toggle di
+   bawahnya) — kalau tetap sejajar horizontal, logo+tombol+gap tidak
+   muat di lebar 76px dan tombolnya jadi terdorong keluar/tak terlihat. */
+.sidebar.collapsed .sidebar-brand{
+  flex-direction:column;
+  gap:10px;
+  padding:16px 8px;
+}
 .sidebar.collapsed .sidebar-user{ padding:12px 8px; justify-content:center; }
 .sidebar.collapsed .sidebar-user > div:last-child{ display:none; }
 .sidebar.collapsed .nav-section-label{ opacity:0; height:0; padding:0; margin:0; overflow:hidden; }
-.sidebar.collapsed .sidebar-link{ justify-content:center; padding-left:0; padding-right:0; }
+/* Kotak highlight menu jadi pas ukuran icon (40x40, center), bukan
+   selebar baris — biar tidak terlihat "lebar" saat aktif/hover */
+.sidebar.collapsed .sidebar-nav .sidebar-link,
+.sidebar.collapsed .sidebar-account .sidebar-link{
+  width:40px; height:40px;
+  padding:0;
+  margin:0 auto 2px;
+  justify-content:center;
+}
 .sidebar.collapsed .sidebar-link-label{
-  opacity:0; max-width:0; margin:0;
+  opacity:0; max-width:0; min-width:0; margin:0;
 }
 /* PENTING: .app-main adalah SIBLING dari .sidebar (sama-sama anak
    langsung .app-shell), BUKAN descendant — selector descendant biasa
@@ -281,13 +301,20 @@
   .sidebar-overlay.open{ display:block; }
   /* Mode mini tidak berlaku di mobile — sidebar mobile selalu jadi
      drawer penuh (expanded) saat dibuka */
-  .sidebar.collapsed{ width:var(--sidebar-width); }
+  .sidebar.collapsed{ width:var(--sidebar-width); overflow-x:visible; }
   .sidebar.collapsed .sidebar-brand-text,
-  .sidebar.collapsed .sidebar-link-label{ opacity:1; max-width:200px; margin:0; pointer-events:auto; }
+  .sidebar.collapsed .sidebar-link-label{ opacity:1; max-width:200px; min-width:0; margin:0; pointer-events:auto; }
+  .sidebar.collapsed .sidebar-brand{ flex-direction:row; gap:12px; padding:22px 20px; }
   .sidebar.collapsed .sidebar-user{ padding:12px 14px; justify-content:flex-start; }
   .sidebar.collapsed .sidebar-user > div:last-child{ display:block; }
   .sidebar.collapsed .nav-section-label{ opacity:1; height:auto; padding:14px 12px 6px; margin:0; overflow:visible; }
-  .sidebar.collapsed .sidebar-link{ justify-content:flex-start; padding-left:12px; padding-right:12px; }
+  .sidebar.collapsed .sidebar-nav .sidebar-link,
+  .sidebar.collapsed .sidebar-account .sidebar-link{
+    width:100%; height:auto;
+    justify-content:flex-start;
+    padding:11px 12px;
+    margin:0 0 2px;
+  }
   .sidebar-collapse-btn{ display:none; }
 
   .bottom-nav{ display:flex; }
@@ -297,4 +324,14 @@
 @media (max-width: 560px){
   .content{ padding:20px 16px 84px; }
   .topbar{ padding:0 16px; }
+}
+
+/* Indikator Online/Offline (dibuat oleh js/pwa-register.js, dipakai di
+   semua halaman) — di dashboard mobile ia bertabrakan dengan Bottom
+   Navigation baru. Geser naik ke atasnya, khusus di sini saja; halaman
+   publik lain tidak tersentuh karena aturan ini ada di dashboard.css. */
+@media (max-width: 1024px){
+  #pmr-net-badge{
+    bottom: calc(60px + env(safe-area-inset-bottom) + 8px) !important;
+  }
 }
