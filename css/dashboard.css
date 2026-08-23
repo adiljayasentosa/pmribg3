@@ -151,7 +151,10 @@
 .sidebar.collapsed .sidebar-link-label{
   opacity:0; max-width:0; margin:0;
 }
-.sidebar.collapsed .app-main{ margin-left:var(--sidebar-width-collapsed); }
+/* PENTING: .app-main adalah SIBLING dari .sidebar (sama-sama anak
+   langsung .app-shell), BUKAN descendant — selector descendant biasa
+   tidak akan pernah match. Pakai adjacent-sibling combinator. */
+.sidebar.collapsed + .app-main{ margin-left:var(--sidebar-width-collapsed); }
 
 /* Tooltip nama menu saat hover, hanya muncul dalam mode mini (desktop) */
 @media (min-width:1025px){
