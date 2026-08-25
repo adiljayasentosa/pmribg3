@@ -69,10 +69,11 @@ document.addEventListener("DOMContentLoaded", () => {
   /* =========================================================
      STRUKTUR PENGURUS PUBLIK
      Satu sumber data dengan Dashboard: pengurus/struktur.
-     Public page hanya membaca data terbaru; tidak ada tombol edit.
+     Pembina dipisahkan dari bagan struktur agar hierarki publik jelas.
      ========================================================= */
   const landingPengurus = document.getElementById("landing-pengurus-grid");
-  if (landingPengurus) {
+  const landingPembina = document.getElementById("landing-pembina-grid");
+  if (landingPengurus || landingPembina) {
     const escapeHtml = (value) => String(value ?? "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
@@ -84,28 +85,80 @@ document.addEventListener("DOMContentLoaded", () => {
       .trim().split(/\s+/).filter(Boolean).slice(0, 2)
       .map(k => k[0]).join("").toUpperCase() || "?";
 
+    const orangHtml = (orang, compact = false) => `
+      <div class="org-tree-person${compact ? " org-tree-person-compact" : ""}">
+        <div class="org-tree-avatar">${escapeHtml(inisial(orang.nama))}</div>
+        <div class="org-tree-role">${escapeHtml(orang.jabatan)}</div>
+        <div class="org-tree-name">${escapeHtml(orang.nama)}</div>
+      </div>`;
+
+    const renderChip = (orang) => `
+      <div class="org-chip">
+        <div class="avatar" style="background:var(--pmr-red)">${escapeHtml(inisial(orang.nama))}</div>
+        <div>
+          <div class="org-role">${escapeHtml(orang.jabatan)}</div>
+          <div class="org-name">${escapeHtml(orang.nama)}</div>
+        </div>
+      </div>`;
+
     const renderPengurusPublik = (data) => {
       const jabatan = Array.isArray(data?.jabatan) ? data.jabatan : [];
-      const terisi = jabatan.flatMap(item =>
-        (Array.isArray(item.anggota) ? item.anggota : []).map(orang => ({
-          jabatan: item.jabatan,
-          nama: orang.nama
-        }))
-      );
+      const normalized = jabatan.map(item => ({
+        roleId: String(item?.role_id || ""),
+        jabatan: String(item?.jabatan || "Jabatan"),
+        anggota: Array.isArray(item?.anggota) ? item.anggota.filter(a => a && a.nama) : []
+      }));
 
-      if (!terisi.length) {
-        landingPengurus.innerHTML = `<p style="color:var(--ink-soft)">Data pengurus belum tersedia.</p>`;
+      const pembimbing = normalized.find(item => item.roleId === "pembimbing");
+      if (landingPembina) {
+        const people = pembimbing?.anggota || [];
+        landingPembina.innerHTML = people.length
+          ? people.map(renderChip).join("")
+          : `<p class="org-empty">Data pembina belum tersedia.</p>`;
+      }
+
+      if (!landingPengurus) return;
+
+      const byRole = (roleId) => normalized.find(item => item.roleId === roleId);
+      const people = (item) => (item?.anggota || []).map(a => ({
+        nama: a.nama,
+        jabatan: item.jabatan
+      }));
+
+      const ketua = people(byRole("ketua"));
+      const wakil = people(byRole("wakil"));
+      const sekretaris = people(byRole("sekretaris"));
+      const bendahara = people(byRole("bendahara"));
+      const pj = normalized
+        .filter(item => item.roleId.startsWith("pj_"))
+        .flatMap(item => people(item));
+
+      if (!ketua.length && !wakil.length && !sekretaris.length && !bendahara.length && !pj.length) {
+        landingPengurus.innerHTML = `<div class="org-tree-empty"><strong>Struktur pengurus belum tersedia</strong><span>Susunan kepengurusan akan segera diperbarui.</span></div>`;
         return;
       }
 
-      landingPengurus.innerHTML = terisi.map(orang => `
-        <div class="org-chip">
-          <div class="avatar" style="background:var(--pmr-red)">${escapeHtml(inisial(orang.nama))}</div>
-          <div>
-            <div class="org-role">${escapeHtml(orang.jabatan)}</div>
-            <div class="org-name">${escapeHtml(orang.nama)}</div>
-          </div>
-        </div>`).join("");
+      const first = ketua[0];
+      const second = [...wakil, ...sekretaris];
+      const third = [...bendahara, ...pj];
+
+      landingPengurus.innerHTML = `
+        ${first ? `
+          <div class="org-tree-level org-tree-level-top">
+            ${orangHtml(first)}
+          </div>` : ""}
+
+        ${second.length ? `
+          <div class="org-tree-connector org-tree-connector-second" aria-hidden="true"></div>
+          <div class="org-tree-level org-tree-level-second">
+            ${second.map(orang => orangHtml(orang)).join("")}
+          </div>` : ""}
+
+        ${third.length ? `
+          <div class="org-tree-connector org-tree-connector-third" aria-hidden="true"></div>
+          <div class="org-tree-level org-tree-level-third">
+            ${third.map(orang => orangHtml(orang, true)).join("")}
+          </div>` : ""}`;
     };
 
     if (typeof FIREBASE_ENABLED !== "undefined" && FIREBASE_ENABLED && window.firebase?.firestore) {
@@ -113,7 +166,8 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(snap => renderPengurusPublik(snap.exists ? snap.data() : null))
         .catch(err => {
           console.error("[PMR] Gagal mengambil struktur pengurus publik:", err);
-          landingPengurus.innerHTML = `<p style="color:var(--ink-soft)">Data pengurus belum dapat dimuat.</p>`;
+          if (landingPengurus) landingPengurus.innerHTML = `<div class="org-tree-empty"><strong>Struktur pengurus belum dapat dimuat</strong><span>Silakan coba muat ulang halaman.</span></div>`;
+          if (landingPembina) landingPembina.innerHTML = `<p class="org-empty">Data pembina belum dapat dimuat.</p>`;
         });
     } else {
       renderPengurusPublik(null);

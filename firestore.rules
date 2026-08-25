@@ -132,7 +132,7 @@ service cloud.firestore {
     // ═══════════════════════════════════════════════════
     match /kegiatan/{kegiatanId} {
 
-      // READ: Semua user login, termasuk anggota.
+      // READ: Anggota yang login boleh melihat kegiatan.
       allow read: if isLoggedIn();
 
       // CREATE & UPDATE: Pengurus kecuali bendahara.
@@ -197,15 +197,13 @@ service cloud.firestore {
     // COLLECTION: pengurus
     //
     // Struktur organisasi (dokumen tunggal: pengurus/struktur).
-    // Ditampilkan juga di Home publik — baca bersifat publik (lihat
-    // catatan [FIX v1.1.1] pada rule read di bawah).
+    // Informasi publik internal — anggota boleh baca.
     // ═══════════════════════════════════════════════════
     match /pengurus/{docId} {
 
-      // [FIX v1.1.1] READ: Publik — struktur pengurus memang ditampilkan
-      // di Home publik (js/landing.js), jadi harus bisa dibaca tanpa
-      // login. Dokumen ini hanya berisi struktur organisasi (jabatan,
-      // nama, guru pembina, periode) — bukan data sensitif anggota.
+      // READ: Struktur pengurus ditampilkan di public pages.
+      // Data yang disimpan di dokumen ini hanya struktur organisasi,
+      // bukan data sensitif anggota.
       allow read: if true;
 
       // CREATE & UPDATE: Admin dan ketua.
