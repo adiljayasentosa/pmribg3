@@ -197,12 +197,16 @@ service cloud.firestore {
     // COLLECTION: pengurus
     //
     // Struktur organisasi (dokumen tunggal: pengurus/struktur).
-    // Informasi publik internal — anggota boleh baca.
+    // Ditampilkan juga di Home publik — baca bersifat publik (lihat
+    // catatan [FIX v1.1.1] pada rule read di bawah).
     // ═══════════════════════════════════════════════════
     match /pengurus/{docId} {
 
-      // READ: Semua user login, termasuk anggota.
-      allow read: if isLoggedIn();
+      // [FIX v1.1.1] READ: Publik — struktur pengurus memang ditampilkan
+      // di Home publik (js/landing.js), jadi harus bisa dibaca tanpa
+      // login. Dokumen ini hanya berisi struktur organisasi (jabatan,
+      // nama, guru pembina, periode) — bukan data sensitif anggota.
+      allow read: if true;
 
       // CREATE & UPDATE: Admin dan ketua.
       // Perubahan struktur adalah keputusan strategis pimpinan.

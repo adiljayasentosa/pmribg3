@@ -67,6 +67,60 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   /* =========================================================
+     STRUKTUR PENGURUS PUBLIK
+     Satu sumber data dengan Dashboard: pengurus/struktur.
+     Public page hanya membaca data terbaru; tidak ada tombol edit.
+     ========================================================= */
+  const landingPengurus = document.getElementById("landing-pengurus-grid");
+  if (landingPengurus) {
+    const escapeHtml = (value) => String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+    const inisial = (nama) => String(nama || "?")
+      .trim().split(/\s+/).filter(Boolean).slice(0, 2)
+      .map(k => k[0]).join("").toUpperCase() || "?";
+
+    const renderPengurusPublik = (data) => {
+      const jabatan = Array.isArray(data?.jabatan) ? data.jabatan : [];
+      const terisi = jabatan.flatMap(item =>
+        (Array.isArray(item.anggota) ? item.anggota : []).map(orang => ({
+          jabatan: item.jabatan,
+          nama: orang.nama
+        }))
+      );
+
+      if (!terisi.length) {
+        landingPengurus.innerHTML = `<p style="color:var(--ink-soft)">Data pengurus belum tersedia.</p>`;
+        return;
+      }
+
+      landingPengurus.innerHTML = terisi.map(orang => `
+        <div class="org-chip">
+          <div class="avatar" style="background:var(--pmr-red)">${escapeHtml(inisial(orang.nama))}</div>
+          <div>
+            <div class="org-role">${escapeHtml(orang.jabatan)}</div>
+            <div class="org-name">${escapeHtml(orang.nama)}</div>
+          </div>
+        </div>`).join("");
+    };
+
+    if (typeof FIREBASE_ENABLED !== "undefined" && FIREBASE_ENABLED && window.firebase?.firestore) {
+      firebase.firestore().collection("pengurus").doc("struktur").get()
+        .then(snap => renderPengurusPublik(snap.exists ? snap.data() : null))
+        .catch(err => {
+          console.error("[PMR] Gagal mengambil struktur pengurus publik:", err);
+          landingPengurus.innerHTML = `<p style="color:var(--ink-soft)">Data pengurus belum dapat dimuat.</p>`;
+        });
+    } else {
+      renderPengurusPublik(null);
+    }
+  }
+
+  /* =========================================================
      [F6.0] LANDING DATA SOURCE — 4 section dinamis
      =========================================================
      Hanya berjalan di halaman yang punya kontainernya (index.html).
