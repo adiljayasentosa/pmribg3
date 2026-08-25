@@ -7,14 +7,21 @@
 /* ─────────────────────────────────────────────────────────
    ANGGOTA
 ───────────────────────────────────────────────────────── */
+/* [FIX — Divisi Anggota] SATU-SATUNYA sumber pilihan divisi anggota di
+   seluruh project — dipakai baik oleh form Tambah/Edit maupun validator
+   Import CSV, supaya keduanya tidak bisa diam-diam berbeda. Sesuai
+   kebutuhan organisasi saat ini, divisi hanya ada 2. */
+const DIVISI_ANGGOTA_LIST = ["Pertolongan Pertama", "Tandu"];
+
 function renderAnggota(el, user) {
-  const canEdit = ["admin","ketua","sekretaris"].includes(user.role);
+  const canEdit = ["admin","ketua","wakil","sekretaris"].includes(user.role);
   el.innerHTML = `
   <div class="page-head">
     <div><h1>Data Anggota</h1><p class="page-sub">${AppState.anggota.length} anggota terdaftar</p></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-outline btn-sm" id="btn-print-anggota">🖨 Cetak</button>
-      ${canEdit?`<button class="btn btn-primary btn-sm" id="btn-tambah-anggota">+ Tambah Anggota</button>`:""}
+      ${canEdit?`<button class="btn btn-outline btn-sm" id="btn-import-anggota">⇧ Import Anggota</button>
+      <button class="btn btn-primary btn-sm" id="btn-tambah-anggota">+ Tambah Anggota</button>`:""}
     </div>
   </div>
   <div class="card">
@@ -28,7 +35,7 @@ function renderAnggota(el, user) {
     </div>
     <div class="table-wrap">
       <table class="data-table">
-        <thead><tr><th>#</th><th>Nama</th><th>Kelas</th><th>Divisi</th><th>Status</th><th>Aksi</th></tr></thead>
+        <thead><tr><th>#</th><th>Nama</th><th>Nomor Induk</th><th>Jabatan</th><th>Status Keanggotaan</th><th>Status Akun</th><th>Aksi</th></tr></thead>
         <tbody id="tb-anggota"></tbody>
       </table>
     </div>
@@ -44,7 +51,7 @@ function renderAnggota(el, user) {
       <div class="avatar" style="width:32px;height:32px;font-size:0.7rem">${getInisial(a.nama)}</div>
       <strong>${a.nama}</strong>
     </div></td>
-    <td>${a.kelas}</td><td>${a.divisi}</td><td>${statusBadge(a.status)}</td>
+    <td>${a.nomorInduk||"—"}</td><td>${a.jabatan||"Anggota"}</td><td>${statusBadge(a.statusKeanggotaan||a.status)}</td><td>${statusBadge(a.statusAkun||"active")}</td>
     <td><div style="display:flex;gap:6px">
       <button class="btn btn-ghost btn-sm btn-detail-anggota" data-id="${a.id}" title="Detail" aria-label="Lihat detail ${a.nama}">👁</button>
       ${canEdit?`<button class="btn btn-ghost btn-sm btn-edit-anggota" data-id="${a.id}" title="Edit" aria-label="Edit ${a.nama}">✏</button>
@@ -53,7 +60,7 @@ function renderAnggota(el, user) {
   </tr>`;
 
   renderTable(document.getElementById("tb-anggota"), AppState.anggota, rowAnggota);
-  pasangSearch("search-anggota","tb-anggota", AppState.anggota, rowAnggota, ["nama","kelas","divisi","status"]);
+  pasangSearch("search-anggota","tb-anggota", AppState.anggota, rowAnggota, ["nama","nomorInduk","kelas","divisi","jabatan","statusKeanggotaan","statusAkun"]);
 
   document.getElementById("tb-anggota").addEventListener("click", e => {
     const id = e.target.closest("[data-id]")?.dataset.id;
@@ -76,6 +83,8 @@ function renderAnggota(el, user) {
 
   document.getElementById("btn-tambah-anggota")?.addEventListener("click", () =>
     bukaFormAnggota(null, () => renderAnggota(el, user)));
+  document.getElementById("btn-import-anggota")?.addEventListener("click", () =>
+    bukaImportAnggota(() => renderAnggota(el, user)));
   document.getElementById("btn-print-anggota")?.addEventListener("click", () => window.print());
 }
 
@@ -91,10 +100,10 @@ function bukaDetailAnggota(a) {
     konten:`
       <div class="detail-hero">
         <div class="avatar">${getInisial(a.nama)}</div>
-        <div><div class="detail-nama">${a.nama}</div><div class="detail-kelas">${a.kelas} · ${a.divisi}</div></div>
+        <div><div class="detail-nama">${a.nama}</div><div class="detail-kelas">${[a.kelas,a.divisi].filter(Boolean).join(" · ") || "—"}</div></div>
       </div>
       <div class="detail-info-grid" style="margin-top:0">
-        <div class="detail-info-item"><div class="lbl">Status</div><div class="val">${statusBadge(a.status)}</div></div>
+        <div class="detail-info-item"><div class="lbl">Status</div><div class="val">${statusBadge(a.statusKeanggotaan || a.status)}</div></div>
         <div class="detail-info-item"><div class="lbl">Bergabung</div><div class="val">${a.bergabung?formatTanggal(a.bergabung):"—"}</div></div>
         <div class="detail-info-item"><div class="lbl">Divisi</div><div class="val">${a.divisi||"—"}</div></div>
         <div class="detail-info-item"><div class="lbl">Kehadiran</div>
@@ -123,10 +132,7 @@ function bukaDetailAnggota(a) {
 
 function bukaFormAnggota(data, onSimpan) {
   const isEdit = !!data;
-  /* [FIX — Divisi Anggota] SATU-SATUNYA sumber pilihan divisi anggota di
-     seluruh project (sudah ditelusuri: tidak ada daftar lain yang perlu
-     diubah). Sesuai kebutuhan organisasi saat ini, divisi hanya ada 2. */
-  const divisiList = ["Pertolongan Pertama", "Tandu"];
+  const divisiList = DIVISI_ANGGOTA_LIST;
 
   /* [FIX — Divisi Anggota, data lama] Kalau anggota yang sedang di-edit
      masih punya nilai divisi LAMA (mis. "Kesehatan Remaja") yang sudah
@@ -148,8 +154,18 @@ function bukaFormAnggota(data, onSimpan) {
           <input id="f-nama" type="text" value="${data?.nama||""}" placeholder="Nama lengkap">
         </div>
         <div class="field">
+          <label>Nomor Induk</label>
+          <input id="f-nomor-induk" type="text" value="${data?.nomorInduk||""}" placeholder="Nomor induk anggota">
+        </div>
+        <div class="field">
           <label>Kelas</label>
           <input id="f-kelas" type="text" value="${data?.kelas||""}" placeholder="Contoh: XI TKJ 1">
+        </div>
+        <div class="field">
+          <label>Jabatan</label>
+          <select id="f-jabatan">
+            ${["Anggota","Ketua","Wakil Ketua","Sekretaris","Bendahara","PJ Divisi"].map(j=>`<option ${data?.jabatan===j?"selected":""}>${j}</option>`).join("")}
+          </select>
         </div>
         <div class="field">
           <label>Divisi</label>
@@ -158,10 +174,16 @@ function bukaFormAnggota(data, onSimpan) {
           </select>
         </div>
         <div class="field">
-          <label>Status</label>
-          <select id="f-status">
-            <option ${data?.status==="Aktif"?"selected":""}>Aktif</option>
-            <option ${data?.status==="Tidak Aktif"?"selected":""}>Tidak Aktif</option>
+          <label>Status Keanggotaan</label>
+          <select id="f-status-keanggotaan">
+            <option ${data?.statusKeanggotaan==="Aktif" || (!data?.statusKeanggotaan && data?.status==="Aktif")?"selected":""}>Aktif</option>
+            <option ${data?.statusKeanggotaan==="Tidak Aktif" || (!data?.statusKeanggotaan && data?.status==="Tidak Aktif")?"selected":""}>Tidak Aktif</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Status Akun</label>
+          <select id="f-status-akun">
+            ${["pending","active","rejected"].map(v=>`<option ${data?.statusAkun===v || (!data?.statusAkun && v==="active")?"selected":""}>${v}</option>`).join("")}
           </select>
         </div>
       </div>
@@ -175,9 +197,14 @@ function bukaFormAnggota(data, onSimpan) {
           err.textContent="Nama tidak boleh kosong."; err.style.display="flex"; return;
         }
         const payload = {
-          nama, kelas:document.getElementById("f-kelas").value.trim(),
+          nama,
+          nomorInduk: document.getElementById("f-nomor-induk").value.trim(),
+          kelas:document.getElementById("f-kelas").value.trim(),
           divisi:document.getElementById("f-divisi").value,
-          status:document.getElementById("f-status").value,
+          jabatan: document.getElementById("f-jabatan").value,
+          statusKeanggotaan:document.getElementById("f-status-keanggotaan").value,
+          statusAkun:document.getElementById("f-status-akun").value,
+          sumberData: data?.sumberData || "admin",
           bergabung: data?.bergabung || new Date().toISOString().split("T")[0]
         };
         _jalankanSimpan("m-simpan-anggota", async () => {
@@ -189,5 +216,238 @@ function bukaFormAnggota(data, onSimpan) {
         });
       }}
     ]
+  });
+}
+
+
+/* ─────────────────────────────────────────────────────────
+   IMPORT ANGGOTA MASSAL
+   CSV UTF-8 / CSV bertanda titik koma / TSV dari Excel.
+   Kolom wajib: Nama, NI. Kolom lain opsional dan punya default aman.
+───────────────────────────────────────────────────────── */
+function _normalisasiHeaderImport(v) {
+  return String(v || "")
+    .replace(/^\uFEFF/, "")
+    .trim().toLowerCase()
+    .replace(/[\s_-]+/g, "");
+}
+
+function _parseCSVAnggota(text) {
+  const input = String(text || "").replace(/^\uFEFF/, "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const firstLine = input.split("\n").find(line => line.trim()) || "";
+  const tabCount = (firstLine.match(/\t/g) || []).length;
+  const semiCount = (firstLine.match(/;/g) || []).length;
+  const commaCount = (firstLine.match(/,/g) || []).length;
+  const delimiter = tabCount > commaCount && tabCount >= semiCount ? "\t" : (semiCount > commaCount ? ";" : ",");
+
+  const rows = [];
+  let row = [], cell = "", quoted = false;
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i];
+    const next = input[i + 1];
+    if (ch === '"') {
+      if (quoted && next === '"') { cell += '"'; i++; }
+      else quoted = !quoted;
+    } else if (ch === delimiter && !quoted) {
+      row.push(cell); cell = "";
+    } else if (ch === "\n" && !quoted) {
+      row.push(cell); rows.push(row); row = []; cell = "";
+    } else {
+      cell += ch;
+    }
+  }
+  if (cell.length || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(c => String(c).trim() !== ""));
+}
+
+function _aliasHeaderImport(h) {
+  const key = _normalisasiHeaderImport(h);
+  const aliases = {
+    nama: "nama", namalengkap: "nama", fullname: "nama", namaanggota: "nama",
+    ni: "nomorInduk", nid: "nomorInduk", nomorinduk: "nomorInduk", nomorindukanggota: "nomorInduk",
+    status: "statusKeanggotaan", statuskeanggotaan: "statusKeanggotaan", keanggotaan: "statusKeanggotaan",
+    jabatan: "jabatan", posisi: "jabatan",
+    kelas: "kelas", divisi: "divisi", sumberdata: "sumberData"
+  };
+  return aliases[key] || null;
+}
+
+function _normalisasiStatusImport(v) {
+  const key = String(v || "").trim().toLowerCase();
+  if (!key) return "Aktif";
+  if (["aktif","active","a","1"].includes(key)) return "Aktif";
+  if (["tidakaktif","nonaktif","inactive","tidak aktif","na","0"].includes(key.replace(/\s+/g,"")) || key === "tidak aktif") return "Tidak Aktif";
+  return null;
+}
+
+function _normalisasiJabatanImport(v) {
+  const key = String(v || "").trim().toLowerCase();
+  if (!key) return "Anggota";
+  const map = {
+    anggota:"Anggota", ketua:"Ketua", "wakil ketua":"Wakil Ketua", wakil:"Wakil Ketua",
+    sekretaris:"Sekretaris", sekre:"Sekretaris", bendahara:"Bendahara", "pj divisi":"PJ Divisi", pj:"PJ Divisi"
+  };
+  return map[key] || null;
+}
+
+function _validasiImportAnggota(rows) {
+  const existing = new Set(AppState.anggota.map(a => String(a.nomorInduk || "").trim().toLowerCase()).filter(Boolean));
+  const seen = new Set();
+  return rows.map((r, index) => {
+    const nomorInduk = String(r.nomorInduk || "").trim();
+    const nama = String(r.nama || "").trim();
+    const statusKeanggotaan = _normalisasiStatusImport(r.statusKeanggotaan);
+    const jabatan = _normalisasiJabatanImport(r.jabatan);
+    const errors = [];
+    if (!nama) errors.push("Nama kosong");
+    if (!nomorInduk) errors.push("NI kosong");
+    const niKey = nomorInduk.toLowerCase();
+    if (niKey && existing.has(niKey)) errors.push("NI sudah terdaftar");
+    if (niKey && seen.has(niKey)) errors.push("NI duplikat di file");
+    if (niKey) seen.add(niKey);
+    if (!statusKeanggotaan) errors.push("Status harus Aktif/Tidak Aktif");
+    if (!jabatan) errors.push("Jabatan tidak dikenali");
+
+    const divisiRaw = String(r.divisi || "").trim();
+    const divisiMapImport = new Map(DIVISI_ANGGOTA_LIST.map(v => [v.toLowerCase(), v]));
+    const divisi = divisiRaw ? (divisiMapImport.get(divisiRaw.toLowerCase()) || null) : "";
+    if (divisiRaw && !divisi) errors.push("Divisi harus Pertolongan Pertama atau Tandu");
+
+    const data = {
+      nama, nomorInduk,
+      kelas: String(r.kelas || "").trim(),
+      divisi: divisi || "",
+      jabatan: jabatan || "Anggota",
+      statusKeanggotaan: statusKeanggotaan || "Aktif",
+      statusAkun: "active",
+      sumberData: "admin",
+      bergabung: String(r.bergabung || "").trim() || new Date().toISOString().split("T")[0]
+    };
+    return { row: index + 2, data, errors };
+  });
+}
+
+function _escapeImportHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
+}
+
+function _downloadTemplateImportAnggota() {
+  const csv = "\uFEFFNama,NI,Status,Jabatan,Kelas,Divisi\nAhmad,PMR001,Aktif,Anggota,XI TKJ 1,Pertolongan Pertama\nBudi,PMR002,Aktif,Ketua,XII TKJ 1,Tandu\n";
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "template-import-anggota-pmr.csv"; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* Bangun ulang tabel preview + ringkasan status dari array `hasil` saat
+   ini. Dipanggil setelah parse awal, dan juga setelah import gagal
+   sebagian (lihat onClick "Import Data Valid") supaya baris yang sudah
+   berhasil masuk Firestore hilang dari daftar sebelum user retry. */
+function _renderPreviewImportAnggota(hasil, { catatan } = {}) {
+  const status = document.getElementById("import-anggota-status");
+  const preview = document.getElementById("import-anggota-preview");
+  if (!status || !preview) return;
+  const valid = hasil.filter(x => !x.errors.length).length;
+  const invalid = hasil.length - valid;
+  status.innerHTML = `<strong>${hasil.length}</strong> baris tersisa · <span style="color:var(--success)">${valid} valid</span> · <span style="color:var(--danger)">${invalid} bermasalah</span>`;
+  preview.innerHTML = `
+    ${catatan ? `<div class="alert alert-danger" style="display:block;margin-bottom:10px">${catatan}</div>` : ""}
+    <div class="table-wrap" style="max-height:330px;overflow:auto">
+      <table class="data-table"><thead><tr><th>Baris</th><th>Nama</th><th>NI</th><th>Status</th><th>Jabatan</th><th>Hasil</th></tr></thead>
+      <tbody>${hasil.map(x => `<tr>
+        <td>${x.row}</td><td>${_escapeImportHtml(x.data.nama || "—")}</td><td>${_escapeImportHtml(x.data.nomorInduk || "—")}</td><td>${_escapeImportHtml(x.data.statusKeanggotaan)}</td><td>${_escapeImportHtml(x.data.jabatan)}</td>
+        <td>${x.errors.length ? `<span class="badge badge-danger">${_escapeImportHtml(x.errors.join(", "))}</span>` : `<span class="badge badge-success">Valid</span>`}</td>
+      </tr>`).join("")}</tbody></table>
+    </div>
+    <div style="font-size:.78rem;color:var(--ink-soft);margin-top:8px">Baris bermasalah tidak akan diimport. NI yang sudah ada di database juga otomatis ditolak agar tidak terjadi duplikat.</div>`;
+}
+
+function bukaImportAnggota(onSelesai) {
+  let hasil = [];
+  Modal.buka({
+    judul: "Import Anggota Lama",
+    ukuran: "modal-lg",
+    konten: `
+      <div class="alert alert-info" style="display:block;margin-bottom:14px">
+        <strong>Format aman:</strong> CSV UTF-8. File dari Excel/Google Sheets bisa disimpan sebagai CSV. Kolom wajib: <strong>Nama</strong> dan <strong>NI</strong>.
+        Kolom Status, Jabatan, Kelas, dan Divisi boleh kosong.
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="btn btn-outline btn-sm" id="btn-download-template-import">↓ Download Template CSV</button>
+        <label class="btn btn-primary btn-sm" for="file-import-anggota">Pilih File CSV</label>
+        <input id="file-import-anggota" type="file" accept=".csv,.txt,text/csv,text/plain" style="display:none">
+      </div>
+      <div id="import-anggota-status" style="color:var(--ink-soft);font-size:.85rem">Belum ada file dipilih.</div>
+      <div id="import-anggota-preview" style="margin-top:14px"></div>`,
+    aksi: [
+      {label:"Batal", kelas:"btn-ghost", id:"btn-batal-import", onClick:()=>Modal.tutup()},
+      {label:"Import Data Valid", kelas:"btn-primary", id:"btn-konfirmasi-import", onClick:async()=>{
+        const valid = hasil.filter(x => x.errors.length === 0).map(x => x.data);
+        if (!valid.length) { tampilToast("Tidak ada data valid untuk diimport.", "default"); return; }
+        const btn = document.getElementById("btn-konfirmasi-import");
+        if (btn) { btn.disabled = true; btn.textContent = `Mengimport ${valid.length} data…`; }
+        try {
+          const hasilImport = await DB.anggota.importBatch(valid);
+          Modal.tutup();
+          onSelesai?.();
+          tampilToast(`${hasilImport.imported} anggota berhasil diimport.`, "success");
+        } catch (e) {
+          console.error("[PMR] Import anggota gagal:", e);
+          const sudahMasuk = e?.imported || 0;
+          if (sudahMasuk > 0) {
+            /* Sebagian batch sudah permanen tersimpan di Firestore sebelum
+               error terjadi. Coret baris yang SUDAH masuk itu dari `hasil`
+               (dalam urutan yang sama seperti saat dikirim ke importBatch)
+               supaya kalau user klik "Import Data Valid" lagi, hanya sisa
+               baris yang belum berhasil yang dikirim ulang — bukan
+               mengulang semuanya dan membuat duplikat. */
+            let dihapus = 0;
+            hasil = hasil.filter(x => {
+              if (x.errors.length === 0 && dihapus < sudahMasuk) { dihapus++; return false; }
+              return true;
+            });
+            _renderPreviewImportAnggota(hasil, {
+              catatan: `⚠ ${sudahMasuk} data sudah berhasil masuk sebelum proses berhenti karena error. Baris itu sudah dihapus dari daftar di bawah agar tidak dobel. Cek dulu Data Anggota, lalu tekan "Import Data Valid" lagi untuk melanjutkan sisanya bila perlu.`
+            });
+          }
+          if (btn) { btn.disabled = false; btn.textContent = "Import Data Valid"; }
+          tampilToast(sudahMasuk > 0 ? `Berhenti setelah ${sudahMasuk} data. Periksa catatan di atas tabel.` : "Import gagal. Periksa koneksi dan izin akun.", "danger");
+        }
+      }}
+    ]
+  });
+
+  document.getElementById("btn-download-template-import")?.addEventListener("click", _downloadTemplateImportAnggota);
+  document.getElementById("file-import-anggota")?.addEventListener("change", async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const status = document.getElementById("import-anggota-status");
+    const preview = document.getElementById("import-anggota-preview");
+    status.textContent = `Membaca ${file.name}…`;
+    try {
+      const text = await file.text();
+      const raw = _parseCSVAnggota(text);
+      if (raw.length < 2) throw new Error("File kosong atau hanya berisi header.");
+      const headers = raw[0].map(_aliasHeaderImport);
+      const known = headers.filter(Boolean);
+      if (!headers.includes("nama") || !headers.includes("nomorInduk")) {
+        throw new Error("Header wajib tidak ditemukan. Gunakan template CSV agar format tidak salah.");
+      }
+      const dataRows = raw.slice(1);
+      if (dataRows.length > 2000) throw new Error("Maksimal 2.000 baris per import. Pecah file menjadi beberapa bagian.");
+      const rows = dataRows.map(cols => {
+        const obj = {};
+        headers.forEach((key, i) => { if (key) obj[key] = String(cols[i] || "").trim(); });
+        return obj;
+      });
+      hasil = _validasiImportAnggota(rows);
+      _renderPreviewImportAnggota(hasil);
+    } catch (err) {
+      hasil = [];
+      status.innerHTML = `<span style="color:var(--danger)">${err.message || "File tidak dapat dibaca."}</span>`;
+      preview.innerHTML = "";
+    }
+    e.target.value = "";
   });
 }

@@ -44,7 +44,7 @@ let _iuranTahunTerpilih = new Date().getFullYear();
 function _hitungRekapIuran(bulan, tahun) {
   const targetStandar = AppState.nominalIuranStandar || 0;
   const baris = AppState.anggota
-    .filter(a => a.status === "Aktif")
+    .filter(a => a.statusKeanggotaan === "Aktif")
     .map(a => {
       const rec = AppState.iuran.find(r => r.anggotaId === a.id && r.bulan === bulan && r.tahun === tahun);
       const n = _normalisasiIuranRecord(rec, targetStandar);

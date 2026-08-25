@@ -82,7 +82,7 @@ function _renderRingkasanUpacara() {
   const totalJadwal     = AppState.upacara.length;
   const jadwalMendatang = AppState.upacara.filter(u => u.status === "Terjadwal" && u.tanggal >= sekarang).length;
   const upacaraSelesai  = AppState.upacara.filter(u => u.status === "Selesai").length;
-  const anggotaAktif    = AppState.anggota.filter(a => a.status === "Aktif").length;
+  const anggotaAktif    = AppState.anggota.filter(a => a.statusKeanggotaan === "Aktif").length;
   const totalSlot       = AppState.upacara.reduce((s,u) => s + (u.petugas||[]).length, 0);
   const rataRata        = anggotaAktif ? (totalSlot / anggotaAktif).toFixed(1) : "0";
 
@@ -226,7 +226,7 @@ function _renderTabRiwayatUpacara() {
   const riwayat = RotationEngine.hitungRiwayat(AppState.upacara);
 
   const data = AppState.anggota
-    .filter(a => a.status === "Aktif")
+    .filter(a => a.statusKeanggotaan === "Aktif")
     .map(a => ({ ...a, ...(riwayat[a.id] || { jumlah:0, terakhir:null }) }))
     .sort((x,y) => x.jumlah - y.jumlah);
 
@@ -350,7 +350,7 @@ function bukaFormUpacara(data, onSimpan) {
     if (!q) { wrapKandidat.style.display = "none"; wrapKandidat.innerHTML = ""; return; }
 
     const hasil = AppState.anggota
-      .filter(a => a.status === "Aktif")
+      .filter(a => a.statusKeanggotaan === "Aktif")
       .filter(a => a.nama.toLowerCase().includes(q))
       .filter(a => !_petugasTerpilihUpacara.some(p => p.id === a.id))
       .slice(0, 8);

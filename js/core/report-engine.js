@@ -102,15 +102,15 @@ const REPORT_DEFINITIONS = [
       { key:"nama",      label:"Nama" },
       { key:"kelas",     label:"Kelas" },
       { key:"divisi",    label:"Divisi" },
-      { key:"status",    label:"Status" },
+      { key:"statusKeanggotaan", label:"Status", format:r => r.statusKeanggotaan || r.status || "—" },
       { key:"noHp",      label:"No. HP", format:r => r.noHp || "—" },
       { key:"bergabung", label:"Bergabung", format:r => formatTanggal(r.bergabung) }
     ],
     getData: () => AppState.anggota,
     summary: rows => [
       { label:"Total Anggota", value:rows.length },
-      { label:"Aktif",         value:rows.filter(a=>a.status==="Aktif").length },
-      { label:"Tidak Aktif",   value:rows.filter(a=>a.status==="Tidak Aktif").length }
+      { label:"Aktif",         value:rows.filter(a=>(a.statusKeanggotaan || a.status)==="Aktif").length },
+      { label:"Tidak Aktif",   value:rows.filter(a=>(a.statusKeanggotaan || a.status)==="Tidak Aktif").length }
     ]
   },
   {

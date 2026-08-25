@@ -41,6 +41,9 @@ function statusBadge(status) {
   const map = {
     "Aktif":       "badge-success",
     "Tidak Aktif": "badge-gray",
+    "active":      "badge-success",
+    "pending":     "badge-warning",
+    "rejected":    "badge-red",
     "Selesai":     "badge-success",
     "Terjadwal":   "badge-info",
     "Menunggu":    "badge-warning",
@@ -58,7 +61,8 @@ function statusBadge(status) {
     "Belum Bayar":   "badge-warning"
   };
   const cls = map[status] || "badge-gray";
-  return `<span class="badge ${cls}">${status}</span>`;
+  const label = ({ pending:"Menunggu", active:"Aktif", rejected:"Ditolak" })[status] || status || "—";
+  return `<span class="badge ${cls}">${label}</span>`;
 }
 
 /**

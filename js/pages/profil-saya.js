@@ -102,14 +102,14 @@ function _renderTampilanProfil(el, profil) {
       <div class="avatar" style="width:54px;height:54px;font-size:1.2rem">${getInisial(profil.nama)}</div>
       <div>
         <div class="detail-nama">${profil.nama}</div>
-        <div class="detail-kelas">${profil.kelas} · ${profil.divisi}</div>
+        <div class="detail-kelas">${[profil.kelas, profil.divisi].filter(Boolean).join(" · ") || "—"}</div>
       </div>
     </div>
 
     <div class="detail-info-grid">
       <div class="detail-info-item">
         <div class="lbl">Status Keanggotaan</div>
-        <div class="val">${statusBadge(profil.status)}</div>
+        <div class="val">${statusBadge(profil.statusKeanggotaan || profil.status)}</div>
       </div>
       <div class="detail-info-item">
         <div class="lbl">Bergabung Sejak</div>

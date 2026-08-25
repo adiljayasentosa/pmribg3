@@ -28,11 +28,22 @@ const AppState = {
   guru:             []
 };
 
+/* Normalisasi record anggota: statusKeanggotaan adalah field canonical.
+   Data lama yang masih memakai `status` tetap bisa dibaca saat transisi,
+   tetapi seluruh modul aplikasi setelah load menggunakan field canonical. */
+function _normalisasiAnggota(a) {
+  const normalized = { ...a, id: String(a.id) };
+  if (!normalized.statusKeanggotaan && normalized.status) {
+    normalized.statusKeanggotaan = normalized.status;
+  }
+  return normalized;
+}
+
 /* Salin DUMMY_DATA ke AppState (ID dikonversi ke string) */
 function _seedAppStateFromDummy() {
   AppState.periode  = DUMMY_DATA.periode;
   AppState.ringkasan = { ...DUMMY_DATA.ringkasan };
-  AppState.anggota  = DUMMY_DATA.anggota.map(a => ({ ...a, id: String(a.id) }));
+  AppState.anggota  = DUMMY_DATA.anggota.map(_normalisasiAnggota);
   AppState.kegiatan = DUMMY_DATA.kegiatan.map(k => ({ ...k, id: String(k.id) }));
   AppState.keuangan = DUMMY_DATA.keuangan.map(t => ({ ...t, id: String(t.id) }));
   AppState.presensiHistory = DUMMY_DATA.presensiHistory.map(p => ({
@@ -53,7 +64,7 @@ function _seedAppStateFromDummy() {
 
 /* Hitung ulang ringkasan dari data yang ada */
 function _hitungRingkasan() {
-  const aktif   = AppState.anggota.filter(a => a.status === "Aktif").length;
+  const aktif   = AppState.anggota.filter(a => a.statusKeanggotaan === "Aktif").length;
   const saldo   = AppState.keuangan.reduce((s, t) => t.jenis === "Masuk" ? s + t.jumlah : s - t.jumlah, 0);
   const berjalan= AppState.kegiatan.filter(k => k.status === "Terjadwal").length;
   const total   = AppState.presensiHistory.length;
@@ -98,7 +109,7 @@ const DB = {
       fdb.collection("pengurus").doc("struktur").get()
     ]);
 
-    AppState.anggota  = snapAnggota.docs.map(d => ({ id: d.id, ...d.data() }));
+    AppState.anggota  = snapAnggota.docs.map(d => _normalisasiAnggota({ id: d.id, ...d.data() }));
     AppState.kegiatan = snapKegiatan.docs.map(d => ({ id: d.id, ...d.data() }));
     AppState.keuangan = snapKeuangan.docs.map(d => ({ id: d.id, ...d.data() }));
     AppState.presensiHistory = snapPresensi.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -126,7 +137,7 @@ const DB = {
 
     this._listeners.push(
       fdb.collection("anggota").orderBy("nama").onSnapshot(snap => {
-        AppState.anggota = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        AppState.anggota = snap.docs.map(d => _normalisasiAnggota({ id: d.id, ...d.data() }));
         _hitungRingkasan(); _reRenderPage();
       }),
       fdb.collection("kegiatan").orderBy("tanggal", "desc").onSnapshot(snap => {
@@ -152,24 +163,44 @@ const DB = {
   /* ──────────────────── ANGGOTA ──────────────────── */
   anggota: {
     async tambah(data) {
+      const now = new Date().toISOString();
+      const payload = {
+        ...data,
+        createdAt: data.createdAt || now,
+        updatedAt: now
+      };
       if (!FIREBASE_ENABLED) {
         const id = String(Math.max(0, ...AppState.anggota.map(a => +a.id || 0)) + 1);
-        AppState.anggota.push({ id, ...data });
+        AppState.anggota.push(_normalisasiAnggota({ id, ...payload }));
         AppState.anggota.sort((a,b) => a.nama.localeCompare(b.nama));
         _hitungRingkasan();
         return id;
       }
-      const ref = await firebase.firestore().collection("anggota").add(data);
+      const serverPayload = {
+        ...payload,
+        createdAt: data.createdAt || firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      const ref = await firebase.firestore().collection("anggota").add(serverPayload);
       return ref.id;
     },
     async update(id, data) {
+      const now = new Date().toISOString();
       if (!FIREBASE_ENABLED) {
         const idx = AppState.anggota.findIndex(a => a.id === id);
-        if (idx !== -1) AppState.anggota[idx] = { ...AppState.anggota[idx], ...data };
+        if (idx !== -1) {
+          const merged = { ...AppState.anggota[idx], ...data, updatedAt: now };
+          if (Object.prototype.hasOwnProperty.call(data, "statusKeanggotaan")) delete merged.status;
+          AppState.anggota[idx] = _normalisasiAnggota(merged);
+        }
         _hitungRingkasan();
         return;
       }
-      await firebase.firestore().collection("anggota").doc(id).update(data);
+      const payload = { ...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+      if (Object.prototype.hasOwnProperty.call(data, "statusKeanggotaan")) {
+        payload.status = firebase.firestore.FieldValue.delete();
+      }
+      await firebase.firestore().collection("anggota").doc(id).update(payload);
     },
     async hapus(id) {
       if (!FIREBASE_ENABLED) {

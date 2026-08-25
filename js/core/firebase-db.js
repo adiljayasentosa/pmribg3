@@ -121,11 +121,22 @@ const AppState = {
                                 lewat DB.iuran.setNominalStandar() */
 };
 
+/* Normalisasi record anggota: statusKeanggotaan adalah field canonical.
+   Data lama yang masih memakai `status` tetap bisa dibaca saat transisi,
+   tetapi seluruh modul aplikasi setelah load menggunakan field canonical. */
+function _normalisasiAnggota(a) {
+  const normalized = { ...a, id: String(a.id) };
+  if (!normalized.statusKeanggotaan && normalized.status) {
+    normalized.statusKeanggotaan = normalized.status;
+  }
+  return normalized;
+}
+
 /* Salin DUMMY_DATA ke AppState (ID dikonversi ke string) */
 function _seedAppStateFromDummy() {
   AppState.periode  = DUMMY_DATA.periode;
   AppState.ringkasan = { ...DUMMY_DATA.ringkasan };
-  AppState.anggota  = DUMMY_DATA.anggota.map(a => ({ ...a, id: String(a.id) }));
+  AppState.anggota  = DUMMY_DATA.anggota.map(_normalisasiAnggota);
   AppState.kegiatan = DUMMY_DATA.kegiatan.map(k => ({ ...k, id: String(k.id) }));
   AppState.keuangan = DUMMY_DATA.keuangan.map(t => ({ ...t, id: String(t.id) }));
   AppState.presensiHistory = DUMMY_DATA.presensiHistory.map(p => ({
@@ -147,7 +158,7 @@ function _seedAppStateFromDummy() {
 
 /* Hitung ulang ringkasan dari data yang ada */
 function _hitungRingkasan() {
-  const aktif   = AppState.anggota.filter(a => a.status === "Aktif").length;
+  const aktif   = AppState.anggota.filter(a => a.statusKeanggotaan === "Aktif").length;
   const saldo   = AppState.keuangan.reduce((s, t) => t.jenis === "Masuk" ? s + t.jumlah : s - t.jumlah, 0);
   const berjalan= AppState.kegiatan.filter(k => k.status === "Terjadwal").length;
   const total   = AppState.presensiHistory.length;
@@ -195,7 +206,7 @@ const DB = {
       fdb.collection("upacara").orderBy("tanggal", "desc").get()
     ]);
 
-    AppState.anggota    = snapAnggota.docs.map(d => ({ id: d.id, ...d.data() }));
+    AppState.anggota    = snapAnggota.docs.map(d => _normalisasiAnggota({ id: d.id, ...d.data() }));
     AppState.kegiatan   = snapKegiatan.docs.map(d => ({ id: d.id, ...d.data() }));
     AppState.inventaris = snapInventaris.docs.map(d => ({ id: d.id, ...d.data() }));
     AppState.piket      = snapPiket.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -260,7 +271,7 @@ const DB = {
     this._listeners.push(
       fdb.collection("anggota").orderBy("nama").onSnapshot(snap => {
         _laporkanStatusCache(snap);
-        AppState.anggota = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        AppState.anggota = snap.docs.map(d => _normalisasiAnggota({ id: d.id, ...d.data() }));
         _hitungRingkasan(); _reRenderPage();
       }),
       fdb.collection("kegiatan").orderBy("tanggal", "desc").onSnapshot(snap => {
@@ -327,24 +338,100 @@ const DB = {
   /* ──────────────────── ANGGOTA ──────────────────── */
   anggota: {
     async tambah(data) {
+      const now = new Date().toISOString();
+      const payload = {
+        ...data,
+        createdAt: data.createdAt || now,
+        updatedAt: now
+      };
       if (!FIREBASE_ENABLED) {
         const id = String(Math.max(0, ...AppState.anggota.map(a => +a.id || 0)) + 1);
-        AppState.anggota.push({ id, ...data });
+        AppState.anggota.push(_normalisasiAnggota({ id, ...payload }));
         AppState.anggota.sort((a,b) => a.nama.localeCompare(b.nama));
         _hitungRingkasan();
         return id;
       }
-      const ref = await firebase.firestore().collection("anggota").add(data);
+      const serverPayload = {
+        ...payload,
+        createdAt: data.createdAt || firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      const ref = await firebase.firestore().collection("anggota").add(serverPayload);
       return ref.id;
     },
+    /* Mengembalikan { imported, total }. Firestore membatasi 1 batch = maks
+       500 write, jadi data dipecah per 400 baris (400 dipilih dgn margin
+       aman, bukan mepet ke limit 500). Tiap chunk atomik sendiri-sendiri,
+       TAPI tidak ada atomisitas lintas chunk — kalau chunk ke-2 dari 3
+       gagal, chunk ke-1 sudah permanen tersimpan. Kalau itu terjadi, error
+       yang dilempar membawa properti .imported (jumlah baris yg SUDAH
+       berhasil masuk sebelum gagal) supaya pemanggil (bukaImportAnggota)
+       bisa mencoret baris-baris itu dari daftar sebelum retry — mencegah
+       baris yang sama diimport dua kali saat user klik ulang. */
+    async importBatch(rows) {
+      const items = Array.isArray(rows) ? rows : [];
+      if (!items.length) return { imported: 0, total: 0 };
+      const now = new Date().toISOString();
+      if (!FIREBASE_ENABLED) {
+        let nextId = Math.max(0, ...AppState.anggota.map(a => +a.id || 0));
+        items.forEach(row => {
+          const id = String(++nextId);
+          const payload = {
+            ...row,
+            id,
+            createdAt: row.createdAt || now,
+            updatedAt: now
+          };
+          AppState.anggota.push(_normalisasiAnggota(payload));
+        });
+        AppState.anggota.sort((a,b) => a.nama.localeCompare(b.nama));
+        _hitungRingkasan();
+        return { imported: items.length, total: items.length };
+      }
+
+      const fdb = firebase.firestore();
+      let imported = 0;
+      for (let start = 0; start < items.length; start += 400) {
+        const chunk = items.slice(start, start + 400);
+        const batch = fdb.batch();
+        chunk.forEach(row => {
+          const ref = fdb.collection("anggota").doc();
+          batch.set(ref, {
+            ...row,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        });
+        try {
+          await batch.commit();
+          imported += chunk.length;
+        } catch (e) {
+          const err = new Error(e?.message || "Sebagian data gagal diimport.");
+          err.imported = imported;
+          err.total = items.length;
+          err.cause = e;
+          throw err;
+        }
+      }
+      return { imported, total: items.length };
+    },
     async update(id, data) {
+      const now = new Date().toISOString();
       if (!FIREBASE_ENABLED) {
         const idx = AppState.anggota.findIndex(a => a.id === id);
-        if (idx !== -1) AppState.anggota[idx] = { ...AppState.anggota[idx], ...data };
+        if (idx !== -1) {
+          const merged = { ...AppState.anggota[idx], ...data, updatedAt: now };
+          if (Object.prototype.hasOwnProperty.call(data, "statusKeanggotaan")) delete merged.status;
+          AppState.anggota[idx] = _normalisasiAnggota(merged);
+        }
         _hitungRingkasan();
         return;
       }
-      await firebase.firestore().collection("anggota").doc(id).update(data);
+      const payload = { ...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+      if (Object.prototype.hasOwnProperty.call(data, "statusKeanggotaan")) {
+        payload.status = firebase.firestore.FieldValue.delete();
+      }
+      await firebase.firestore().collection("anggota").doc(id).update(payload);
     },
     async hapus(id) {
       if (!FIREBASE_ENABLED) {

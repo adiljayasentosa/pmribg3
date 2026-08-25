@@ -122,7 +122,7 @@ function _renderRingkasanPiket() {
   const totalJadwal   = AppState.piket.length;
   const jadwalMendatang = AppState.piket.filter(p => p.status === "Terjadwal" && p.tanggal >= sekarang).length;
   const piketSelesai  = AppState.piket.filter(p => p.status === "Selesai").length;
-  const anggotaAktif  = AppState.anggota.filter(a => a.status === "Aktif").length;
+  const anggotaAktif  = AppState.anggota.filter(a => a.statusKeanggotaan === "Aktif").length;
   const totalSlot     = AppState.piket.reduce((s,p) => s + (p.petugas||[]).length, 0);
   const rataRata      = anggotaAktif ? (totalSlot / anggotaAktif).toFixed(1) : "0";
 
@@ -257,7 +257,7 @@ function _renderTabRiwayat() {
   const riwayat = _hitungRiwayatPiket();
 
   const data = AppState.anggota
-    .filter(a => a.status === "Aktif")
+    .filter(a => a.statusKeanggotaan === "Aktif")
     .map(a => ({ ...a, ...riwayat[a.id] }))
     .sort((x,y) => x.jumlahPiket - y.jumlahPiket);
 
@@ -382,7 +382,7 @@ function bukaFormPiket(data, onSimpan) {
     if (!q) { wrapKandidat.style.display = "none"; wrapKandidat.innerHTML = ""; return; }
 
     const hasil = AppState.anggota
-      .filter(a => a.status === "Aktif")
+      .filter(a => a.statusKeanggotaan === "Aktif")
       .filter(a => a.nama.toLowerCase().includes(q))
       .filter(a => !_petugasTerpilih.some(p => p.id === a.id))
       .slice(0, 8);

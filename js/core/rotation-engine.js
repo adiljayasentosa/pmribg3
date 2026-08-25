@@ -108,7 +108,7 @@ const RotationEngine = (() => {
     const riwayat = hitungRiwayat(koleksi, statusDibatalkan);
 
     let kandidat = AppState.anggota
-      .filter(a => a.status === "Aktif")
+      .filter(a => a.statusKeanggotaan === "Aktif")
       .filter(a => !dikecualikanIds.includes(a.id))
       .map(a => {
         const r = riwayat[a.id] || { jumlah: 0, terakhir: null };

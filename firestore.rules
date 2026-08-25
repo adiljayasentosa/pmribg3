@@ -116,7 +116,7 @@ service cloud.firestore {
 
       // CREATE & UPDATE: Admin, ketua, sekretaris.
       allow create, update: if hasAnyRole([
-        'admin', 'ketua', 'sekretaris'
+        'admin', 'ketua', 'wakil', 'sekretaris'
       ]);
 
       // DELETE: Admin dan ketua — operasi destruktif.

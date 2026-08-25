@@ -71,6 +71,22 @@ function _setLoadingState(loading) {
    PAGES — Registry router. render() masing-masing entry
    didefinisikan di js/pages/*.js (dimuat sebelum file ini).
 ───────────────────────────────────────────────────────── */
+function renderPersetujuanAnggota(el, user) {
+  const allowed = ["admin","ketua","wakil","sekretaris"].includes(user.role);
+  if (!allowed) { el.innerHTML = `<div class="empty-state"><p>Akses hanya untuk pengurus yang berwenang.</p></div>`; return; }
+  const pending = AppState.anggota.filter(a => (a.statusAkun || "active") === "pending");
+  el.innerHTML = `<div class="page-head"><div><h1>Persetujuan Anggota PMR</h1><p class="page-sub">Kelola pendaftaran yang menunggu aktivasi.</p></div></div><div class="card"><div class="table-wrap"><table class="data-table"><thead><tr><th>Nama</th><th>Nomor Induk</th><th>Jabatan</th><th>Aksi</th></tr></thead><tbody>${pending.length ? pending.map(a=>`<tr><td>${a.nama}</td><td>${a.nomorInduk||"—"}</td><td>${a.jabatan||"Anggota"}</td><td><button class="btn btn-primary btn-sm" data-approve="${a.id}">Setujui</button> <button class="btn btn-ghost btn-sm" data-reject="${a.id}">Tolak</button></td></tr>`).join("") : `<tr><td colspan="4" style="text-align:center;color:var(--ink-soft)">Tidak ada pendaftaran yang menunggu.</td></tr>`}</tbody></table></div></div>`;
+  el.querySelectorAll("[data-approve]").forEach(btn=>btn.addEventListener("click", async()=>{ await DB.anggota.update(btn.dataset.approve,{statusAkun:"active",statusKeanggotaan:"Aktif"}); if(!FIREBASE_ENABLED) renderPersetujuanAnggota(el,user); tampilToast("Anggota disetujui.","success"); }));
+  el.querySelectorAll("[data-reject]").forEach(btn=>btn.addEventListener("click", async()=>{ await DB.anggota.update(btn.dataset.reject,{statusAkun:"rejected"}); if(!FIREBASE_ENABLED) renderPersetujuanAnggota(el,user); tampilToast("Pendaftaran ditolak.","default"); }));
+}
+
+function renderKta(el, user) {
+  const allowed = ["admin","ketua","wakil","sekretaris"].includes(user.role);
+  if (!allowed) { el.innerHTML = `<div class="empty-state"><p>Akses hanya untuk pengurus yang berwenang.</p></div>`; return; }
+  const active = AppState.anggota.filter(a => (a.statusAkun || "active") === "active");
+  el.innerHTML = `<div class="page-head"><div><h1>KTA PMR</h1><p class="page-sub">KTA akan menggunakan data anggota aktif secara otomatis.</p></div></div><div class="card"><div class="table-wrap"><table class="data-table"><thead><tr><th>Nama</th><th>Nomor Induk</th><th>Status/Jabatan</th><th>Barcode</th></tr></thead><tbody>${active.length ? active.map(a=>`<tr><td>${a.nama}</td><td>${a.nomorInduk||"—"}</td><td>${a.jabatan||"Anggota"}</td><td><span class="badge badge-gray">Belum digenerate</span></td></tr>`).join("") : `<tr><td colspan="4" style="text-align:center;color:var(--ink-soft)">Belum ada anggota aktif.</td></tr>`}</tbody></table></div></div>`;
+}
+
 let PAGES = {};
 
 function _initDashboard(user) {
@@ -121,6 +137,8 @@ function _initDashboard(user) {
   PAGES = {
     beranda:    { title:"Beranda",      render:renderBeranda    },
     anggota:    { title:"Data Anggota", render:renderAnggota    },
+    "persetujuan-anggota": { title:"Persetujuan Anggota PMR", render:renderPersetujuanAnggota },
+    kta:        { title:"KTA PMR", render:renderKta },
     kegiatan:   { title:"Kegiatan",     render:renderKegiatan   },
     presensi:   { title:"Presensi",     render:renderPresensi   },
     piket:      { title:"Piket",        render:renderPiket      },
@@ -143,9 +161,21 @@ function _initDashboard(user) {
      Hanya mengubah tampilan sidebar JIKA role adalah anggota.
      Untuk semua role lain, blok ini tidak dieksekusi sama sekali —
      sidebar tetap identik seperti sebelum F3.2. */
+  /* ── RBAC navigasi: menu Anggota/Persetujuan/KTA hanya untuk
+     admin, ketua, wakil, sekretaris. Rendering page tetap melakukan
+     pengecekan permission sebagai lapisan kedua. */
+  const roleKelolaAnggota = ["admin","ketua","wakil","sekretaris"].includes(user.role);
+  if (!roleKelolaAnggota) {
+    ["persetujuan-anggota","kta"].forEach(page => {
+      document.querySelectorAll(`.sidebar-link[data-page="${page}"]`).forEach(link => {
+        link.style.display = "none";
+      });
+    });
+  }
+
   if (user.role === "anggota") {
     const sembunyikanUntukAnggota = [
-      "anggota", "presensi", "keuangan", "pengaturan",
+      "anggota", "persetujuan-anggota", "kta", "presensi", "keuangan", "pengaturan",
       /* [F6.0] Manajemen Konten Publik bukan untuk role anggota —
          mereka melihat konten lewat halaman publik (artikel.html dst),
          sama seperti pengunjung umum. */
