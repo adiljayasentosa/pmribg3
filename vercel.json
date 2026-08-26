@@ -3,35 +3,82 @@
   "cleanUrls": false,
   "trailingSlash": false,
   "rewrites": [
-    { "source": "/artikel/:slug", "destination": "/artikel.html?slug=:slug" },
-    { "source": "/video/:slug", "destination": "/video.html?slug=:slug" },
-    { "source": "/poster/:slug", "destination": "/poster.html?slug=:slug" },
-    { "source": "/dokumentasi/:slug", "destination": "/dokumentasi.html?slug=:slug" },
-    { "source": "/artikel", "destination": "/artikel.html" },
-    { "source": "/video", "destination": "/video.html" },
-    { "source": "/poster", "destination": "/poster.html" },
-    { "source": "/dokumentasi", "destination": "/dokumentasi.html" }
+    {
+      "source": "/artikel/:slug",
+      "destination": "/artikel.html?slug=:slug"
+    },
+    {
+      "source": "/video/:slug",
+      "destination": "/video.html?slug=:slug"
+    },
+    {
+      "source": "/poster/:slug",
+      "destination": "/poster.html?slug=:slug"
+    },
+    {
+      "source": "/dokumentasi/:slug",
+      "destination": "/dokumentasi.html?slug=:slug"
+    },
+    {
+      "source": "/artikel",
+      "destination": "/artikel.html"
+    },
+    {
+      "source": "/video",
+      "destination": "/video.html"
+    },
+    {
+      "source": "/poster",
+      "destination": "/poster.html"
+    },
+    {
+      "source": "/dokumentasi",
+      "destination": "/dokumentasi.html"
+    }
   ],
   "headers": [
     {
       "source": "/sw.js",
       "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
-        { "key": "Service-Worker-Allowed", "value": "/" }
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        }
       ]
     },
     {
       "source": "/manifest.json",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=3600" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
       ]
     },
     {
       "source": "/.well-known/assetlinks.json",
       "headers": [
-        { "key": "Content-Type", "value": "application/json" },
-        { "key": "Cache-Control", "value": "public, max-age=3600" }
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/backup-verify.js": {
+      "maxDuration": 60
+    },
+    "api/backup-restore.js": {
+      "maxDuration": 60
+    }
+  }
 }

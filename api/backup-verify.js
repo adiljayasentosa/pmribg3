@@ -1,65 +1,11 @@
 /* =========================================================
-   API/BACKUP-VERIFY.JS — [F4.5 — Backup Data]                BARU
-   =========================================================
-   Vercel Serverless Function.
-
-   KENAPA ENDPOINT INI PERLU ADA (bukan cukup client + Firestore
-   Rules seperti fitur-fitur lain di project ini):
-   Backup Data harus benar-benar TIDAK BISA dipicu oleh non-admin —
-   termasuk untuk collection yang sebenarnya sudah boleh dibaca role
-   lain (anggota/kegiatan/pengurus/piket/upacara), bukan cuma "gagal
-   di collection yang lebih sensitif seperti keuangan". Ini keputusan
-   eksplisit project (bukan default arsitektur project ini, yang
-   biasanya murni client + firestore.rules) — makanya verifikasi
-   identitas + pembacaan SEMUA data backup dilakukan di SERVER
-   (Firebase Admin SDK, pakai service account), bukan di client.
-   Client TIDAK PERNAH memegang/melihat service account key.
-
-   BUTUH package.json BARU (dependency: firebase-admin) — project
-   ini sebelumnya nol npm dependency (imagekit-auth.js/imagekit-
-   delete.js murni pakai built-in `https`, tanpa Admin SDK). Endpoint
-   ini SATU-SATUNYA yang butuh Admin SDK — dependency baru scope-nya
-   kecil & alasannya jelas (lihat Phase 2 — poin ini sudah disetujui
-   sebelum ditambahkan).
-
-   ENV VAR YANG DIBUTUHKAN (WAJIB di-set manual di Vercel dashboard,
-   Project Settings → Environment Variables — TIDAK ADA di repo/kode
-   ini dan TIDAK BOLEH di-commit):
-
-     FIREBASE_SERVICE_ACCOUNT_KEY
-       Isi: JSON LENGKAP service account (Firebase Console →
-       Project Settings → Service Accounts → Generate New Private
-       Key → paste seluruh isi file .json sebagai value env var ini,
-       satu baris). File ini SANGAT SENSITIF (setara akses admin
-       penuh ke seluruh project Firebase) — sengaja TIDAK PERNAH
-       dikirim ke atau dibaca dari browser, hanya dipakai di sini,
-       server-side.
-
-   Tanpa env var ini ter-set, endpoint mengembalikan 500 (bukan
-   crash) — fitur lain di aplikasi tetap berjalan normal.
-
-   [HOTFIX] Sempat pakai classic namespace API (`require("firebase-
-   admin")` + `admin.apps`/`admin.initializeApp`/`admin.credential.
-   cert`/`admin.auth()`/`admin.firestore()`), tapi di runtime Vercel
-   project ini objek yang dikembalikan require() tidak punya properti
-   `.apps` seperti yang diharapkan (`TypeError: Cannot read properties
-   of undefined (reading 'length')` persis di baris pengecekan
-   `admin.apps.length` — dikonfirmasi dari Vercel Runtime Logs).
-   Diganti ke MODULAR API (`firebase-admin/app`, `/auth`, `/firestore`)
-   — pola resmi yang sekarang direkomendasikan Firebase, tidak
-   bergantung pada bentuk objek namespace classic yang bermasalah di
-   lingkungan bundling Vercel ini. Logic verifikasi token, cek role,
-   whitelist collection, dan validasi lain TIDAK berubah — murni cara
-   memanggil SDK-nya saja.
+   API/BACKUP-VERIFY.JS — F4.5 Backup Data
+   Server-side admin-only backup with a versioned, restore-safe format.
    ========================================================= */
-
 const { initializeApp, cert, getApps } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
-const { getFirestore } = require("firebase-admin/firestore");
+const { getFirestore, Timestamp, GeoPoint } = require("firebase-admin/firestore");
 
-/* Inisialisasi SEKALI per instance server — Vercel bisa memakai
-   ulang ("warm") container yang sama antar-request; initializeApp()
-   kedua kali pada instance yang sama akan error kalau tidak dijaga. */
 if (!getApps().length && process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
   try {
     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
@@ -69,25 +15,54 @@ if (!getApps().length && process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
   }
 }
 
-/* Whitelist eksplisit collection yang masuk backup — SENGAJA tidak
-   enumerasi otomatis semua collection Firestore, supaya kalau suatu
-   hari ada collection baru ditambahkan ke project, backup TIDAK
-   otomatis ikut membocorkannya sebelum ada review sadar dari
-   pengelola project. Tidak ada satupun field credential/password di
-   collection-collection ini (password ditangani Firebase Auth,
-   bukan Firestore — lihat auth.js). */
 const KOLEKSI_BACKUP = [
   "users", "anggota", "kegiatan", "keuangan", "presensi",
   "pengurus", "inventaris", "piket", "upacara", "iuran",
   "artikel", "video", "poster", "dokumentasi"
 ];
 
+function serializeValue(value) {
+  if (value instanceof Timestamp) {
+    return { __pmrType: "timestamp", seconds: value.seconds, nanoseconds: value.nanoseconds };
+  }
+  if (value instanceof GeoPoint) {
+    return { __pmrType: "geopoint", latitude: value.latitude, longitude: value.longitude };
+  }
+  if (value && value.constructor?.name === "Bytes" && typeof value.toBase64 === "function") {
+    return { __pmrType: "bytes", base64: value.toBase64() };
+  }
+  if (Array.isArray(value)) return value.map(serializeValue);
+  if (value && typeof value === "object") {
+    const out = {};
+    for (const [key, item] of Object.entries(value)) out[key] = serializeValue(item);
+    return out;
+  }
+  return value;
+}
+
+async function createBackup(uid) {
+  const fdb = getFirestore();
+  const collections = {};
+  await Promise.all(KOLEKSI_BACKUP.map(async (nama) => {
+    const snap = await fdb.collection(nama).get();
+    collections[nama] = snap.docs.map((d) => ({ id: d.id, data: serializeValue(d.data()) }));
+  }));
+
+  return {
+    backupFormatVersion: 2,
+    appVersion: "1.1.3",
+    project: "pmr-wira-unit",
+    generatedAt: new Date().toISOString(),
+    generatedByUid: uid,
+    collections
+  };
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method tidak diizinkan. Gunakan POST." });
   }
-
   if (!getApps().length) {
     return res.status(500).json({ error: "Konfigurasi backend (FIREBASE_SERVICE_ACCOUNT_KEY) belum lengkap di server." });
   }
@@ -98,43 +73,37 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: "idToken wajib diisi." });
     }
 
-    /* Verifikasi token Firebase Auth pengirim request — checkRevoked
-       true supaya token yang sudah di-revoke (mis. akun dinonaktifkan
-       admin) langsung ditolak, tidak menunggu token lama kedaluwarsa
-       sendiri. */
     let decoded;
     try {
       decoded = await getAuth().verifyIdToken(idToken, true);
-    } catch (e) {
+    } catch (_) {
       return res.status(401).json({ error: "Sesi tidak valid, silakan login ulang." });
     }
 
-    /* Cek role dari Firestore users/{uid} — SATU-SATUNYA sumber
-       kebenaran role di project ini (identik dengan yang dipakai
-       firestore.rules & auth.js di client), BUKAN dari custom claim
-       token (project ini tidak memakainya). */
     const userDoc = await getFirestore().collection("users").doc(decoded.uid).get();
     const role = userDoc.exists ? userDoc.data().role : null;
     if (role !== "admin") {
       return res.status(403).json({ error: "Hanya admin yang boleh membuat backup." });
     }
 
-    /* Ambil seluruh collection backup secara paralel, langsung dari
-       server (bypass firestore.rules lewat service account — sengaja,
-       supaya admin yang memang berhak tidak terhambat Rules yang
-       dirancang untuk membatasi role LAIN, bukan admin). */
-    const fdb = getFirestore();
-    const collections = {};
-    await Promise.all(KOLEKSI_BACKUP.map(async (nama) => {
-      const snap = await fdb.collection(nama).get();
-      collections[nama] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    }));
+    const startedAt = Date.now();
+    const backup = await createBackup(decoded.uid);
+    const payload = JSON.stringify(backup);
+    const payloadBytes = Buffer.byteLength(payload, "utf8");
+    console.log(`[api/backup-verify] Backup siap: ${payloadBytes} bytes dalam ${Date.now() - startedAt} ms`);
 
-    return res.status(200).json({
-      generatedAt: new Date().toISOString(),
-      generatedByUid: decoded.uid,
-      collections
-    });
+    // Vercel membatasi ukuran response Function. Beri error JSON yang jelas
+    // sebelum platform memotong response menjadi respons kosong/generic 500.
+    if (payloadBytes > 4_200_000) {
+      return res.status(413).json({
+        error: "Backup terlalu besar untuk dikirim langsung dari Vercel.",
+        bytes: payloadBytes,
+        limitBytes: 4_200_000
+      });
+    }
+
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    return res.status(200).send(payload);
   } catch (error) {
     console.error("[api/backup-verify] Error:", error);
     return res.status(500).json({ error: "Gagal membuat backup." });

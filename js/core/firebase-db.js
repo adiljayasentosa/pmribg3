@@ -217,6 +217,10 @@ const DB = {
       /* Normalisasi ID ke string agar konsisten dengan DOM dataset.id */
       AppState.strukturPengurus = (data.jabatan || []).map(jabatan => ({
         ...jabatan,
+        /* Semua PJ divisi menyediakan sampai 3 slot.
+           Normalisasi ini juga menaikkan struktur lama yang masih menyimpan maks: 2,
+           sehingga admin tidak perlu mengedit data Firestore secara manual. */
+        maks: String(jabatan.role_id || "").startsWith("pj_") ? 3 : (jabatan.maks || 1),
         anggota: (jabatan.anggota || []).map(a => ({ ...a, id: String(a.id) }))
       }));
       AppState.periode = data.periode || "2025/2026";
@@ -802,6 +806,11 @@ const DB = {
   /* ──────────────────── PENGURUS ──────────────────── */
   pengurus: {
     async simpanStruktur(strukturBaru) {
+      /* Kapasitas PJ selalu 3 slot, termasuk saat menyimpan struktur lama. */
+      strukturBaru = strukturBaru.map(jabatan => ({
+        ...jabatan,
+        maks: String(jabatan.role_id || "").startsWith("pj_") ? 3 : jabatan.maks
+      }));
       AppState.strukturPengurus = strukturBaru;
       if (!FIREBASE_ENABLED) return;
       /* {merge:true} WAJIB — doc ini juga menyimpan `guru`. Tanpa

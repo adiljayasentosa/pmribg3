@@ -83,24 +83,24 @@ const DUMMY_DATA = {
       { id: 5,    nama: "Putri Ramadhani" },
       { id: 9002, nama: "Naufal Ramadhan" }
     ]},
-    { role_id: "pj_pp",            jabatan: "PJ Pertolongan Pertama (PP)", maks: 2, anggota: [
+    { role_id: "pj_pp",            jabatan: "PJ Pertolongan Pertama (PP)", maks: 3, anggota: [
       { id: 1,   nama: "Raka Pratama" },
       { id: 11,  nama: "Dimas Wicaksono" }
     ]},
-    { role_id: "pj_tandu",         jabatan: "PJ Tandu",                    maks: 2, anggota: [
+    { role_id: "pj_tandu",         jabatan: "PJ Tandu",                    maks: 3, anggota: [
       { id: 6,   nama: "Bagas Saputra" }
     ]},
-    { role_id: "pj_kesehatan",     jabatan: "PJ Kesehatan",                maks: 2, anggota: [
+    { role_id: "pj_kesehatan",     jabatan: "PJ Kesehatan",                maks: 3, anggota: [
       { id: 2,   nama: "Siti Nuraini" }
     ]},
-    { role_id: "pj_logistik",      jabatan: "PJ Logistik",                 maks: 2, anggota: [
+    { role_id: "pj_logistik",      jabatan: "PJ Logistik",                 maks: 3, anggota: [
       { id: 9,   nama: "Rizky Firmansyah" }
     ]},
-    { role_id: "pj_persahabatan",  jabatan: "PJ Persahabatan",             maks: 2, anggota: [] },
+    { role_id: "pj_persahabatan",  jabatan: "PJ Persahabatan",             maks: 3, anggota: [] },
     { role_id: "pj_humas",         jabatan: "PJ Humas",                    maks: 3, anggota: [
       { id: 12,  nama: "Melinda Cahyani" }
     ]},
-    { role_id: "pj_wirausaha",     jabatan: "PJ Wirausaha",                maks: 2, anggota: [] }
+    { role_id: "pj_wirausaha",     jabatan: "PJ Wirausaha",                maks: 3, anggota: [] }
   ],
 
   /* Riwayat presensi: [anggotaId, tanggal, hadir, keterangan] */

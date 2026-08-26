@@ -93,13 +93,20 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>`;
 
     const renderChip = (orang) => `
-      <div class="org-chip">
-        <div class="avatar" style="background:var(--pmr-red)">${escapeHtml(inisial(orang.nama))}</div>
-        <div>
-          <div class="org-role">${escapeHtml(orang.jabatan)}</div>
-          <div class="org-name">${escapeHtml(orang.nama)}</div>
+      <article class="pembina-card">
+        <div class="pembina-card-accent" aria-hidden="true"></div>
+        <div class="pembina-card-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21a8 8 0 0 0-16 0"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
         </div>
-      </div>`;
+        <div class="pembina-card-copy">
+          <div class="pembina-card-label">${escapeHtml(orang.jabatan || "Pembina PMR")}</div>
+          <div class="pembina-card-name">${escapeHtml(orang.nama)}</div>
+          <div class="pembina-card-desc">Mendampingi dan membina kegiatan PMR WIRA UNIT.</div>
+        </div>
+      </article>`;
 
     const renderPengurusPublik = (data) => {
       const jabatan = Array.isArray(data?.jabatan) ? data.jabatan : [];
@@ -129,35 +136,61 @@ document.addEventListener("DOMContentLoaded", () => {
       const wakil = people(byRole("wakil"));
       const sekretaris = people(byRole("sekretaris"));
       const bendahara = people(byRole("bendahara"));
-      const pj = normalized
-        .filter(item => item.roleId.startsWith("pj_"))
-        .flatMap(item => people(item));
 
-      if (!ketua.length && !wakil.length && !sekretaris.length && !bendahara.length && !pj.length) {
+      const pjGroups = normalized
+        .filter(item => item.roleId.startsWith("pj_") && item.anggota?.length)
+        .map(item => ({
+          roleId: item.roleId,
+          jabatan: item.jabatan,
+          anggota: people(item)
+        }));
+
+      if (!ketua.length && !wakil.length && !sekretaris.length && !bendahara.length && !pjGroups.length) {
         landingPengurus.innerHTML = `<div class="org-tree-empty"><strong>Struktur pengurus belum tersedia</strong><span>Susunan kepengurusan akan segera diperbarui.</span></div>`;
         return;
       }
 
-      const first = ketua[0];
-      const second = [...wakil, ...sekretaris];
-      const third = [...bendahara, ...pj];
+      const coreGroup = (label, peopleList, modifier = "") => peopleList.length ? `
+        <div class="org-tree-core-group ${modifier}">
+          <div class="org-tree-core-label">${escapeHtml(label)}</div>
+          <div class="org-tree-core-members">
+            ${peopleList.map(orang => orangHtml(orang, true)).join("")}
+          </div>
+        </div>` : "";
+
+      const pjGroup = (group) => `
+        <section class="org-tree-pj-group" aria-label="${escapeHtml(group.jabatan)}">
+          <div class="org-tree-pj-branch" aria-hidden="true"></div>
+          <div class="org-tree-pj-label">${escapeHtml(group.jabatan)}</div>
+          <div class="org-tree-pj-members">
+            ${group.anggota.map(orang => orangHtml(orang, true)).join("")}
+          </div>
+        </section>`;
 
       landingPengurus.innerHTML = `
-        ${first ? `
+        ${ketua[0] ? `
           <div class="org-tree-level org-tree-level-top">
-            ${orangHtml(first)}
+            ${orangHtml(ketua[0])}
           </div>` : ""}
 
-        ${second.length ? `
-          <div class="org-tree-connector org-tree-connector-second" aria-hidden="true"></div>
-          <div class="org-tree-level org-tree-level-second">
-            ${second.map(orang => orangHtml(orang)).join("")}
+        ${(wakil.length || sekretaris.length || bendahara.length) ? `
+          <div class="org-tree-main-connector" aria-hidden="true"></div>
+          <div class="org-tree-level org-tree-level-core">
+            ${coreGroup("Wakil Ketua", wakil, "org-tree-core-wakil")}
+            ${coreGroup("Sekretaris", sekretaris, "org-tree-core-sekretaris")}
+            ${coreGroup("Bendahara", bendahara, "org-tree-core-bendahara")}
           </div>` : ""}
 
-        ${third.length ? `
-          <div class="org-tree-connector org-tree-connector-third" aria-hidden="true"></div>
-          <div class="org-tree-level org-tree-level-third">
-            ${third.map(orang => orangHtml(orang, true)).join("")}
+        ${pjGroups.length ? `
+          <div class="org-tree-pj-connector" aria-hidden="true">
+            <span></span>
+          </div>
+          <div class="org-tree-pj-heading">
+            <span>Bidang Penanggung Jawab</span>
+            <small>Setiap bidang dikelompokkan agar mudah dibaca.</small>
+          </div>
+          <div class="org-tree-pj-groups">
+            ${pjGroups.map(pjGroup).join("")}
           </div>` : ""}`;
     };
 

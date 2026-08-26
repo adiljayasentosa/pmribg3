@@ -191,18 +191,71 @@
 /* Struktur organisasi publik */
 .org-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:16px; }
 .org-row-left{ justify-content:flex-start; }
-.org-chip{
-  display:flex; align-items:center; gap:10px;
-  background:var(--white);
+.pembina-card{
+  position:relative;
+  display:grid;
+  grid-template-columns:auto 1fr;
+  align-items:center;
+  gap:18px;
+  width:min(560px, 100%);
+  overflow:hidden;
+  padding:22px 24px 22px 28px;
+  background:linear-gradient(135deg, var(--white) 0%, #fffafa 100%);
   border:1px solid var(--gray-200);
-  border-radius:var(--radius-pill);
-  padding:10px 18px 10px 10px;
+  border-radius:20px;
   box-shadow:var(--shadow-sm);
 }
-.org-chip .avatar{ width:34px; height:34px; font-size:0.75rem; }
-.org-chip .org-role{ font-size:0.8rem; font-weight:700; }
-.org-chip .org-name{ font-size:0.76rem; color:var(--ink-soft); }
+.pembina-card-accent{
+  position:absolute;
+  inset:0 auto 0 0;
+  width:5px;
+  background:linear-gradient(180deg, var(--pmr-red), #ef4444);
+}
+.pembina-card-icon{
+  width:58px;
+  height:58px;
+  border-radius:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--pmr-red);
+  color:var(--white);
+  box-shadow:0 8px 20px rgba(185,28,28,.16);
+}
+.pembina-card-copy{ min-width:0; }
+.pembina-card-label{
+  color:var(--pmr-red);
+  font-size:.74rem;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  margin-bottom:4px;
+}
+.pembina-card-name{
+  color:var(--ink);
+  font-size:1.18rem;
+  font-weight:800;
+  line-height:1.25;
+}
+.pembina-card-desc{
+  color:var(--ink-soft);
+  font-size:.82rem;
+  line-height:1.5;
+  margin-top:5px;
+}
 .org-empty{ color:var(--ink-soft); margin:0; font-size:0.9rem; }
+
+@media (max-width: 560px){
+  .pembina-card{
+    grid-template-columns:auto 1fr;
+    gap:14px;
+    padding:18px 18px 18px 22px;
+    border-radius:18px;
+  }
+  .pembina-card-icon{ width:50px; height:50px; border-radius:14px; }
+  .pembina-card-name{ font-size:1.05rem; }
+  .pembina-card-desc{ font-size:.78rem; }
+}
 
 .landing-structure{
   margin-top:64px;
@@ -650,3 +703,330 @@
 /* Modal install-guide (dipakai di dalam Modal.buka konten) */
 .app-install-steps{ margin:0 0 4px; padding-left:20px; }
 .app-install-steps li{ margin-bottom:8px; font-size:0.92rem; }
+
+
+/* =========================================================
+   PUBLIC STRUCTURE REDESIGN — v1.1.3
+   Hierarchy:
+   Ketua → Wakil/Sekretaris/Bendahara → PJ by bidang
+   ========================================================= */
+.org-tree{
+  width:100%;
+  max-width:1120px;
+  margin:0 auto;
+  padding:8px 0 20px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+.org-tree-level{
+  width:100%;
+  display:flex;
+  justify-content:center;
+  align-items:stretch;
+  gap:20px;
+  position:relative;
+}
+
+.org-tree-level-top .org-tree-person{
+  width:300px;
+  min-height:126px;
+  border:1.5px solid var(--pmr-red);
+  box-shadow:0 10px 28px rgba(185,28,28,.10);
+}
+
+.org-tree-level-top .org-tree-avatar{
+  width:54px;
+  height:54px;
+  background:var(--pmr-red);
+  color:var(--white);
+}
+
+.org-tree-person{
+  width:220px;
+  min-height:112px;
+  padding:20px 18px 18px;
+  text-align:center;
+  background:var(--white);
+  border:1px solid var(--gray-200);
+  border-radius:18px;
+  box-shadow:var(--shadow-sm);
+}
+
+.org-tree-person-compact{
+  width:210px;
+  min-height:100px;
+  padding:17px 16px 15px;
+}
+
+.org-tree-avatar{
+  width:44px;
+  height:44px;
+  margin:0 auto 9px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--pmr-red-light);
+  color:var(--pmr-red);
+  font-weight:800;
+  font-size:.84rem;
+}
+
+.org-tree-role{
+  color:var(--pmr-red);
+  font-size:.73rem;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.055em;
+  line-height:1.35;
+  margin-bottom:4px;
+}
+
+.org-tree-name{
+  color:var(--ink);
+  font-size:.98rem;
+  font-weight:750;
+  line-height:1.3;
+}
+
+/* Connector dari Ketua menuju tiga posisi inti */
+.org-tree-main-connector{
+  position:relative;
+  width:min(780px, 90%);
+  height:38px;
+}
+.org-tree-main-connector::before{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:0;
+  width:2px;
+  height:18px;
+  background:var(--gray-300);
+  transform:translateX(-50%);
+}
+.org-tree-main-connector::after{
+  content:"";
+  position:absolute;
+  left:16.66%;
+  right:16.66%;
+  top:18px;
+  height:2px;
+  background:var(--gray-300);
+}
+
+/* Wakil, Sekretaris, Bendahara benar-benar satu level */
+.org-tree-level-core{
+  width:min(900px, 100%);
+  gap:28px;
+}
+.org-tree-core-group{
+  position:relative;
+  flex:1 1 0;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:9px;
+}
+.org-tree-core-label{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:30px;
+  padding:5px 12px;
+  border-radius:999px;
+  background:var(--pmr-red-light);
+  color:var(--pmr-red);
+  font-size:.7rem;
+  font-weight:800;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.org-tree-core-members{
+  width:100%;
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:12px;
+}
+.org-tree-core-group .org-tree-person{
+  width:100%;
+}
+
+/* Garis dari level inti menuju bidang PJ */
+.org-tree-pj-connector{
+  position:relative;
+  width:94%;
+  height:54px;
+}
+.org-tree-pj-connector::before{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:0;
+  width:2px;
+  height:18px;
+  background:var(--gray-300);
+  transform:translateX(-50%);
+}
+.org-tree-pj-connector span{
+  position:absolute;
+  left:4%;
+  right:4%;
+  top:18px;
+  height:2px;
+  background:var(--gray-300);
+}
+.org-tree-pj-connector span::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:0;
+  width:2px;
+  height:36px;
+  background:var(--gray-300);
+  transform:translateX(-50%);
+}
+
+.org-tree-pj-heading{
+  width:100%;
+  text-align:center;
+  margin-bottom:18px;
+}
+.org-tree-pj-heading span{
+  display:inline-block;
+  color:var(--ink);
+  font-size:.78rem;
+  font-weight:850;
+  text-transform:uppercase;
+  letter-spacing:.09em;
+}
+.org-tree-pj-heading small{
+  display:block;
+  margin-top:5px;
+  color:var(--ink-soft);
+  font-size:.8rem;
+}
+
+/* Setiap PJ punya kelompok dan garis sendiri */
+.org-tree-pj-groups{
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:34px 28px;
+  position:relative;
+}
+.org-tree-pj-group{
+  position:relative;
+  min-width:0;
+  padding:22px 18px 18px;
+  background:var(--gray-50);
+  border:1px solid var(--gray-200);
+  border-radius:20px;
+}
+.org-tree-pj-branch{
+  position:absolute;
+  left:50%;
+  top:-34px;
+  width:2px;
+  height:34px;
+  background:var(--gray-300);
+  transform:translateX(-50%);
+}
+.org-tree-pj-label{
+  position:relative;
+  width:max-content;
+  max-width:100%;
+  margin:0 auto 15px;
+  padding:7px 13px;
+  border-radius:999px;
+  background:var(--white);
+  border:1px solid var(--pmr-red-light);
+  color:var(--pmr-red);
+  font-size:.72rem;
+  font-weight:850;
+  letter-spacing:.055em;
+  text-transform:uppercase;
+  text-align:center;
+}
+.org-tree-pj-members{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:12px;
+}
+.org-tree-pj-group .org-tree-person{
+  width:min(220px, 100%);
+  background:var(--white);
+}
+
+/* Bidang dengan 3 PJ tetap rapi */
+.org-tree-pj-group .org-tree-person + .org-tree-person{
+  margin-top:0;
+}
+
+@media (max-width: 860px){
+  .org-tree-level-core{
+    gap:16px;
+  }
+  .org-tree-core-group{
+    flex-basis:calc(33.333% - 12px);
+  }
+  .org-tree-pj-groups{
+    gap:28px 18px;
+  }
+}
+
+@media (max-width: 680px){
+  .org-tree-level-core{
+    flex-direction:column;
+    width:min(360px, 100%);
+    gap:18px;
+  }
+  .org-tree-core-group{
+    width:100%;
+  }
+  .org-tree-main-connector{
+    height:30px;
+  }
+  .org-tree-main-connector::after{
+    display:none;
+  }
+  .org-tree-pj-connector{
+    width:100%;
+    height:38px;
+  }
+  .org-tree-pj-connector span{
+    left:0;
+    right:0;
+  }
+  .org-tree-pj-groups{
+    grid-template-columns:1fr;
+    gap:34px;
+  }
+  .org-tree-pj-group{
+    padding:20px 14px 16px;
+  }
+  .org-tree-level-top .org-tree-person{
+    width:min(300px, 100%);
+  }
+}
+
+@media (max-width: 420px){
+  .org-tree-person{
+    width:100%;
+  }
+  .org-tree-level-top .org-tree-person{
+    width:100%;
+  }
+  .org-tree-pj-members{
+    flex-direction:column;
+    align-items:center;
+  }
+  .org-tree-pj-group .org-tree-person{
+    width:min(260px, 100%);
+  }
+}
