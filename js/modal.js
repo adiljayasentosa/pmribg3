@@ -152,9 +152,9 @@ const Notif = (() => {
       _dropdownEl?.classList.remove("open");
     });
 
-    /* Buat notif dari kegiatan yang < 7 hari lagi */
+    /* Buat notif dari kegiatan yang < 7 hari lagi — baca dari AppState */
     const sekarang = new Date();
-    DUMMY_DATA.kegiatan.forEach((k) => {
+    (AppState.kegiatan || []).forEach((k) => {
       const selisih = Math.ceil((new Date(k.tanggal) - sekarang) / (1000 * 60 * 60 * 24));
       if (selisih >= 0 && selisih <= 7) {
         tambah(`Kegiatan "${k.nama}" ${selisih === 0 ? "hari ini!" : `${selisih} hari lagi`}`, false);
