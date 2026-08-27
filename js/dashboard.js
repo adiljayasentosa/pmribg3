@@ -189,11 +189,45 @@ function _initDashboard(user) {
         link.style.display = "none";
       });
     });
+
     const linkProfil = document.querySelector('.sidebar-link[data-page="profilsaya"]');
     if (linkProfil) linkProfil.style.display = "";
+
+    /* [RBAC NAV — ANGGOTA] Bottom nav memakai slot yang sama, tetapi
+       shortcut yang tidak relevan diganti dengan halaman yang memang
+       boleh dilihat anggota:
+       - Anggota  → Pengurus (view-only)
+       - Presensi → Profil Saya
+       Keuangan tetap disembunyikan untuk anggota. */
+    const bottomPengurus = document.querySelector('.bottom-nav .bottom-nav-link[data-page="anggota"]');
+    if (bottomPengurus) {
+      bottomPengurus.href = "#pengurus";
+      bottomPengurus.dataset.page = "pengurus";
+      bottomPengurus.querySelector(".bottom-nav-label")?.replaceChildren(document.createTextNode("Pengurus"));
+      bottomPengurus.style.display = "";
+    }
+
+    const bottomProfil = document.querySelector('.bottom-nav .bottom-nav-link[data-page="presensi"]');
+    if (bottomProfil) {
+      bottomProfil.href = "#profilsaya";
+      bottomProfil.dataset.page = "profilsaya";
+      bottomProfil.querySelector(".bottom-nav-label")?.replaceChildren(document.createTextNode("Profil Saya"));
+      bottomProfil.style.display = "";
+    }
   }
 
   function navigateTo(pageId) {
+    /* Route guard lapis UI: akun anggota tidak boleh membuka halaman
+       administrasi hanya dengan mengetik hash secara manual. Firestore
+       Rules tetap menjadi lapisan keamanan utama. */
+    if (user.role === "anggota") {
+      const halamanAnggota = new Set([
+        "beranda", "kegiatan", "piket", "upacara", "inventaris",
+        "pengurus", "profilsaya"
+      ]);
+      if (!halamanAnggota.has(pageId)) pageId = "beranda";
+    }
+
     const page = PAGES[pageId];
     if (!page) return;
     navLinks.forEach(a => a.classList.toggle("active", a.dataset.page === pageId));
