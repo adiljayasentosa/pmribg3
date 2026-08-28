@@ -436,3 +436,62 @@ table.data-table tbody tr:hover{ background:var(--pmr-red-light); }
 .skeleton-stack{ display:flex; flex-direction:column; gap:16px; }
 .skeleton-row{ display:flex; gap:20px; }
 .skeleton-row > *{ flex:1; }
+
+/* ---------- Anggota: grouping & mobile-friendly layout ---------- */
+.anggota-class-tabs{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding:2px 0 14px;
+  scrollbar-width:none;
+}
+.anggota-class-tabs::-webkit-scrollbar{display:none}
+.anggota-class-tab{
+  flex:0 0 auto;
+  border:1px solid var(--gray-200);
+  background:var(--white);
+  color:var(--ink-soft);
+  border-radius:999px;
+  padding:8px 16px;
+  font:600 .82rem Inter,sans-serif;
+  cursor:pointer;
+  transition:.18s ease;
+}
+.anggota-class-tab.active{
+  background:var(--pmr-red);
+  border-color:var(--pmr-red);
+  color:#fff;
+}
+.anggota-groups{display:flex;flex-direction:column;gap:18px}
+.anggota-group{border:1px solid var(--gray-200);border-radius:var(--radius-md);overflow:hidden;background:var(--white)}
+.anggota-group-head{padding:14px 16px;background:var(--gray-100);border-bottom:1px solid var(--gray-200)}
+.anggota-group-head h2{margin:0;font:800 1rem Poppins,sans-serif;color:var(--ink)}
+.anggota-group-head span{font-size:.78rem;color:var(--ink-soft)}
+.anggota-group .table-wrap{border:0}
+.anggota-group .data-table{margin:0}
+.anggota-empty{padding:32px 16px}
+@media(max-width:700px){
+  .anggota-page-card{padding:14px}
+  .anggota-toolbar{display:block}
+  .anggota-toolbar .search-bar{width:100%}
+  .anggota-group{border-radius:12px}
+  .anggota-table-wrap{overflow:visible}
+  .anggota-data-table,
+  .anggota-data-table thead,
+  .anggota-data-table tbody,
+  .anggota-data-table tr,
+  .anggota-data-table th,
+  .anggota-data-table td{display:block}
+  .anggota-data-table thead{display:none}
+  .anggota-data-table tr{padding:12px 14px;border-bottom:1px solid var(--gray-200)}
+  .anggota-data-table tr:last-child{border-bottom:0}
+  .anggota-data-table td{padding:3px 0;border:0;white-space:normal}
+  .anggota-data-table td:first-child{display:none}
+  .anggota-data-table td:nth-child(2){padding-bottom:5px}
+  .anggota-data-table td:nth-child(2) strong{font-size:.92rem}
+  .anggota-data-table td:nth-child(3)::before{content:'NI: ';font-weight:600;color:var(--ink-soft)}
+  .anggota-data-table td:nth-child(4)::before{content:'Jabatan: ';font-weight:600;color:var(--ink-soft)}
+  .anggota-data-table td:nth-child(5)::before{content:'Kelas: ';font-weight:600;color:var(--ink-soft)}
+  .anggota-data-table td:nth-child(6)::before{content:'Divisi: ';font-weight:600;color:var(--ink-soft)}
+  .anggota-data-table td:nth-child(7){padding-top:7px}
+}

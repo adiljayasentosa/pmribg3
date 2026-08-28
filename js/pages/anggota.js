@@ -15,6 +15,8 @@ const DIVISI_ANGGOTA_LIST = ["Pertolongan Pertama", "Tandu"];
 
 function renderAnggota(el, user) {
   const canEdit = ["admin","ketua","wakil","sekretaris"].includes(user.role);
+  const GROUPS = ["Alumni", "XII", "XI", "X"];
+
   el.innerHTML = `
   <div class="page-head">
     <div><h1>Data Anggota</h1><p class="page-sub">${AppState.anggota.length} anggota terdaftar</p></div>
@@ -24,34 +26,45 @@ function renderAnggota(el, user) {
       <button class="btn btn-primary btn-sm" id="btn-tambah-anggota">+ Tambah Anggota</button>`:""}
     </div>
   </div>
-  <div class="card">
-    <div class="table-toolbar">
+
+  <div class="card anggota-page-card">
+    <div class="table-toolbar anggota-toolbar">
       <div class="search-bar">
         <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0z"/>
         </svg>
-        <input id="search-anggota" type="search" placeholder="Cari nama, kelas, divisi…">
+        <input id="search-anggota" type="search" placeholder="Cari nama, NI, kelas, divisi, jabatan…">
       </div>
     </div>
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead><tr><th>#</th><th>Nama</th><th>Nomor Induk</th><th>Jabatan</th><th>Status Keanggotaan</th><th>Status Akun</th><th>Aksi</th></tr></thead>
-        <tbody id="tb-anggota"></tbody>
-      </table>
+
+    <div class="anggota-class-tabs" role="tablist" aria-label="Kelompok anggota">
+      <button class="anggota-class-tab active" data-group="all" role="tab" aria-selected="true">Semua</button>
+      ${GROUPS.map(g=>`<button class="anggota-class-tab" data-group="${g}" role="tab" aria-selected="false">${g}</button>`).join("")}
     </div>
+
+    <div id="anggota-groups" class="anggota-groups"></div>
   </div>`;
 
-  /* FIX BUG #2: rowAnggota menerima (item, index) dari Array.map di renderTable.
-     Sebelumnya 'let no = 1' di-share sebagai closure — counter tidak pernah reset
-     antara render awal dan setiap panggilan pasangSearch, sehingga nomor urut
-     terus naik setiap kali user mengetik di search bar. */
+  const normalizeClass = value => {
+    const v = String(value || "").trim().toUpperCase();
+    if (/^ALUMNI(?:\b|\s|[-_])/i.test(v) || v === "ALUMNI") return "Alumni";
+    if (/^XII(?:\b|\s|[-_])/i.test(v) || v === "XII") return "XII";
+    if (/^XI(?:\b|\s|[-_])/i.test(v) || v === "XI") return "XI";
+    if (/^X(?:\b|\s|[-_])/i.test(v) || v === "X") return "X";
+    return "Belum ditentukan";
+  };
+
+  const sortNama = (a,b) => String(a.nama||"").localeCompare(String(b.nama||""), "id", { sensitivity:"base" });
   const rowAnggota = (a, i) => `<tr>
     <td>${i + 1}</td>
     <td><div style="display:flex;align-items:center;gap:10px">
       <div class="avatar" style="width:32px;height:32px;font-size:0.7rem">${getInisial(a.nama)}</div>
       <strong>${a.nama}</strong>
     </div></td>
-    <td>${a.nomorInduk||"—"}</td><td>${a.jabatan||"Anggota"}</td><td>${statusBadge(a.statusKeanggotaan||a.status)}</td><td>${statusBadge(a.statusAkun||"active")}</td>
+    <td>${a.nomorInduk||"—"}</td>
+    <td>${a.jabatan||"Anggota"}</td>
+    <td>${a.kelas||"—"}</td>
+    <td>${a.divisi||"—"}</td>
     <td><div style="display:flex;gap:6px">
       <button class="btn btn-ghost btn-sm btn-detail-anggota" data-id="${a.id}" title="Detail" aria-label="Lihat detail ${a.nama}">👁</button>
       ${canEdit?`<button class="btn btn-ghost btn-sm btn-edit-anggota" data-id="${a.id}" title="Edit" aria-label="Edit ${a.nama}">✏</button>
@@ -59,10 +72,68 @@ function renderAnggota(el, user) {
     </div></td>
   </tr>`;
 
-  renderTable(document.getElementById("tb-anggota"), AppState.anggota, rowAnggota);
-  pasangSearch("search-anggota","tb-anggota", AppState.anggota, rowAnggota, ["nama","nomorInduk","kelas","divisi","jabatan","statusKeanggotaan","statusAkun"]);
+  const groupsEl = document.getElementById("anggota-groups");
+  let activeGroup = "all";
+  let searchTerm = "";
 
-  document.getElementById("tb-anggota").addEventListener("click", e => {
+  function filteredData() {
+    const q = searchTerm.trim().toLowerCase();
+    return AppState.anggota.filter(a => {
+      const group = normalizeClass(a.kelas);
+      const groupMatch = activeGroup === "all" || group === activeGroup;
+      if (!groupMatch) return false;
+      if (!q) return true;
+      return [a.nama,a.nomorInduk,a.kelas,a.divisi,a.jabatan,a.statusKeanggotaan,a.statusAkun]
+        .some(v => String(v||"").toLowerCase().includes(q));
+    }).sort(sortNama);
+  }
+
+  function renderGroups() {
+    const rows = filteredData();
+    if (!rows.length) {
+      groupsEl.innerHTML = `<div class="empty-state anggota-empty"><p>Tidak ada anggota yang cocok dengan pencarian.</p></div>`;
+      return;
+    }
+
+    const visibleGroups = activeGroup === "all" ? [...GROUPS, "Belum ditentukan"] : [activeGroup];
+    let globalNo = 0;
+    groupsEl.innerHTML = visibleGroups.map(group => {
+      const members = rows.filter(a => normalizeClass(a.kelas) === group);
+      if (!members.length) return "";
+      const startNo = globalNo;
+      const htmlRows = members.map((a,i) => rowAnggota(a, startNo + i)).join("");
+      globalNo += members.length;
+      return `<section class="anggota-group" data-group-section="${group}">
+        <div class="anggota-group-head">
+          <div><h2>${group}</h2><span>${members.length} anggota</span></div>
+        </div>
+        <div class="table-wrap anggota-table-wrap">
+          <table class="data-table anggota-data-table">
+            <thead><tr><th>#</th><th>Nama</th><th>Nomor Induk</th><th>Jabatan</th><th>Kelas</th><th>Divisi</th><th>Aksi</th></tr></thead>
+            <tbody>${htmlRows}</tbody>
+          </table>
+        </div>
+      </section>`;
+    }).join("");
+  }
+
+  renderGroups();
+
+  document.getElementById("search-anggota")?.addEventListener("input", e => {
+    searchTerm = e.target.value;
+    renderGroups();
+  });
+  document.querySelectorAll(".anggota-class-tab").forEach(btn => btn.addEventListener("click", () => {
+    activeGroup = btn.dataset.group;
+    document.querySelectorAll(".anggota-class-tab").forEach(b => {
+      const active = b === btn;
+      b.classList.toggle("active", active);
+      b.setAttribute("aria-selected", active ? "true" : "false");
+    });
+    renderGroups();
+  }));
+
+  groupsEl.addEventListener("click", e => {
     const id = e.target.closest("[data-id]")?.dataset.id;
     if (!id) return;
     if (e.target.closest(".btn-detail-anggota")) {
