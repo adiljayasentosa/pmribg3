@@ -258,3 +258,9 @@ Belum ada lisensi terbuka yang ditetapkan — project ini didistribusikan untuk 
 Made with ❤️ by PMR WIRA UNIT — *Siap, Peduli, Bersahabat*
 
 </div>
+
+
+### v1.1.6 — KTA
+- KTA admin preview/generator menggunakan template depan & belakang.
+- QR mengarah ke login KTA anggota.
+- Provision akun anggota: NI sebagai username, password acak dari backend.

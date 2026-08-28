@@ -454,4 +454,14 @@ match /piket/{jadwalId} {
     }
 
   }
+
+    // KTA private: token QR dan binding akun tidak boleh dibaca anggota lain.
+    match /kta/{anggotaId} {
+      allow read: if isLoggedIn() && (
+        hasAnyRole(['admin','ketua','wakil','sekretaris']) ||
+        (userDocExists() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.anggotaId == anggotaId)
+      );
+      allow create, update, delete: if hasAnyRole(['admin','ketua','wakil','sekretaris']);
+    }
+
 }

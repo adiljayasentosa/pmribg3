@@ -244,6 +244,11 @@ function bukaFormAnggota(data, onSimpan) {
             ${divisiOpsi.map(d=>`<option ${data?.divisi===d?"selected":""}>${d}</option>`).join("")}
           </select>
         </div>
+        <div class="field" style="grid-column:1/-1">
+          <label>Foto KTA <span style="font-weight:400;color:var(--ink-soft)">(opsional · URL publik/data URL)</span></label>
+          <input id="f-foto" type="url" value="${data?.foto||""}" placeholder="https://…">
+          <small style="color:var(--ink-soft)">Untuk Google Drive, gunakan link yang dapat diakses publik. Foto hanya direferensikan, bukan disimpan di Firestore sebagai file.</small>
+        </div>
         <div class="field">
           <label>Status Keanggotaan</label>
           <select id="f-status-keanggotaan">
@@ -272,6 +277,7 @@ function bukaFormAnggota(data, onSimpan) {
           nomorInduk: document.getElementById("f-nomor-induk").value.trim(),
           kelas:document.getElementById("f-kelas").value.trim(),
           divisi:document.getElementById("f-divisi").value,
+          foto: document.getElementById("f-foto")?.value.trim() || "",
           jabatan: document.getElementById("f-jabatan").value,
           statusKeanggotaan:document.getElementById("f-status-keanggotaan").value,
           statusAkun:document.getElementById("f-status-akun").value,
@@ -338,7 +344,7 @@ function _aliasHeaderImport(h) {
     ni: "nomorInduk", nid: "nomorInduk", nomorinduk: "nomorInduk", nomorindukanggota: "nomorInduk",
     status: "statusKeanggotaan", statuskeanggotaan: "statusKeanggotaan", keanggotaan: "statusKeanggotaan",
     jabatan: "jabatan", posisi: "jabatan",
-    kelas: "kelas", divisi: "divisi", sumberdata: "sumberData"
+    kelas: "kelas", divisi: "divisi", foto: "foto", fotokta: "foto", sumberdata: "sumberData"
   };
   return aliases[key] || null;
 }
