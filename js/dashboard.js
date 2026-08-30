@@ -187,13 +187,14 @@ async function previewKta(a, fromAll=false) {
       <div class="kta-preview-card"><div class="kta-preview-label">DEPAN</div><canvas id="kta-front-canvas" width="993" height="1536"></canvas></div>
       <div class="kta-preview-card"><div class="kta-preview-label">BELAKANG</div><canvas id="kta-back-canvas" width=993 height=1536 class="kta-preview-img"></canvas></div>
     </div>
-    <div class="kta-meta"><strong>${escapeHtmlKta(a.nama)}</strong> · ${escapeHtmlKta(a.nomorInduk||'—')} · ${escapeHtmlKta(a.kelas||'—')} · ${escapeHtmlKta(a.jabatan||'Anggota')} · ${escapeHtmlKta(a.divisi||'—')}<br><span>${hasPhoto?'Foto ditemukan dan akan ditempatkan ke template.':'Foto belum diisi, generator menggunakan placeholder.'}</span></div>`, aksi:[{label:'Unduh Depan PNG',kelas:'btn-outline',id:'btn-kta-download-front',onClick:()=>downloadCanvasPng(document.getElementById('kta-front-canvas'),`KTA-${safeFile(a.nomorInduk||a.nama)}-depan.png`)},{label:'Unduh Belakang',kelas:'btn-outline',id:'btn-kta-download-back',onClick:async()=>{const c=await buildKtaBackCanvas(a,target);downloadCanvasPng(c,`KTA-${safeFile(a.nomorInduk||a.nama)}-belakang.png`)}},{label:'Tutup',kelas:'btn-primary',id:'modal-tutup-kta-preview',onClick:()=>Modal.tutup()}]});
+    <div class="kta-meta"><strong>${escapeHtmlKta(a.nama)}</strong> · ${escapeHtmlKta(a.nomorInduk||'—')} · ${escapeHtmlKta(a.kelas||'—')} · ${escapeHtmlKta(a.jabatan||'Anggota')} · ${escapeHtmlKta(a.divisi||'—')}<br><span>${hasPhoto?'Foto ditemukan dan akan ditempatkan ke template.':'Foto belum diisi, generator menggunakan placeholder.'}</span></div>`, aksi:[{label:'Unduh Depan PNG',kelas:'btn-outline',id:'btn-kta-download-front',onClick:()=>downloadCanvasPng(document.getElementById('kta-front-canvas'),`KTA-${safeFile(a.nomorInduk||a.nama)}-depan.png`)},{label:'Unduh Belakang',kelas:'btn-outline',id:'btn-kta-download-back',onClick:async()=>{const c=await buildKtaBackCanvas(a,target);downloadCanvasPng(c,`KTA-${safeFile(a.nomorInduk||a.nama)}-belakang.png`)}},{label:'Unduh Semua',kelas:'btn-primary',id:'btn-kta-download-all',onClick:async()=>{const btn=document.getElementById('btn-kta-download-all');if(btn)btn.disabled=true;try{if(!window.JSZip)throw new Error('Library ZIP belum termuat.');const front=await buildKtaCanvas(a,target);const back=await buildKtaBackCanvas(a,target);const zip=new JSZip();zip.file(`KTA-${safeFile(a.nomorInduk||a.nama)}-depan.png`,await canvasToBlob(front));zip.file(`KTA-${safeFile(a.nomorInduk||a.nama)}-belakang.png`,await canvasToBlob(back));const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE'});const href=URL.createObjectURL(blob);const link=document.createElement('a');link.href=href;link.download=`KTA-${safeFile(a.nomorInduk||a.nama)}.zip`;link.click();setTimeout(()=>URL.revokeObjectURL(href),3000);}catch(err){tampilToast('Unduh semua gagal: '+err.message,'error');}finally{if(btn)btn.disabled=false;}}},{label:'Tutup',kelas:'btn-primary',id:'modal-tutup-kta-preview',onClick:()=>Modal.tutup()}]});
   setTimeout(async()=>{await renderKtaCanvas(a,target); await renderKtaBackCanvas(a,target);},0);
 }
 
 function safeFile(v){return String(v||'KTA').replace(/[^a-z0-9_-]+/gi,'_').slice(0,80)}
 function downloadCanvasPng(canvas,name){if(!canvas)return; const a=document.createElement('a'); a.href=canvas.toDataURL('image/png'); a.download=name; a.click();}
 function downloadImage(src,name){const a=document.createElement('a');a.href=src;a.download=name;a.click();}
+function canvasToBlob(canvas){return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Canvas tidak dapat diekspor.')),'image/png'));}
 
 async function buildKtaCanvas(a,target) {
   const canvas=document.createElement('canvas'); canvas.width=993; canvas.height=1536; const ctx=canvas.getContext('2d');
@@ -222,7 +223,20 @@ async function renderKtaBackCanvas(a,target){const canvas=await buildKtaBackCanv
 function fitText(ctx,text,x,y,maxW,size){let s=size;ctx.font=`${s}px Inter, Arial`;while(ctx.measureText(text).width>maxW&&s>22){s-=1;ctx.font=`${s}px Inter, Arial`;}ctx.fillText(text,x,y)}
 function loadKtaImage(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});}
 function waitImg(img){return img.complete?Promise.resolve():new Promise(r=>{img.onload=r;img.onerror=r;});}
-async function tryLoadKtaPhoto(src){if(!src)return null;let url=String(src).trim();try{if(url.includes('drive.google.com')&&url.includes('/file/d/')){const m=url.match(/\/file\/d\/([^/]+)/);if(m)url=`https://drive.google.com/thumbnail?id=${m[1]}&sz=w1200`;} const i=new Image();i.crossOrigin='anonymous';await new Promise((res)=>{i.onload=res;i.onerror=()=>res();i.src=url;setTimeout(res,5000)});return i.naturalWidth?i:null;}catch{return null}}
+async function tryLoadKtaPhoto(src){
+  if(!src) return null;
+  let url=String(src).trim();
+  try{
+    if(/drive\.google\.com/i.test(url)){
+      const id=(url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)||url.match(/[?&]id=([a-zA-Z0-9_-]+)/)||url.match(/\/d\/([a-zA-Z0-9_-]+)/))?.[1];
+      if(id) url=`/api/kta-photo?id=${encodeURIComponent(id)}`;
+      else if(/^https?:\/\/drive\.google\.com/i.test(url)) url=`/api/kta-photo?url=${encodeURIComponent(url)}`;
+    }
+    const i=new Image();
+    await new Promise((res)=>{i.onload=res;i.onerror=()=>res();i.src=url;setTimeout(res,8000)});
+    return i.naturalWidth?i:null;
+  }catch{return null}
+}
 
 let PAGES = {};
 
