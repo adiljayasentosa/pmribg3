@@ -153,7 +153,8 @@ async function renderKta(el, user) {
         const canvas=await buildKtaCanvas(a,`${location.origin}/kta-member.html?kta=${encodeURIComponent(a.ktaToken)}`);
         const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
         zip.file(`KTA-${safeFile(a.nomorInduk||a.nama)}-depan.png`,blob);
-        const back=await fetch('assets/kta-back-template.png').then(r=>r.blob());
+        const backCanvas=await buildKtaBackCanvas(a,`${location.origin}/kta-member.html?kta=${encodeURIComponent(a.ktaToken)}`);
+        const back=await new Promise(r=>backCanvas.toBlob(r,'image/png'));
         zip.file(`KTA-${safeFile(a.nomorInduk||a.nama)}-belakang.png`,back);
         const pct=Math.round((i+1)/ready.length*100); const st=document.getElementById('kta-batch-status'); const pr=document.getElementById('kta-batch-progress'); if(st)st.textContent=`Memproses ${i+1}/${ready.length}: ${a.nama}`; if(pr)pr.style.width=pct+'%';
       }
@@ -173,7 +174,7 @@ async function kelolaAkunKta(a, adminUser) {
     return;
   }
   if (!a.nomorInduk) return tampilToast('NI wajib diisi sebelum membuat akun KTA.','error');
-  Modal.buka({judul:'Buat Akun Anggota', konten:`<p>Akun akan dibuat untuk <strong>${escapeHtmlKta(a.nama)}</strong>.</p><div class="kta-credential-warning">Username: <strong>${escapeHtmlKta(a.nomorInduk)}</strong><br>Password awal dibuat acak oleh sistem dan hanya ditampilkan sekali.</div><p style="color:var(--ink-soft);font-size:.84rem">Setelah akun dibuat, QR KTA akan mengarah ke halaman login dan hanya akun yang terhubung dengan KTA tersebut yang dapat melihatnya.</p>`, aksi:[{label:'Buat Akun',kelas:'btn-primary',id:'btn-confirm-create-kta-account',onClick:async()=>{const btn=document.getElementById('btn-confirm-create-kta-account'); if(btn) btn.disabled=true; try { const token=await firebase.auth().currentUser.getIdToken(true); const r=await fetch('/api/kta-account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:token,anggotaId:a.id})}); const data=await r.json(); if(!r.ok) throw new Error(data.error||'Gagal membuat akun.'); await DB.anggota.update(a.id,{authUid:data.uid,statusAkun:'active'}); a.authUid=data.uid; a.ktaToken=data.ktaToken; Modal.tutup(); tampilToast(`Akun dibuat. Password awal: ${data.temporaryPassword}`,'success'); } catch(err){ if(btn) btn.disabled=false; tampilToast(err.message,'error'); }}}]});
+  Modal.buka({judul:'Buat Akun Anggota', konten:`<p>Akun akan dibuat untuk <strong>${escapeHtmlKta(a.nama)}</strong>.</p><div class="kta-credential-warning">Username: <strong>${escapeHtmlKta(a.nomorInduk)}</strong><br>Password awal dibuat acak oleh sistem dan hanya ditampilkan sekali.</div><p style="color:var(--ink-soft);font-size:.84rem">Setelah akun dibuat, QR KTA dapat diverifikasi publik. Login hanya diperlukan untuk membuka KTA/profil milik anggota sendiri.</p>`, aksi:[{label:'Buat Akun',kelas:'btn-primary',id:'btn-confirm-create-kta-account',onClick:async()=>{const btn=document.getElementById('btn-confirm-create-kta-account'); if(btn) btn.disabled=true; try { const token=await firebase.auth().currentUser.getIdToken(true); const r=await fetch('/api/kta-account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:token,anggotaId:a.id})}); const data=await r.json(); if(!r.ok) throw new Error(data.error||'Gagal membuat akun.'); await DB.anggota.update(a.id,{authUid:data.uid,statusAkun:'active'}); a.authUid=data.uid; a.ktaToken=data.ktaToken; Modal.tutup(); tampilToast(`Akun dibuat. Password awal: ${data.temporaryPassword}`,'success'); } catch(err){ if(btn) btn.disabled=false; tampilToast(err.message,'error'); }}}]});
 }
 
 async function previewKta(a, fromAll=false) {
@@ -184,10 +185,10 @@ async function previewKta(a, fromAll=false) {
   Modal.buka({judul:`Preview KTA · ${escapeHtmlKta(a.nama)}`, ukuran:'modal-xl', konten:`
     <div class="kta-preview-wrap">
       <div class="kta-preview-card"><div class="kta-preview-label">DEPAN</div><canvas id="kta-front-canvas" width="993" height="1536"></canvas></div>
-      <div class="kta-preview-card"><div class="kta-preview-label">BELAKANG</div><img src="assets/kta-back-template.png" alt="Template belakang KTA" class="kta-preview-img"></div>
+      <div class="kta-preview-card"><div class="kta-preview-label">BELAKANG</div><canvas id="kta-back-canvas" width=993 height=1536 class="kta-preview-img"></canvas></div>
     </div>
-    <div class="kta-meta"><strong>${escapeHtmlKta(a.nama)}</strong> · ${escapeHtmlKta(a.nomorInduk||'—')} · ${escapeHtmlKta(a.kelas||'—')} · ${escapeHtmlKta(a.jabatan||'Anggota')} · ${escapeHtmlKta(a.divisi||'—')}<br><span>${hasPhoto?'Foto ditemukan dan akan ditempatkan ke template.':'Foto belum diisi, generator menggunakan placeholder.'}</span></div>`, aksi:[{label:'Unduh Depan PNG',kelas:'btn-outline',id:'btn-kta-download-front',onClick:()=>downloadCanvasPng(document.getElementById('kta-front-canvas'),`KTA-${safeFile(a.nomorInduk||a.nama)}-depan.png`)},{label:'Unduh Belakang',kelas:'btn-outline',id:'btn-kta-download-back',onClick:()=>downloadImage('assets/kta-back-template.png',`KTA-${safeFile(a.nomorInduk||a.nama)}-belakang.png`)},{label:'Tutup',kelas:'btn-primary',id:'modal-tutup-kta-preview',onClick:()=>Modal.tutup()}]});
-  setTimeout(()=>renderKtaCanvas(a,target),0);
+    <div class="kta-meta"><strong>${escapeHtmlKta(a.nama)}</strong> · ${escapeHtmlKta(a.nomorInduk||'—')} · ${escapeHtmlKta(a.kelas||'—')} · ${escapeHtmlKta(a.jabatan||'Anggota')} · ${escapeHtmlKta(a.divisi||'—')}<br><span>${hasPhoto?'Foto ditemukan dan akan ditempatkan ke template.':'Foto belum diisi, generator menggunakan placeholder.'}</span></div>`, aksi:[{label:'Unduh Depan PNG',kelas:'btn-outline',id:'btn-kta-download-front',onClick:()=>downloadCanvasPng(document.getElementById('kta-front-canvas'),`KTA-${safeFile(a.nomorInduk||a.nama)}-depan.png`)},{label:'Unduh Belakang',kelas:'btn-outline',id:'btn-kta-download-back',onClick:async()=>{const c=await buildKtaBackCanvas(a,target);downloadCanvasPng(c,`KTA-${safeFile(a.nomorInduk||a.nama)}-belakang.png`)}},{label:'Tutup',kelas:'btn-primary',id:'modal-tutup-kta-preview',onClick:()=>Modal.tutup()}]});
+  setTimeout(async()=>{await renderKtaCanvas(a,target); await renderKtaBackCanvas(a,target);},0);
 }
 
 function safeFile(v){return String(v||'KTA').replace(/[^a-z0-9_-]+/gi,'_').slice(0,80)}
@@ -203,6 +204,20 @@ async function buildKtaCanvas(a,target) {
   return canvas;
 }
 async function renderKtaCanvas(a,target){const canvas=await buildKtaCanvas(a,target);const host=document.getElementById('kta-front-canvas');if(!host)return;host.getContext('2d').drawImage(canvas,0,0);}
+async function buildKtaBackCanvas(a,target){
+  const canvas=document.createElement('canvas'); canvas.width=993; canvas.height=1536; const ctx=canvas.getContext('2d');
+  const bg=await loadKtaImage('assets/kta-back-template.png'); ctx.drawImage(bg,0,0,993,1536);
+  try{
+    const box=document.createElement('div'); box.style.cssText='position:fixed;left:-99999px;top:-99999px;background:#fff;padding:8px'; document.body.appendChild(box);
+    new QRCode(box,{text:target,width:210,height:210,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+    await new Promise(r=>setTimeout(r,40));
+    const q=box.querySelector('canvas')||box.querySelector('img');
+    if(q){if(q.tagName==='IMG')await waitImg(q); ctx.drawImage(q,391,785,210,210);}
+    box.remove();
+  }catch(e){console.warn('[KTA] QR belakang gagal:',e);}
+  return canvas;
+}
+async function renderKtaBackCanvas(a,target){const canvas=await buildKtaBackCanvas(a,target);const host=document.getElementById('kta-back-canvas');if(!host)return;host.getContext('2d').drawImage(canvas,0,0);}
 
 function fitText(ctx,text,x,y,maxW,size){let s=size;ctx.font=`${s}px Inter, Arial`;while(ctx.measureText(text).width>maxW&&s>22){s-=1;ctx.font=`${s}px Inter, Arial`;}ctx.fillText(text,x,y)}
 function loadKtaImage(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});}

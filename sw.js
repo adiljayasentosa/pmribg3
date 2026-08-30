@@ -25,7 +25,7 @@
    deploy yang mengubah isi file apa pun, karena inilah yang membuat
    browser mendeteksi ada versi sw.js baru (lihat penjelasan mekanisme
    update di README-PWA.md). */
-const APP_VERSION = "1.1.7";
+const APP_VERSION = "1.1.8";
 
 const CACHE_STATIC  = `pmr-static-${APP_VERSION}`;   // app shell: html/css/js/icon/logo
 const CACHE_RUNTIME = `pmr-runtime-${APP_VERSION}`;  // font & aset eksternal lain

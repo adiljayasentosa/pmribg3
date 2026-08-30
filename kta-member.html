@@ -1,7 +1,134 @@
-<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KTA PMR</title><meta name="theme-color" content="#C8102E"><link rel="stylesheet" href="css/variables.css"><link rel="stylesheet" href="css/base.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/kta.css"><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script></head><body><main class="kta-member-page"><section id="login-card" class="card kta-login-card"><h1>KTA PMR</h1><p class="page-sub">Masuk untuk melihat KTA milik akun ini.</p><div class="field"><label>Nomor Induk</label><input id="ni" autocomplete="username" placeholder="Contoh: PMR001"></div><div class="field"><label>Password</label><input id="pw" type="password" autocomplete="current-password" placeholder="Password"></div><button id="btn-login" class="btn btn-primary" style="width:100%">Masuk</button><p id="msg" class="kta-msg"></p></section><section id="kta-card" class="card kta-member-card" style="display:none"><div class="kta-member-head"><div><span class="badge badge-red">KTA PMR</span><h1 id="member-name">—</h1><p id="member-meta">—</p></div><button id="btn-logout" class="btn btn-outline btn-sm">Keluar</button></div><div class="kta-member-images"><img id="member-front" src="assets/kta-front-template.png" alt="KTA depan"><img src="assets/kta-back-template.png" alt="KTA belakang"></div></section></main><script src="js/firebase-config.js"></script><script>
-const targetToken=new URLSearchParams(location.search).get('kta');const msg=document.getElementById('msg');
-function m(t,kind=''){msg.textContent=t;msg.className='kta-msg '+kind}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Verifikasi KTA PMR</title>
+<meta name="theme-color" content="#C8102E">
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/kta.css">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+<main class="kta-member-page">
+  <section id="public-card" class="card kta-login-card" style="display:none">
+    <span class="badge badge-red">KTA PMR</span>
+    <h1 id="public-title">Verifikasi KTA</h1>
+    <p id="public-status" class="page-sub">Memverifikasi kartu anggota…</p>
+    <div id="public-info" class="kta-public-info" style="display:none">
+      <div class="kta-verified">✓ KTA terverifikasi</div>
+      <div class="kta-public-grid">
+        <div><span>Nama</span><strong id="public-name">—</strong></div>
+        <div><span>Nomor Induk</span><strong id="public-ni">—</strong></div>
+        <div><span>Kelas</span><strong id="public-kelas">—</strong></div>
+        <div><span>Jabatan</span><strong id="public-jabatan">—</strong></div>
+        <div><span>Divisi</span><strong id="public-divisi">—</strong></div>
+        <div><span>Status</span><strong id="public-keanggotaan">—</strong></div>
+      </div>
+      <p class="kta-public-note">Informasi di atas merupakan informasi verifikasi KTA yang dapat dilihat publik. Data akun dan fitur anggota tetap terlindungi.</p>
+      <div class="kta-public-actions">
+        <button id="btn-member-login" class="btn btn-primary">Masuk sebagai anggota</button>
+        <button id="btn-public-home" class="btn btn-outline">Kembali ke beranda</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="login-card" class="card kta-login-card" style="display:none">
+    <span class="badge badge-red">KTA PMR</span>
+    <h1>Masuk Anggota</h1>
+    <p class="page-sub">Akses KTA dan profil milik akun yang sedang login.</p>
+    <div class="field"><label>Nomor Induk</label><input id="ni" autocomplete="username" placeholder="Nomor Induk"></div>
+    <div class="field"><label>Password</label><input id="pw" type="password" autocomplete="current-password" placeholder="Password"></div>
+    <button id="btn-login" class="btn btn-primary" style="width:100%">Masuk</button>
+    <p id="msg" class="kta-msg"></p>
+  </section>
+
+  <section id="kta-card" class="card kta-member-card" style="display:none">
+    <div class="kta-member-head">
+      <div><span class="badge badge-red">KTA Saya</span><h1 id="member-name">—</h1><p id="member-meta">—</p></div>
+      <button id="btn-logout" class="btn btn-outline btn-sm">Keluar</button>
+    </div>
+    <div class="kta-member-images">
+      <img id="member-front" src="assets/kta-front-template.png" alt="KTA depan">
+      <img src="assets/kta-back-template.png" alt="KTA belakang">
+    </div>
+    <p id="private-note" class="kta-public-note">KTA ini hanya menampilkan data milik akun yang sedang login.</p>
+  </section>
+</main>
+<script src="js/firebase-config.js"></script>
+<script>
+const targetToken = new URLSearchParams(location.search).get('kta');
+const msg = document.getElementById('msg');
+const publicCard = document.getElementById('public-card');
+const loginCard = document.getElementById('login-card');
+const ktaCard = document.getElementById('kta-card');
+
+function m(t,kind=''){if(!msg)return;msg.textContent=t;msg.className='kta-msg '+kind}
 function email(ni){return String(ni).trim().toLowerCase()+'@pmr-smkibg3.app'}
-async function loadOwn(){const u=firebase.auth().currentUser;if(!u)return;const us=await firebase.firestore().collection('users').doc(u.uid).get();if(!us.exists||us.data().role!=='anggota')throw new Error('Akun anggota tidak valid.');const d=us.data();const ktaSnap=await firebase.firestore().collection('kta').doc(d.anggotaId).get();if(!ktaSnap.exists)throw new Error('KTA belum diaktifkan untuk akun ini.');const kta=ktaSnap.data();if(targetToken && kta.ktaToken!==targetToken)throw new Error('QR KTA ini bukan milik akun yang sedang login.');const snap=await firebase.firestore().collection('anggota').doc(d.anggotaId).get();if(!snap.exists)throw new Error('Data anggota tidak ditemukan.');const a=snap.data();if(a.statusKeanggotaan==='Tidak Aktif')throw new Error('KTA ini tidak aktif.');document.getElementById('login-card').style.display='none';document.getElementById('kta-card').style.display='block';document.getElementById('member-name').textContent=a.nama||'Anggota PMR';document.getElementById('member-meta').textContent=[a.nomorInduk,a.kelas,a.jabatan,a.divisi].filter(Boolean).join(' · ');}
-firebase.auth().onAuthStateChanged(u=>{if(u)loadOwn().catch(e=>m(e.message,'error'))});document.getElementById('btn-login').onclick=async()=>{m('Memverifikasi…');try{const ni=document.getElementById('ni').value;const pw=document.getElementById('pw').value;await firebase.auth().signInWithEmailAndPassword(email(ni),pw);m('');}catch(e){m(e.code==='auth/invalid-credential'?'Nomor Induk atau password salah.':e.message,'error')}};document.getElementById('btn-logout').onclick=()=>firebase.auth().signOut().then(()=>location.reload());
-</script></body></html>
+function showOnly(el){[publicCard,loginCard,ktaCard].forEach(x=>{if(x)x.style.display='none'});if(el)el.style.display='block'}
+function esc(v){const d=document.createElement('div');d.textContent=String(v??'');return d.innerHTML}
+
+async function loadPublic(){
+  if(!targetToken){
+    showOnly(loginCard);
+    document.getElementById('public-title').textContent='KTA PMR';
+    return;
+  }
+  showOnly(publicCard);
+  try{
+    const r=await fetch('/api/kta-public?token='+encodeURIComponent(targetToken),{headers:{Accept:'application/json'}});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(data.error||'KTA tidak dapat diverifikasi.');
+    document.getElementById('public-status').textContent='Identitas anggota terdaftar pada sistem PMR.';
+    document.getElementById('public-info').style.display='block';
+    document.getElementById('public-name').textContent=data.nama||'—';
+    document.getElementById('public-ni').textContent=data.nomorInduk||'—';
+    document.getElementById('public-kelas').textContent=data.kelas||'—';
+    document.getElementById('public-jabatan').textContent=data.jabatan||'Anggota';
+    document.getElementById('public-divisi').textContent=data.divisi||'—';
+    document.getElementById('public-keanggotaan').textContent=data.statusKeanggotaan||'Aktif';
+  }catch(e){
+    document.getElementById('public-status').textContent=e.message||'KTA tidak valid atau sudah tidak aktif.';
+    document.getElementById('public-info').style.display='none';
+  }
+}
+
+async function loadOwn(){
+  const u=firebase.auth().currentUser;if(!u)return;
+  const us=await firebase.firestore().collection('users').doc(u.uid).get();
+  if(!us.exists||us.data().role!=='anggota')throw new Error('Akun anggota tidak valid.');
+  const d=us.data();
+  const ktaSnap=await firebase.firestore().collection('kta').doc(d.anggotaId).get();
+  if(!ktaSnap.exists)throw new Error('KTA belum diaktifkan untuk akun ini.');
+  const kta=ktaSnap.data();
+  if(targetToken && kta.ktaToken!==targetToken)throw new Error('QR KTA ini bukan milik akun yang sedang login.');
+  const snap=await firebase.firestore().collection('anggota').doc(d.anggotaId).get();
+  if(!snap.exists)throw new Error('Data anggota tidak ditemukan.');
+  const a=snap.data();
+  if(a.statusKeanggotaan==='Tidak Aktif')throw new Error('KTA ini tidak aktif.');
+  showOnly(ktaCard);
+  document.getElementById('member-name').textContent=a.nama||'Anggota PMR';
+  document.getElementById('member-meta').textContent=[a.nomorInduk,a.kelas,a.jabatan,a.divisi].filter(Boolean).join(' · ');
+}
+
+document.getElementById('btn-member-login')?.addEventListener('click',()=>showOnly(loginCard));
+document.getElementById('btn-public-home')?.addEventListener('click',()=>location.href='/');
+document.getElementById('btn-login')?.addEventListener('click',async()=>{
+  m('Memverifikasi…');
+  try{const ni=document.getElementById('ni').value;const pw=document.getElementById('pw').value;await firebase.auth().signInWithEmailAndPassword(email(ni),pw);m('');}
+  catch(e){m(e.code==='auth/invalid-credential'?'Nomor Induk atau password salah.':e.message,'error')}
+});
+document.getElementById('btn-logout')?.addEventListener('click',()=>firebase.auth().signOut().then(()=>targetToken?loadPublic():location.reload()));
+
+firebase.auth().onAuthStateChanged(u=>{
+  if(u){loadOwn().catch(e=>{m(e.message,'error');targetToken?loadPublic():showOnly(loginCard)})}
+  else if(targetToken)loadPublic();
+  else showOnly(loginCard);
+});
+</script>
+</body>
+</html>

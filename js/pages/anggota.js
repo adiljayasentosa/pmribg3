@@ -397,6 +397,7 @@ function _validasiImportAnggota(rows) {
       jabatan: jabatan || "Anggota",
       statusKeanggotaan: statusKeanggotaan || "Aktif",
       statusAkun: "active",
+      foto: String(r.foto || "").trim(),
       sumberData: "admin",
       bergabung: String(r.bergabung || "").trim() || new Date().toISOString().split("T")[0]
     };

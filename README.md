@@ -260,6 +260,11 @@ Made with ❤️ by PMR WIRA UNIT — *Siap, Peduli, Bersahabat*
 </div>
 
 
+### v1.1.8 — KTA redesign
+- Mengganti template depan dan belakang KTA ke desain terbaru.
+- QR depan kiri bawah dan QR belakang di tengah dibuat dinamis per anggota.
+- Placeholder nama/NI dan QR contoh tidak lagi ditampilkan sebagai teks/QR statis pada hasil generate.
+
 ### v1.1.6 — KTA
 - KTA admin preview/generator menggunakan template depan & belakang.
 - QR mengarah ke login KTA anggota.
