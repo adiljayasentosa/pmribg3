@@ -103,27 +103,30 @@ const DUMMY_DATA = {
     { role_id: "pj_wirausaha",     jabatan: "PJ Wirausaha",                maks: 3, anggota: [] }
   ],
 
-  /* Riwayat presensi: [anggotaId, tanggal, hadir, keterangan] */
+  /* Riwayat presensi: [anggotaId, tanggal, status, hadir, keterangan].
+     `status` adalah field canonical (hadir|alpha|sakit|izin) sejak fitur
+     4-status Presensi. `hadir` (boolean) tetap disertakan untuk
+     kompatibilitas ringkasan Beranda & Detail Anggota. */
   presensiHistory: [
     /* Pertemuan 1 — 2026-06-02 */
-    ...[1,2,3,5,6,7,8,9,10,11].map(id => ({ anggotaId:id, tanggal:"2026-06-02", hadir:true,  ket:"" })),
-    ...[4,12].map(id             => ({ anggotaId:id, tanggal:"2026-06-02", hadir:false, ket:"Tidak keterangan" })),
+    ...[1,2,3,5,6,7,8,9,10,11].map(id => ({ anggotaId:id, tanggal:"2026-06-02", status:"hadir", hadir:true,  ket:"" })),
+    ...[4,12].map(id             => ({ anggotaId:id, tanggal:"2026-06-02", status:"alpha", hadir:false, ket:"Tidak keterangan" })),
 
     /* Pertemuan 2 — 2026-06-09 */
-    ...[1,2,3,5,7,8,9,10].map(id => ({ anggotaId:id, tanggal:"2026-06-09", hadir:true,  ket:"" })),
-    { anggotaId:6,  tanggal:"2026-06-09", hadir:false, ket:"Izin" },
-    { anggotaId:11, tanggal:"2026-06-09", hadir:false, ket:"Sakit" },
-    ...[4,12].map(id             => ({ anggotaId:id, tanggal:"2026-06-09", hadir:false, ket:"" })),
+    ...[1,2,3,5,7,8,9,10].map(id => ({ anggotaId:id, tanggal:"2026-06-09", status:"hadir", hadir:true,  ket:"" })),
+    { anggotaId:6,  tanggal:"2026-06-09", status:"izin",  hadir:false, ket:"Izin" },
+    { anggotaId:11, tanggal:"2026-06-09", status:"sakit", hadir:false, ket:"Sakit" },
+    ...[4,12].map(id             => ({ anggotaId:id, tanggal:"2026-06-09", status:"alpha", hadir:false, ket:"" })),
 
     /* Pertemuan 3 — 2026-06-16 */
-    ...[1,2,3,4,5,6,7,8,10,11].map(id => ({ anggotaId:id, tanggal:"2026-06-16", hadir:true,  ket:"" })),
-    { anggotaId:9,  tanggal:"2026-06-16", hadir:false, ket:"Izin" },
-    { anggotaId:12, tanggal:"2026-06-16", hadir:false, ket:"" },
+    ...[1,2,3,4,5,6,7,8,10,11].map(id => ({ anggotaId:id, tanggal:"2026-06-16", status:"hadir", hadir:true,  ket:"" })),
+    { anggotaId:9,  tanggal:"2026-06-16", status:"izin", hadir:false, ket:"Izin" },
+    { anggotaId:12, tanggal:"2026-06-16", status:"alpha", hadir:false, ket:"" },
 
     /* Pertemuan 4 — 2026-06-23 */
-    ...[1,2,5,6,7,8,9,10,11,12].map(id => ({ anggotaId:id, tanggal:"2026-06-23", hadir:true,  ket:"" })),
-    { anggotaId:3,  tanggal:"2026-06-23", hadir:false, ket:"Sakit" },
-    { anggotaId:4,  tanggal:"2026-06-23", hadir:false, ket:"" }
+    ...[1,2,5,6,7,8,9,10,11,12].map(id => ({ anggotaId:id, tanggal:"2026-06-23", status:"hadir", hadir:true,  ket:"" })),
+    { anggotaId:3,  tanggal:"2026-06-23", status:"sakit", hadir:false, ket:"Sakit" },
+    { anggotaId:4,  tanggal:"2026-06-23", status:"alpha", hadir:false, ket:"" }
   ]
 };
 

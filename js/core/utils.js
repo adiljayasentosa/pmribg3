@@ -66,6 +66,42 @@ function statusBadge(status) {
 }
 
 /**
+ * [Presensi] Metadata 4 status kehadiran: Hadir, Alpha, Sakit, Izin.
+ * Satu sumber warna/label dipakai bersama oleh halaman Presensi
+ * (tombol input & rekap bulanan), Laporan (report-engine.js), dan
+ * riwayat presensi di Detail Anggota — supaya keempatnya konsisten.
+ */
+const PRESENSI_STATUS_META = {
+  hadir: { label: "Hadir", color: "var(--success)", bg: "var(--success-bg)" },
+  alpha: { label: "Alpha", color: "var(--danger)",  bg: "var(--danger-bg)"  },
+  sakit: { label: "Sakit", color: "var(--warning)", bg: "var(--warning-bg)" },
+  izin:  { label: "Izin",  color: "var(--info)",    bg: "var(--info-bg)"    }
+};
+
+/**
+ * Tentukan status presensi ("hadir"|"alpha"|"sakit"|"izin") dari satu
+ * baris riwayat presensi.
+ * - Data baru (sejak fitur 4-status): baca langsung field `status`.
+ * - Data lama (sebelum fitur ini ada, hanya `hadir` boolean + `ket`
+ *   bebas teks): diturunkan agar tetap kompatibel — hadir=true → hadir;
+ *   hadir=false dengan keterangan terisi → izin (data lama tidak bisa
+ *   membedakan izin/sakit, jadi default ke izin); selain itu → alpha.
+ */
+function getStatusPresensi(p) {
+  if (!p) return "alpha";
+  if (p.status) return p.status;
+  if (p.hadir) return "hadir";
+  if (p.ket) return "izin";
+  return "alpha";
+}
+
+/** Badge HTML siap pakai untuk satu baris riwayat presensi. */
+function presensiStatusBadgeHtml(p) {
+  const meta = PRESENSI_STATUS_META[getStatusPresensi(p)] || PRESENSI_STATUS_META.alpha;
+  return `<span class="badge" style="background:${meta.bg};color:${meta.color}">${meta.label}</span>`;
+}
+
+/**
  * Tampilkan toast notifikasi.
  * @param {string} pesan
  * @param {"default"|"success"|"danger"} tipe

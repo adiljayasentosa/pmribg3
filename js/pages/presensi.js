@@ -39,7 +39,7 @@ function renderTabInput() {
   const presensiHariIni = AppState.presensiHistory.filter(p => p.tanggal === tanggalHari);
   const anggotaList = anggota.map(a => {
     const p = presensiHariIni.find(px => px.anggotaId === a.id);
-    return { ...a, hadir: p ? p.hadir : false, ket: p ? (p.ket || "") : "" };
+    return { ...a, status: p ? getStatusPresensi(p) : "alpha", ket: p ? (p.ket || "") : "" };
   });
 
   c.innerHTML = `
@@ -53,7 +53,7 @@ function renderTabInput() {
     </div>
     <div class="table-wrap">
       <table class="data-table">
-        <thead><tr><th>#</th><th>Nama</th><th>Kelas</th><th>Hadir</th><th>Keterangan</th></tr></thead>
+        <thead><tr><th>#</th><th>Nama</th><th>Kelas</th><th>Status</th><th>Keterangan</th></tr></thead>
         <tbody>
           ${anggotaList.map((a,i)=>`<tr>
             <td>${i+1}</td>
@@ -61,15 +61,11 @@ function renderTabInput() {
               <div class="avatar" style="width:28px;height:28px;font-size:0.65rem">${getInisial(a.nama)}</div>${a.nama}
             </div></td>
             <td>${a.kelas}</td>
-            <td><label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="checkbox" class="cb-hadir" data-id="${a.id}" ${a.hadir?"checked":""}
-                style="accent-color:var(--pmr-red);width:17px;height:17px">
-              <span class="hadir-lbl" style="font-size:0.8rem;color:${a.hadir?"var(--success)":"var(--gray-400)"}">
-                ${a.hadir?"Hadir":"Alpha"}
-              </span>
-            </label></td>
+            <td><div class="status-toggle" data-id="${a.id}">
+              ${Object.keys(PRESENSI_STATUS_META).map(s=>`<button type="button" class="status-btn${a.status===s?" active":""}" data-status="${s}">${PRESENSI_STATUS_META[s].label}</button>`).join("")}
+            </div></td>
             <td><input type="text" class="ket-input" data-id="${a.id}" value="${a.ket}"
-              placeholder="—" style="border:1px solid var(--gray-300);border-radius:6px;padding:5px 10px;font-size:0.82rem;width:160px">
+              placeholder="Opsional" style="border:1px solid var(--gray-300);border-radius:6px;padding:5px 10px;font-size:0.82rem;width:160px">
             </td>
           </tr>`).join("")}
         </tbody>
@@ -77,11 +73,12 @@ function renderTabInput() {
     </div>
   </div>`;
 
-  c.querySelectorAll(".cb-hadir").forEach(cb => {
-    cb.addEventListener("change", ()=>{
-      const lbl = cb.closest("tr").querySelector(".hadir-lbl");
-      lbl.textContent = cb.checked?"Hadir":"Alpha";
-      lbl.style.color = cb.checked?"var(--success)":"var(--gray-400)";
+  c.querySelectorAll(".status-toggle").forEach(group => {
+    group.querySelectorAll(".status-btn").forEach(btn => {
+      btn.addEventListener("click", ()=>{
+        group.querySelectorAll(".status-btn").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+      });
     });
   });
 
@@ -89,12 +86,16 @@ function renderTabInput() {
     const tanggal = document.getElementById("presensi-tanggal").value;
     if (!tanggal) { tampilToast("Pilih tanggal terlebih dahulu.","danger"); return; }
 
-    const rows = anggotaList.map(a => ({
-      anggotaId: a.id,
-      tanggal,
-      hadir: c.querySelector(`.cb-hadir[data-id="${a.id}"]`)?.checked ?? a.hadir,
-      ket:   c.querySelector(`.ket-input[data-id="${a.id}"]`)?.value || ""
-    }));
+    const rows = anggotaList.map(a => {
+      const status = c.querySelector(`.status-toggle[data-id="${a.id}"] .status-btn.active`)?.dataset.status || a.status;
+      return {
+        anggotaId: a.id,
+        tanggal,
+        status,
+        hadir: status === "hadir", /* field lama dipertahankan utk kompatibilitas ringkasan Beranda & Detail Anggota */
+        ket:   c.querySelector(`.ket-input[data-id="${a.id}"]`)?.value || ""
+      };
+    });
 
     const btn = document.getElementById("btn-simpan-presensi");
     btn.disabled=true; btn.textContent="Menyimpan…";
@@ -124,11 +125,12 @@ function hitungRekapPresensi() {
   const jumlahPtm = hitungJumlahPertemuanPresensi();
   return AppState.anggota.map(a => {
     const riwayat = AppState.presensiHistory.filter(p=>p.anggotaId===a.id);
-    const hadir   = riwayat.filter(p=>p.hadir).length;
-    const alpha   = riwayat.filter(p=>!p.hadir&&!p.ket).length;
-    const izin    = riwayat.filter(p=>!p.hadir&&p.ket).length;
+    const hadir   = riwayat.filter(p=>getStatusPresensi(p)==="hadir").length;
+    const alpha   = riwayat.filter(p=>getStatusPresensi(p)==="alpha").length;
+    const sakit   = riwayat.filter(p=>getStatusPresensi(p)==="sakit").length;
+    const izin    = riwayat.filter(p=>getStatusPresensi(p)==="izin").length;
     const pct     = jumlahPtm ? Math.round(hadir/jumlahPtm*100) : 0;
-    return {...a, hadir, alpha, izin, pct};
+    return {...a, hadir, alpha, sakit, izin, pct};
   }).sort((a,b)=>b.pct-a.pct);
 }
 
@@ -151,7 +153,7 @@ function renderTabRekap() {
     </div>
     <div class="table-wrap">
       <table class="data-table">
-        <thead><tr><th>Nama</th><th>Kelas</th><th>Hadir</th><th>Alpha</th><th>Izin/Sakit</th><th>% Kehadiran</th></tr></thead>
+        <thead><tr><th>Nama</th><th>Kelas</th><th>Hadir</th><th>Alpha</th><th>Sakit</th><th>Izin</th><th>% Kehadiran</th></tr></thead>
         <tbody id="tb-rekap"></tbody>
       </table>
     </div>
@@ -168,7 +170,8 @@ function renderTabRekap() {
       <td>${r.kelas}</td>
       <td style="color:var(--success);font-weight:600">${r.hadir}</td>
       <td style="color:var(--danger);font-weight:600">${r.alpha}</td>
-      <td style="color:var(--warning);font-weight:600">${r.izin}</td>
+      <td style="color:var(--warning);font-weight:600">${r.sakit}</td>
+      <td style="color:var(--info);font-weight:600">${r.izin}</td>
       <td><span style="font-weight:700;color:${warna}">${r.pct}%</span>${bar}</td>
     </tr>`;
   };

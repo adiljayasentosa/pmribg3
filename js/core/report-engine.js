@@ -193,7 +193,8 @@ const REPORT_DEFINITIONS = [
       { key:"kelas", label:"Kelas" },
       { key:"hadir", label:"Hadir",       align:"right" },
       { key:"alpha", label:"Alpha",       align:"right" },
-      { key:"izin",  label:"Izin/Sakit",  align:"right" },
+      { key:"sakit", label:"Sakit",       align:"right" },
+      { key:"izin",  label:"Izin",        align:"right" },
       { key:"pct",   label:"% Kehadiran", format:r => `${r.pct}%`, align:"right" }
     ],
     /* Memakai ulang hitungRekapPresensi() dari presensi.js (diekstrak

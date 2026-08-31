@@ -60,6 +60,26 @@
 .badge-info{ background:var(--info-bg); color:var(--info); }
 .badge-gray{ background:var(--gray-200); color:var(--ink-soft); }
 
+/* ---------- Status Toggle (Presensi: Hadir/Alpha/Sakit/Izin) ---------- */
+.status-toggle{ display:inline-flex; flex-wrap:wrap; gap:4px; }
+.status-btn{
+  border:1px solid var(--gray-300);
+  background:var(--white);
+  color:var(--ink-soft);
+  font-size:0.72rem;
+  font-weight:700;
+  padding:5px 10px;
+  border-radius:var(--radius-pill);
+  cursor:pointer;
+  transition:background var(--transition), color var(--transition), border-color var(--transition);
+  white-space:nowrap;
+}
+.status-btn:hover{ background:var(--gray-100); }
+.status-btn.active[data-status="hadir"]{ background:var(--success-bg); border-color:var(--success); color:var(--success); }
+.status-btn.active[data-status="alpha"]{ background:var(--danger-bg); border-color:var(--danger); color:var(--danger); }
+.status-btn.active[data-status="sakit"]{ background:var(--warning-bg); border-color:var(--warning); color:var(--warning); }
+.status-btn.active[data-status="izin"]{ background:var(--info-bg); border-color:var(--info); color:var(--info); }
+
 /* ---------- Card ---------- */
 .card{
   background:var(--white);

@@ -191,7 +191,7 @@ function bukaDetailAnggota(a) {
             ?`<tr><td colspan="3" style="text-align:center;color:var(--ink-soft)">Belum ada data.</td></tr>`
             :riwayat.map(p=>`<tr>
               <td>${formatTanggal(p.tanggal)}</td>
-              <td>${p.hadir?'<span class="badge badge-success">Hadir</span>':'<span class="badge badge-gray">Alpha</span>'}</td>
+              <td>${presensiStatusBadgeHtml(p)}</td>
               <td>${p.ket||"—"}</td>
             </tr>`).join("")}
           </tbody>
