@@ -39,6 +39,18 @@ service cloud.firestore {
       return isLoggedIn() && request.auth.uid == uid;
     }
 
+    function isActiveMember() {
+      return isLoggedIn() && userDocExists() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'anggota' &&
+        exists(/databases/$(database)/documents/anggota/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.anggotaId)) &&
+        get(/databases/$(database)/documents/anggota/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.anggotaId)).data.get('statusKeanggotaan', get(/databases/$(database)/documents/anggota/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.anggotaId)).data.get('status','Aktif')) == 'Aktif';
+    }
+
+    function isMyMemberId(memberId) {
+      return isLoggedIn() && userDocExists() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.anggotaId == memberId;
+    }
+
     // Field 'role' tidak boleh berubah saat update
     // Perlindungan utama terhadap privilege escalation
     function roleNotChanged() {
@@ -158,7 +170,7 @@ service cloud.firestore {
       // READ: Admin, ketua, wakil (pengawasan), bendahara.
       allow read: if hasAnyRole([
         'admin', 'ketua', 'wakil', 'bendahara'
-      ]);
+      ]) || (isActiveMember() && (resource.data.get('anggotaId','') == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.anggotaId || resource.id == '_pengaturan'));
 
       // CREATE & UPDATE: Admin dan bendahara.
       allow create, update: if hasAnyRole(['admin', 'bendahara']);
@@ -181,7 +193,7 @@ service cloud.firestore {
       // READ: Admin, ketua, wakil, sekretaris, pj.
       allow read: if hasAnyRole([
         'admin', 'ketua', 'wakil', 'sekretaris', 'pj'
-      ]);
+      ]) || (isActiveMember() && isMyMemberId(resource.data.anggotaId));
 
       // CREATE & UPDATE: Admin, ketua, wakil, sekretaris, pj.
       allow create, update: if hasAnyRole([
@@ -261,9 +273,8 @@ match /piket/{jadwalId} {
   // operasional yang perlu diketahui seluruh anggota.
   allow read: if hasAnyRole([
     'admin', 'ketua', 'wakil',
-    'sekretaris', 'bendahara',
-    'pj', 'anggota'
-  ]);
+    'sekretaris', 'bendahara', 'pj'
+  ]) || isActiveMember();
 
   // CREATE & UPDATE ────────────────────────────────────────────
   // Admin, ketua, wakil, sekretaris, dan PJ dapat membuat
@@ -306,9 +317,8 @@ match /piket/{jadwalId} {
       // identik alasan dengan Piket.
       allow read: if hasAnyRole([
         'admin', 'ketua', 'wakil',
-        'sekretaris', 'bendahara',
-        'pj', 'anggota'
-      ]);
+        'sekretaris', 'bendahara', 'pj'
+      ]) || isActiveMember();
 
       // CREATE & UPDATE ────────────────────────────────────────────
       // Admin, ketua, wakil, sekretaris, dan PJ — sama persis
@@ -453,8 +463,6 @@ match /piket/{jadwalId} {
       allow delete:          if isAdmin() || isPjPemilikDivisi(resource.data);
     }
 
-  }
-
     // KTA private: token QR dan binding akun tidak boleh dibaca anggota lain.
     match /kta/{anggotaId} {
       allow read: if isLoggedIn() && (
@@ -463,5 +471,7 @@ match /piket/{jadwalId} {
       );
       allow create, update, delete: if hasAnyRole(['admin','ketua','wakil','sekretaris']);
     }
+
+}
 
 }

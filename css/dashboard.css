@@ -345,3 +345,6 @@
     bottom: calc(60px + env(safe-area-inset-bottom) + 8px) !important;
   }
 }
+
+/* Presensi: status berbentuk checklist, default Hadir */
+.status-checks{display:flex;flex-wrap:wrap;gap:6px}.status-check{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;border:1px solid var(--gray-300);border-radius:999px;padding:5px 9px;cursor:pointer}.status-check input{accent-color:var(--pmr-red);margin:0}.status-check:has(input:checked){border-color:var(--pmr-red);background:var(--danger-bg);color:var(--pmr-red);font-weight:700}

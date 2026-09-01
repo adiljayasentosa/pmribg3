@@ -13,6 +13,14 @@
    ROLE_AKSES_PRESENSI, dan pola sembunyikanUntukAnggota).
    ========================================================= */
 function renderLaporan(el, user) {
+  const _now = new Date();
+  const _periodDefault = {
+    startMonth: _now.getMonth() >= 5 ? _now.getMonth() - 4 : 1,
+    startYear:  _now.getMonth() >= 5 ? _now.getFullYear() : _now.getFullYear(),
+    endMonth:   _now.getMonth() + 1,
+    endYear:    _now.getFullYear()
+  };
+  let periodeAktif = { ..._periodDefault };
   const daftarLaporan = REPORT_DEFINITIONS.filter(cfg =>
     (REPORT_ROLE_ACCESS[cfg.key] || []).includes(user.role));
 
@@ -37,6 +45,7 @@ function renderLaporan(el, user) {
   ` : `
     <div class="card laporan-toolbar">
       <div class="laporan-toolbar-title" id="laporan-hasil-judul"></div>
+      <div id="laporan-periode-controls" class="laporan-period-controls"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-outline btn-sm" id="btn-laporan-cetak">🖨 Cetak</button>
         <button class="btn btn-outline btn-sm" id="btn-laporan-pdf">⬇ Unduh PDF</button>
@@ -53,13 +62,42 @@ function renderLaporan(el, user) {
 
   function tampilkanLaporan(cfg) {
     cfgAktif  = cfg;
-    rowsAktif = cfg.getData(user) || [];
+    rowsAktif = cfg.getData(user, periodeAktif) || [];
 
     document.querySelectorAll(".laporan-tipe-btn").forEach(b =>
       b.classList.toggle("active", b.dataset.key === cfg.key));
-    document.getElementById("laporan-hasil-judul").textContent = `Laporan ${cfg.label}`;
+    document.getElementById("laporan-hasil-judul").textContent = cfg.getPeriodTitle
+      ? cfg.getPeriodTitle(periodeAktif)
+      : `Laporan ${cfg.label}`;
+
+    const controls = document.getElementById("laporan-periode-controls");
+    controls.innerHTML = cfg.periodic ? `
+      <div class="laporan-period-field"><label>Mulai</label>
+        <input id="laporan-start-month" type="month" value="${String(periodeAktif.startYear).padStart(4,"0")}-${String(periodeAktif.startMonth).padStart(2,"0")}">
+      </div>
+      <span class="laporan-period-sep">s/d</span>
+      <div class="laporan-period-field"><label>Akhir</label>
+        <input id="laporan-end-month" type="month" value="${String(periodeAktif.endYear).padStart(4,"0")}-${String(periodeAktif.endMonth).padStart(2,"0")}">
+      </div>
+      <button type="button" class="btn btn-outline btn-sm" id="btn-terapkan-periode">Terapkan</button>
+    ` : "";
+
     document.getElementById("laporan-preview-area").innerHTML =
-      ReportEngine.renderPreviewHTML(cfg, rowsAktif);
+      ReportEngine.renderPreviewHTML(cfg, rowsAktif, periodeAktif);
+
+    if (cfg.periodic) {
+      document.getElementById("btn-terapkan-periode")?.addEventListener("click", () => {
+        const sm = document.getElementById("laporan-start-month").value;
+        const em = document.getElementById("laporan-end-month").value;
+        if (!sm || !em) return tampilToast("Pilih periode mulai dan akhir.", "danger");
+        const [sy, smn] = sm.split("-").map(Number);
+        const [ey, emn] = em.split("-").map(Number);
+        if (sy > ey || (sy === ey && smn > emn)) return tampilToast("Periode mulai tidak boleh setelah periode akhir.", "danger");
+        if ((ey - sy) * 12 + (emn - smn) > 11) return tampilToast("Maksimal periode laporan adalah 12 bulan agar tabel tetap terbaca.", "danger");
+        periodeAktif = { startMonth:smn, startYear:sy, endMonth:emn, endYear:ey };
+        tampilkanLaporan(cfg);
+      });
+    }
   }
 
   document.getElementById("laporan-picker").addEventListener("click", (e) => {
@@ -78,7 +116,7 @@ function renderLaporan(el, user) {
     const teksAsli = btn.textContent;
     btn.disabled = true; btn.textContent = "Membuat PDF…";
     try {
-      await ReportEngine.exportPDF(cfgAktif, rowsAktif);
+      await ReportEngine.exportPDF(cfgAktif, rowsAktif, periodeAktif);
     } catch (e) {
       console.error("[PMR] Gagal export PDF:", e);
       tampilToast("Gagal membuat PDF: " + e.message, "danger");
@@ -89,7 +127,7 @@ function renderLaporan(el, user) {
 
   document.getElementById("btn-laporan-csv").addEventListener("click", () => {
     try {
-      ReportEngine.exportCSV(cfgAktif, rowsAktif);
+      ReportEngine.exportCSV(cfgAktif, rowsAktif, periodeAktif);
     } catch (e) {
       console.error("[PMR] Gagal export CSV:", e);
       tampilToast("Gagal membuat CSV: " + e.message, "danger");

@@ -19,7 +19,7 @@
    DB.init()/initListeners() tidak gagal karena satu collection
    yang memang di luar wewenang role tersebut.
 
-   anggota      : anggota, kegiatan, pengurus
+   anggota      : anggota, kegiatan + data pribadi operasional jika Aktif
    bendahara    : anggota, kegiatan, pengurus, keuangan
    sekretaris   : anggota, kegiatan, pengurus, presensi
    pj           : anggota, kegiatan, pengurus, presensi
@@ -117,6 +117,7 @@ const AppState = {
                               cicilan), status ("Lunas"/"Belum Lunas"), riwayatPembayaran;
                               absennya record untuk (anggotaId,bulan,tahun) berarti
                               "Belum Bayar" (default implisit — lihat _normalisasiIuranRecord) */
+  memberKta:        {},
   nominalIuranStandar: 5000 /* F4.4 Fitur 1 — default, bisa diubah admin/bendahara
                                 lewat DB.iuran.setNominalStandar() */
 };
@@ -194,6 +195,35 @@ const DB = {
     const fdb  = firebase.firestore();
     const role = getCurrentUser()?.role || 'none';
 
+    /* Portal anggota: fetch hanya data yang memang dibutuhkan.
+       Data operasional yang sensitif dibatasi lagi oleh Firestore Rules. */
+    if (role === 'anggota') {
+      const snapAnggota = await fdb.collection("anggota").orderBy("nama").get();
+      AppState.anggota = snapAnggota.docs.map(d => _normalisasiAnggota({id:d.id,...d.data()}));
+      const me = AppState.anggota.find(a =>
+        (getCurrentUser()?.anggotaId && String(a.id) === String(getCurrentUser().anggotaId)) ||
+        (firebase.auth().currentUser?.uid && String(a.authUid || '') === String(firebase.auth().currentUser.uid)) ||
+        (getCurrentUser()?.username && String(a.nomorInduk || '').toLowerCase() === String(getCurrentUser().username).toLowerCase())
+      );
+      AppState.kegiatan = await _fetchAman(() => fdb.collection("kegiatan").orderBy("tanggal","desc").get(), "kegiatan");
+      AppState.piket = []; AppState.upacara = []; AppState.presensiHistory = []; AppState.iuran = []; AppState.memberKta = {};
+      if (me && String(me.statusKeanggotaan || me.status || 'Aktif').toLowerCase() === 'aktif') {
+        const [piket, upacara, presensi, iuran, nominal, kta] = await Promise.all([
+          _fetchAman(() => fdb.collection("piket").orderBy("tanggal","desc").get(), "piket"),
+          _fetchAman(() => fdb.collection("upacara").orderBy("tanggal","desc").get(), "upacara"),
+          _fetchAman(() => fdb.collection("presensi").where("anggotaId","==",String(me.id)).get(), "presensi"),
+          _fetchAman(() => fdb.collection("iuran").where("anggotaId","==",String(me.id)).get(), "iuran"),
+          fdb.collection("iuran").doc("_pengaturan").get().then(s => s.exists ? {id:s.id,...s.data()} : null).catch(e => { console.error("[PMR] Gagal memuat iuran/_pengaturan:", e); return null; }),
+          fdb.collection("kta").doc(String(me.id)).get().then(s => s.exists ? {id:s.id,...s.data()} : null).catch(e => { console.error("[PMR] Gagal memuat KTA anggota:", e); return null; })
+        ]);
+        AppState.piket = piket; AppState.upacara = upacara; AppState.presensiHistory = presensi; AppState.iuran = iuran;
+        const setting = nominal; AppState.nominalIuranStandar = setting?.nominalStandar || 5000;
+        AppState.memberKta = kta || {};
+      }
+      _hitungRingkasan();
+      return;
+    }
+
     /* Group 1: anggota, kegiatan, pengurus, inventaris, piket, upacara —
        boleh dibaca SEMUA role yang sudah login. Upacara (F4.4) masuk
        grup ini dengan alasan sama seperti Piket (transparansi jadwal). */
@@ -270,6 +300,28 @@ const DB = {
     if (!FIREBASE_ENABLED) return; /* demo mode: tidak perlu listener */
     const fdb  = firebase.firestore();
     const role = getCurrentUser()?.role || 'none';
+
+    if (role === 'anggota') {
+      const me = AppState.anggota.find(a =>
+        (getCurrentUser()?.anggotaId && String(a.id) === String(getCurrentUser().anggotaId)) ||
+        (firebase.auth().currentUser?.uid && String(a.authUid || '') === String(firebase.auth().currentUser.uid)) ||
+        (getCurrentUser()?.username && String(a.nomorInduk || '').toLowerCase() === String(getCurrentUser().username).toLowerCase())
+      );
+      this._listeners.push(
+        fdb.collection("anggota").orderBy("nama").onSnapshot(snap=>{ _laporkanStatusCache(snap); AppState.anggota=snap.docs.map(d=>_normalisasiAnggota({id:d.id,...d.data()})); _reRenderPage(); }),
+        fdb.collection("kegiatan").orderBy("tanggal","desc").onSnapshot(snap=>{ _laporkanStatusCache(snap); AppState.kegiatan=snap.docs.map(d=>({id:d.id,...d.data()})); _reRenderPage(); })
+      );
+      if (me && String(me.statusKeanggotaan || me.status || 'Aktif').toLowerCase() === 'aktif') {
+        this._listeners.push(
+          fdb.collection("presensi").where("anggotaId","==",String(me.id)).onSnapshot(snap=>{_laporkanStatusCache(snap);AppState.presensiHistory=snap.docs.map(d=>({id:d.id,...d.data()}));_reRenderPage();}),
+          fdb.collection("iuran").where("anggotaId","==",String(me.id)).onSnapshot(snap=>{_laporkanStatusCache(snap);AppState.iuran=snap.docs.map(d=>({id:d.id,...d.data()}));_reRenderPage();}),
+          fdb.collection("piket").orderBy("tanggal","desc").onSnapshot(snap=>{_laporkanStatusCache(snap);AppState.piket=snap.docs.map(d=>({id:d.id,...d.data()}));_reRenderPage();}),
+          fdb.collection("upacara").orderBy("tanggal","desc").onSnapshot(snap=>{_laporkanStatusCache(snap);AppState.upacara=snap.docs.map(d=>({id:d.id,...d.data()}));_reRenderPage();}),
+          fdb.collection("kta").doc(String(me.id)).onSnapshot(snap=>{AppState.memberKta=snap.exists?snap.data():{};_reRenderPage();})
+        );
+      }
+      return;
+    }
 
     /* anggota, kegiatan, inventaris — boleh di-listen SEMUA role yang login */
     this._listeners.push(

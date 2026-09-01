@@ -114,3 +114,11 @@
   }
   .laporan-picker, .laporan-toolbar{ display:none !important; }
 }
+
+
+.laporan-period-controls{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;margin-left:auto}
+.laporan-period-field{display:flex;flex-direction:column;gap:3px}
+.laporan-period-field label{font-size:.68rem;color:var(--ink-soft);font-weight:600}
+.laporan-period-field input{height:36px;border:1px solid var(--gray-300);border-radius:var(--radius-sm);padding:0 9px;font:inherit;color:var(--ink);background:var(--white)}
+.laporan-period-sep{font-size:.78rem;color:var(--ink-soft);padding-bottom:9px}
+@media (max-width:700px){.laporan-period-controls{width:100%;margin-left:0}.laporan-period-field{flex:1}.laporan-period-field input{width:100%}}

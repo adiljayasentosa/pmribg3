@@ -32,7 +32,7 @@ const DUMMY_USERS = [
   { username:"sekretaris", password:"sekre123",    role:"sekretaris", nama:"Dewi Lestari"    },
   { username:"bendahara",  password:"bendahara123",role:"bendahara",  nama:"Putri Ramadhani" },
   { username:"pj",         password:"pj123",       role:"pj",         nama:"Raka Pratama",    divisi:"Dokumentasi" },
-  { username:"anggota",    password:"anggota123",  role:"anggota",    nama:"Anggota PMR"     }
+  { username:"anggota",    password:"anggota123",  role:"anggota",    nama:"Raka Pratama", anggotaId:"1" }
 ];
 
 /** Cache user aktif di memori (sinkron setelah init) */
@@ -57,7 +57,7 @@ async function login(username, password, role) {
     if (user.role !== role)  return { ok:false, message:"Role tidak sesuai dengan akun ini." };
     if (user.password !== password) return { ok:false, message:"Password salah." };
 
-    _currentUser = { nama:user.nama, username, role };
+    _currentUser = { nama:user.nama, username, role, anggotaId:user.anggotaId || null };
     localStorage.setItem(SESSION_KEY, JSON.stringify(_currentUser));
     return { ok:true };
   }
@@ -84,7 +84,7 @@ async function login(username, password, role) {
       return { ok:false, message:"Role tidak sesuai dengan akun ini." };
     }
 
-    _currentUser = { nama:profile.nama, username:profile.username, role:profile.role };
+    _currentUser = { nama:profile.nama, username:profile.username, role:profile.role, anggotaId:profile.anggotaId || null, authUid:uid };
     localStorage.setItem(SESSION_KEY, JSON.stringify(_currentUser));
     return { ok:true };
 

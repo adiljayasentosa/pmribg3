@@ -39,7 +39,7 @@ function renderTabInput() {
   const presensiHariIni = AppState.presensiHistory.filter(p => p.tanggal === tanggalHari);
   const anggotaList = anggota.map(a => {
     const p = presensiHariIni.find(px => px.anggotaId === a.id);
-    return { ...a, status: p ? getStatusPresensi(p) : "alpha", ket: p ? (p.ket || "") : "" };
+    return { ...a, status: p ? getStatusPresensi(p) : "hadir", ket: p ? (p.ket || "") : "" };
   });
 
   c.innerHTML = `
@@ -61,8 +61,8 @@ function renderTabInput() {
               <div class="avatar" style="width:28px;height:28px;font-size:0.65rem">${getInisial(a.nama)}</div>${a.nama}
             </div></td>
             <td>${a.kelas}</td>
-            <td><div class="status-toggle" data-id="${a.id}">
-              ${Object.keys(PRESENSI_STATUS_META).map(s=>`<button type="button" class="status-btn${a.status===s?" active":""}" data-status="${s}">${PRESENSI_STATUS_META[s].label}</button>`).join("")}
+            <td><div class="status-checks" data-id="${a.id}">
+              ${Object.keys(PRESENSI_STATUS_META).map(st=>`<label class="status-check"><input type="checkbox" data-status="${st}" ${a.status===st?"checked":""}><span>${PRESENSI_STATUS_META[st].label}</span></label>`).join("")}
             </div></td>
             <td><input type="text" class="ket-input" data-id="${a.id}" value="${a.ket}"
               placeholder="Opsional" style="border:1px solid var(--gray-300);border-radius:6px;padding:5px 10px;font-size:0.82rem;width:160px">
@@ -73,11 +73,14 @@ function renderTabInput() {
     </div>
   </div>`;
 
-  c.querySelectorAll(".status-toggle").forEach(group => {
-    group.querySelectorAll(".status-btn").forEach(btn => {
-      btn.addEventListener("click", ()=>{
-        group.querySelectorAll(".status-btn").forEach(b=>b.classList.remove("active"));
-        btn.classList.add("active");
+  c.querySelectorAll(".status-checks").forEach(group => {
+    group.querySelectorAll("input[type=checkbox]").forEach(box => {
+      box.addEventListener("change", ()=>{
+        if (box.checked) {
+          group.querySelectorAll("input[type=checkbox]").forEach(other => { if (other !== box) other.checked = false; });
+        } else if (!group.querySelector("input[type=checkbox]:checked")) {
+          const hadir = group.querySelector('input[data-status="hadir"]'); if (hadir) hadir.checked = true;
+        }
       });
     });
   });
@@ -87,7 +90,7 @@ function renderTabInput() {
     if (!tanggal) { tampilToast("Pilih tanggal terlebih dahulu.","danger"); return; }
 
     const rows = anggotaList.map(a => {
-      const status = c.querySelector(`.status-toggle[data-id="${a.id}"] .status-btn.active`)?.dataset.status || a.status;
+      const status = c.querySelector(`.status-checks[data-id="${a.id}"] input[type="checkbox"]:checked`)?.dataset.status || "hadir";
       return {
         anggotaId: a.id,
         tanggal,

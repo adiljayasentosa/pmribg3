@@ -288,7 +288,7 @@ function _initDashboard(user) {
 
   PAGES = {
     beranda:    { title:"Beranda",      render:renderBeranda    },
-    anggota:    { title:"Data Anggota", render:renderAnggota    },
+    anggota:    { title:"Data Anggota", render:(el,u)=>u.role === "anggota" ? renderMemberPortal(el,u) : renderAnggota(el,u) },
     "persetujuan-anggota": { title:"Persetujuan Anggota PMR", render:renderPersetujuanAnggota },
     kta:        { title:"KTA PMR", render:renderKta },
     kegiatan:   { title:"Kegiatan",     render:renderKegiatan   },
@@ -309,76 +309,21 @@ function _initDashboard(user) {
     profilsaya: { title:"Profil Saya",  render:renderProfilSaya }
   };
 
-  /* ── F3.2: Sidebar khusus role "anggota" ──
-     Hanya mengubah tampilan sidebar JIKA role adalah anggota.
-     Untuk semua role lain, blok ini tidak dieksekusi sama sekali —
-     sidebar tetap identik seperti sebelum F3.2. */
-  /* ── RBAC navigasi: menu Anggota/Persetujuan/KTA hanya untuk
-     admin, ketua, wakil, sekretaris. Rendering page tetap melakukan
-     pengecekan permission sebagai lapisan kedua. */
-  const roleKelolaAnggota = ["admin","ketua","wakil","sekretaris"].includes(user.role);
-  if (!roleKelolaAnggota) {
-    ["persetujuan-anggota","kta"].forEach(page => {
-      document.querySelectorAll(`.sidebar-link[data-page="${page}"]`).forEach(link => {
-        link.style.display = "none";
-      });
-    });
-  }
-
+  /* ── Portal khusus role ANGGOTA ──
+     Anggota tidak memakai sidebar/bottom-nav. Semua kebutuhan anggota
+     dirender dalam satu halaman (#anggota) dengan satu tombol Pengaturan.
+     KTA publik tetap melalui kta-member.html?token=... dan tidak disentuh. */
   if (user.role === "anggota") {
-    const sembunyikanUntukAnggota = [
-      "anggota", "persetujuan-anggota", "kta", "presensi", "keuangan", "pengaturan",
-      /* [F6.0] Manajemen Konten Publik bukan untuk role anggota —
-         mereka melihat konten lewat halaman publik (artikel.html dst),
-         sama seperti pengunjung umum. */
-      "konten-artikel", "konten-video", "konten-poster", "konten-dokumentasi"
-    ];
-    /* querySelectorAll (bukan querySelector) — beberapa data-page kini
-       punya 2 elemen (sidebar + shortcut Bottom Navigation mobile),
-       keduanya harus ikut disembunyikan untuk role "anggota". */
-    sembunyikanUntukAnggota.forEach(page => {
-      document.querySelectorAll(`.sidebar-link[data-page="${page}"]`).forEach(link => {
-        link.style.display = "none";
-      });
-    });
-
-    const linkProfil = document.querySelector('.sidebar-link[data-page="profilsaya"]');
-    if (linkProfil) linkProfil.style.display = "";
-
-    /* [RBAC NAV — ANGGOTA] Bottom nav memakai slot yang sama, tetapi
-       shortcut yang tidak relevan diganti dengan halaman yang memang
-       boleh dilihat anggota:
-       - Anggota  → Pengurus (view-only)
-       - Presensi → Profil Saya
-       Keuangan tetap disembunyikan untuk anggota. */
-    const bottomPengurus = document.querySelector('.bottom-nav .bottom-nav-link[data-page="anggota"]');
-    if (bottomPengurus) {
-      bottomPengurus.href = "#pengurus";
-      bottomPengurus.dataset.page = "pengurus";
-      bottomPengurus.querySelector(".bottom-nav-label")?.replaceChildren(document.createTextNode("Pengurus"));
-      bottomPengurus.style.display = "";
-    }
-
-    const bottomProfil = document.querySelector('.bottom-nav .bottom-nav-link[data-page="presensi"]');
-    if (bottomProfil) {
-      bottomProfil.href = "#profilsaya";
-      bottomProfil.dataset.page = "profilsaya";
-      bottomProfil.querySelector(".bottom-nav-label")?.replaceChildren(document.createTextNode("Profil Saya"));
-      bottomProfil.style.display = "";
-    }
+    document.body.classList.add("member-portal-mode");
+    document.querySelectorAll(".sidebar-link").forEach(link => { link.style.display = "none"; });
+    document.querySelectorAll(".sidebar,.bottom-nav,.topbar").forEach(node => { node.style.display = "none"; });
   }
 
   function navigateTo(pageId) {
     /* Route guard lapis UI: akun anggota tidak boleh membuka halaman
        administrasi hanya dengan mengetik hash secara manual. Firestore
        Rules tetap menjadi lapisan keamanan utama. */
-    if (user.role === "anggota") {
-      const halamanAnggota = new Set([
-        "beranda", "kegiatan", "piket", "upacara", "inventaris",
-        "pengurus", "profilsaya"
-      ]);
-      if (!halamanAnggota.has(pageId)) pageId = "beranda";
-    }
+    if (user.role === "anggota" && pageId !== "anggota") pageId = "anggota";
 
     const page = PAGES[pageId];
     if (!page) return;

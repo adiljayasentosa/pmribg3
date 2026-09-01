@@ -153,6 +153,9 @@ function _renderTabBukuKas(el, user, canEdit) {
     </div>
   </div>
   <div class="card">
+    <div style="padding:12px 16px;background:var(--gray-100);border-radius:var(--radius-sm);margin-bottom:12px;font-size:.82rem;color:var(--ink-soft)">
+      💡 <strong>Riwayat bulan sebelumnya tetap bisa diedit.</strong> Pilih bulan/tahun yang ingin diperbaiki, lalu gunakan tombol pembayaran seperti biasa. Tidak ada penguncian otomatis setelah berganti bulan.
+    </div>
     <div class="table-toolbar">
       <div class="search-bar">
         <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
