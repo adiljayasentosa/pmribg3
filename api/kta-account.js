@@ -5,8 +5,8 @@ function json(res, status, payload) {
   return res.end(JSON.stringify(payload));
 }
 
-function randomPassword() {
-  return crypto.randomBytes(9).toString('base64url') + 'A1!';
+function defaultPassword() {
+  return String(process.env.KTA_DEFAULT_PASSWORD || 'anggotapmr');
 }
 
 function emailFor(ni) {
@@ -84,7 +84,7 @@ module.exports = async function handler(req, res) {
     } catch (e) {
       if (e.code !== 'auth/user-not-found') throw e;
       if (action !== 'create') return json(res, 404, { error: 'Akun anggota belum dibuat.' });
-      password = randomPassword();
+      password = defaultPassword();
       user = await auth.createUser({
         email,
         password,
@@ -94,7 +94,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === 'reset') {
-      password = randomPassword();
+      password = defaultPassword();
       await auth.updateUser(user.uid, { password });
     } else if (action !== 'create') {
       return json(res, 400, { error: 'Aksi akun tidak valid.' });

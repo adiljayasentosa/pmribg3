@@ -193,32 +193,67 @@ async function kelolaAkunKta(a, adminUser) {
   tampilKredensialKta(a, null, false);
 }
 
+function clipboardIcon() {
+  return `<svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>`;
+}
+
+function copyTextKta(text, label) {
+  return navigator.clipboard.writeText(String(text)).then(()=>{
+    tampilToast(`${label} disalin.`,'success');
+  }).catch(()=>{
+    tampilToast(`${label} tidak bisa disalin otomatis.`,'error');
+  });
+}
+
 function tampilKredensialKta(a, temporaryPassword=null, justCreated=false) {
   const username = String(a.nomorInduk || '—');
   const email = username !== '—' ? `${username}@pmr-smkibg3.app` : '—';
+  const status = String(a.statusAkun || 'active').toLowerCase() === 'active' ? 'Aktif' : 'Tidak Aktif';
   const passwordHtml = temporaryPassword
-    ? `<div class="kta-credential-box"><span>Password ${justCreated ? 'awal' : 'baru'}</span><code id="kta-password-value">${escapeHtmlKta(temporaryPassword)}</code><button type="button" class="btn btn-outline btn-sm" id="btn-copy-kta-password">Salin Password</button></div>`
-    : `<div class="kta-credential-warning"><strong>Password tidak dapat ditampilkan kembali.</strong><br>Firebase tidak menyediakan cara untuk membaca password lama. Gunakan <strong>Reset Password</strong> untuk membuat password baru.</div>`;
+    ? `<div class="kta-credential-box">
+        <div class="kta-credential-row-head"><span>Password ${justCreated ? 'awal' : 'baru'}</span><span class="kta-credential-badge">${justCreated ? 'Akun dibuat' : 'Password di-reset'}</span></div>
+        <div class="kta-copy-field"><code id="kta-password-value">${escapeHtmlKta(temporaryPassword)}</code><button type="button" class="kta-copy-btn" id="btn-copy-kta-password" title="Salin password" aria-label="Salin password">${clipboardIcon()}</button></div>
+        <small>Password hanya ditampilkan pada proses buat/reset akun.</small>
+      </div>`
+    : `<div class="kta-credential-warning"><strong>Password belum dapat ditampilkan.</strong><br>Password Firebase tidak bisa dibaca kembali. Gunakan <strong>Reset Password</strong> untuk membuat password baru.</div>`;
 
   const actions = [];
   if (!temporaryPassword) actions.push({label:'Reset Password',kelas:'btn-primary',id:'btn-reset-kta-password',onClick:()=>resetPasswordKta(a)});
   actions.push({label:'Tutup',kelas:temporaryPassword?'btn-primary':'btn-outline',id:'btn-close-kta-credentials',onClick:()=>Modal.tutup()});
 
   Modal.buka({judul:'Kelola Akun Anggota', konten:`
-    <div class="kta-account-note">
-      <strong>${escapeHtmlKta(a.nama)}</strong>
-      <p style="margin-bottom:8px">Username: <code>${escapeHtmlKta(username)}</code></p>
-      <p style="margin-top:0">Email sistem: <code>${escapeHtmlKta(email)}</code></p>
-      ${passwordHtml}
-      <p style="color:var(--ink-soft);font-size:.82rem;margin-top:12px">${temporaryPassword ? 'Simpan password ini sekarang. Setelah modal ditutup, password tersebut tidak bisa diambil kembali dari Firebase.' : 'Jika anggota lupa password, reset akan membuat password baru dan password baru akan ditampilkan satu kali.'}</p>
+    <div class="kta-manage-wrap">
+      <div class="kta-member-summary">
+        <div class="avatar kta-manage-avatar">${getInisial(a.nama)}</div>
+        <div><strong>${escapeHtmlKta(a.nama)}</strong><span>Anggota PMR · ${escapeHtmlKta(a.divisi || 'Belum ada divisi')}</span></div>
+        <span class="badge badge-success">${status}</span>
+      </div>
+      <div class="kta-manage-grid">
+        <div class="kta-member-info">
+          <h4>Informasi Anggota</h4>
+          <dl>
+            <div><dt>Nomor Induk</dt><dd>${escapeHtmlKta(username)}</dd></div>
+            <div><dt>Kelas</dt><dd>${escapeHtmlKta(a.kelas || '—')}</dd></div>
+            <div><dt>Jabatan</dt><dd>${escapeHtmlKta(a.jabatan || 'Anggota')}</dd></div>
+            <div><dt>Divisi</dt><dd>${escapeHtmlKta(a.divisi || '—')}</dd></div>
+          </dl>
+        </div>
+        <div class="kta-account-panel">
+          <div class="kta-panel-title">Akun Anggota</div>
+          <label>Username</label>
+          <div class="kta-copy-field"><code>${escapeHtmlKta(username)}</code><button type="button" class="kta-copy-btn" id="btn-copy-kta-username" title="Salin username" aria-label="Salin username">${clipboardIcon()}</button></div>
+          <label>Password ${temporaryPassword ? (justCreated ? 'awal' : 'baru') : ''}</label>
+          ${passwordHtml}
+          <div class="kta-system-email">Email sistem: <code>${escapeHtmlKta(email)}</code></div>
+        </div>
+      </div>
+      <p class="kta-manage-note">${temporaryPassword ? 'Simpan atau salin password ini sekarang. Setelah modal ditutup, password tersebut tidak dapat dibaca kembali dari Firebase.' : 'Jika anggota lupa password, lakukan reset. Password baru akan ditampilkan satu kali dan dapat langsung disalin.'}</p>
     </div>`, aksi: actions});
 
-  if (temporaryPassword) {
-    setTimeout(()=>document.getElementById('btn-copy-kta-password')?.addEventListener('click', async()=>{
-      try { await navigator.clipboard.writeText(temporaryPassword); tampilToast('Password disalin.','success'); }
-      catch(_) { tampilToast('Password tidak bisa disalin otomatis.','error'); }
-    }),0);
-  }
+  setTimeout(()=>{
+    document.getElementById('btn-copy-kta-username')?.addEventListener('click', ()=>copyTextKta(username,'Username'));
+    if (temporaryPassword) document.getElementById('btn-copy-kta-password')?.addEventListener('click', ()=>copyTextKta(temporaryPassword,'Password'));
+  },0);
 }
 
 async function resetPasswordKta(a) {
