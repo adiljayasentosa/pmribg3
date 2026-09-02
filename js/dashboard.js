@@ -211,7 +211,7 @@ function tampilKredensialKta(a, temporaryPassword=null, justCreated=false) {
       <p style="margin-top:0">Email sistem: <code>${escapeHtmlKta(email)}</code></p>
       ${passwordHtml}
       <p style="color:var(--ink-soft);font-size:.82rem;margin-top:12px">${temporaryPassword ? 'Simpan password ini sekarang. Setelah modal ditutup, password tersebut tidak bisa diambil kembali dari Firebase.' : 'Jika anggota lupa password, reset akan membuat password baru dan password baru akan ditampilkan satu kali.'}</p>
-    </div>`, aksi});
+    </div>`, aksi: actions});
 
   if (temporaryPassword) {
     setTimeout(()=>document.getElementById('btn-copy-kta-password')?.addEventListener('click', async()=>{
