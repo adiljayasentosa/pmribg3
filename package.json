@@ -1,11 +1,14 @@
 {
   "name": "pmr-wira-unit",
   "private": true,
-  "description": "Dependency backend Vercel Serverless Functions (api/). Website utamanya sendiri tetap murni HTML/CSS/JS statis tanpa build step \u2014 package.json ini HANYA supaya Vercel bisa install firebase-admin untuk api/backup-verify.js.",
+  "description": "Dependency backend Vercel Serverless Functions (api/). Website utamanya sendiri tetap murni HTML/CSS/JS statis tanpa build step — package.json ini HANYA supaya Vercel bisa install firebase-admin untuk api/backup-verify.js.",
   "engines": {
     "node": "24.x"
   },
   "dependencies": {
     "firebase-admin": "^14.0.0"
+  },
+  "overrides": {
+    "jose": "4.15.9"
   }
 }
