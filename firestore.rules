@@ -46,6 +46,13 @@ service cloud.firestore {
         get(/databases/$(database)/documents/anggota/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.anggotaId)).data.get('statusKeanggotaan', get(/databases/$(database)/documents/anggota/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.anggotaId)).data.get('status','Aktif')) == 'Aktif';
     }
 
+    function isPortalMember() {
+      return isLoggedIn() && userDocExists() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'anggota' &&
+        exists(/databases/$(database)/documents/anggota/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.anggotaId)) &&
+        get(/databases/$(database)/documents/anggota/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.anggotaId)).data.get('statusKeanggotaan', get(/databases/$(database)/documents/anggota/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.anggotaId)).data.get('status','Aktif')) in ['Aktif', 'Alumni'];
+    }
+
     function isMyMemberId(memberId) {
       return isLoggedIn() && userDocExists() &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.anggotaId == memberId;
@@ -274,7 +281,7 @@ match /piket/{jadwalId} {
   allow read: if hasAnyRole([
     'admin', 'ketua', 'wakil',
     'sekretaris', 'bendahara', 'pj'
-  ]) || isActiveMember();
+  ]) || isPortalMember();
 
   // CREATE & UPDATE ────────────────────────────────────────────
   // Admin, ketua, wakil, sekretaris, dan PJ dapat membuat
@@ -318,7 +325,7 @@ match /piket/{jadwalId} {
       allow read: if hasAnyRole([
         'admin', 'ketua', 'wakil',
         'sekretaris', 'bendahara', 'pj'
-      ]) || isActiveMember();
+      ]) || isPortalMember();
 
       // CREATE & UPDATE ────────────────────────────────────────────
       // Admin, ketua, wakil, sekretaris, dan PJ — sama persis

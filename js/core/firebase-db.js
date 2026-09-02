@@ -19,7 +19,7 @@
    DB.init()/initListeners() tidak gagal karena satu collection
    yang memang di luar wewenang role tersebut.
 
-   anggota      : anggota, kegiatan + data pribadi operasional jika Aktif
+   anggota      : anggota, kegiatan + KTA jika Aktif/Alumni; data operasional pribadi hanya jika Aktif
    bendahara    : anggota, kegiatan, pengurus, keuangan
    sekretaris   : anggota, kegiatan, pengurus, presensi
    pj           : anggota, kegiatan, pengurus, presensi
@@ -207,15 +207,19 @@ const DB = {
       );
       AppState.kegiatan = await _fetchAman(() => fdb.collection("kegiatan").orderBy("tanggal","desc").get(), "kegiatan");
       AppState.piket = []; AppState.upacara = []; AppState.presensiHistory = []; AppState.iuran = []; AppState.memberKta = {};
-      if (me && String(me.statusKeanggotaan || me.status || 'Aktif').toLowerCase() === 'aktif') {
-        const [piket, upacara, presensi, iuran, nominal, kta] = await Promise.all([
+      const memberStatus = String(me?.statusKeanggotaan || me?.status || 'Aktif').toLowerCase();
+      const isMemberActive = memberStatus === 'aktif';
+      const isMemberAlumni = memberStatus === 'alumni';
+      if (me && (isMemberActive || isMemberAlumni)) {
+        const ktaPromise = fdb.collection("kta").doc(String(me.id)).get().then(s => s.exists ? {id:s.id,...s.data()} : null).catch(e => { console.error("[PMR] Gagal memuat KTA anggota:", e); return null; });
+        const operational = isMemberActive ? Promise.all([
           _fetchAman(() => fdb.collection("piket").orderBy("tanggal","desc").get(), "piket"),
           _fetchAman(() => fdb.collection("upacara").orderBy("tanggal","desc").get(), "upacara"),
           _fetchAman(() => fdb.collection("presensi").where("anggotaId","==",String(me.id)).get(), "presensi"),
           _fetchAman(() => fdb.collection("iuran").where("anggotaId","==",String(me.id)).get(), "iuran"),
-          fdb.collection("iuran").doc("_pengaturan").get().then(s => s.exists ? {id:s.id,...s.data()} : null).catch(e => { console.error("[PMR] Gagal memuat iuran/_pengaturan:", e); return null; }),
-          fdb.collection("kta").doc(String(me.id)).get().then(s => s.exists ? {id:s.id,...s.data()} : null).catch(e => { console.error("[PMR] Gagal memuat KTA anggota:", e); return null; })
-        ]);
+          fdb.collection("iuran").doc("_pengaturan").get().then(s => s.exists ? {id:s.id,...s.data()} : null).catch(e => { console.error("[PMR] Gagal memuat iuran/_pengaturan:", e); return null; })
+        ]) : Promise.resolve([[],[],[],[],null]);
+        const [[piket, upacara, presensi, iuran, nominal], kta] = await Promise.all([operational, ktaPromise]);
         AppState.piket = piket; AppState.upacara = upacara; AppState.presensiHistory = presensi; AppState.iuran = iuran;
         const setting = nominal; AppState.nominalIuranStandar = setting?.nominalStandar || 5000;
         AppState.memberKta = kta || {};

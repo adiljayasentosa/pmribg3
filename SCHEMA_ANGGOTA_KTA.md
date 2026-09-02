@@ -9,7 +9,7 @@ Dokumen ini hanya mendefinisikan struktur dasar. Belum berisi data anggota produ
 - `kelas`: string, kelas sekolah (opsional untuk KTA)
 - `divisi`: string, divisi anggota
 - `jabatan`: string, default `Anggota`; contoh `Ketua`, `Wakil Ketua`, `Sekretaris`, `Bendahara`, `PJ Divisi`
-- `statusKeanggotaan`: `Aktif` | `Tidak Aktif` (field canonical; modul aplikasi membaca field ini)
+- `statusKeanggotaan`: `Aktif` | `Alumni` | `Tidak Aktif` (field canonical; modul aplikasi membaca field ini)
 - `statusAkun`: `pending` | `active` | `rejected`
 - `sumberData`: `registration` | `admin`
 - `foto`: string, URL publik/data URL foto (opsional; file foto tidak disimpan di Firestore)

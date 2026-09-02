@@ -254,6 +254,7 @@ function bukaFormAnggota(data, onSimpan) {
           <select id="f-status-keanggotaan">
             <option ${data?.statusKeanggotaan==="Aktif" || (!data?.statusKeanggotaan && data?.status==="Aktif")?"selected":""}>Aktif</option>
             <option ${data?.statusKeanggotaan==="Tidak Aktif" || (!data?.statusKeanggotaan && data?.status==="Tidak Aktif")?"selected":""}>Tidak Aktif</option>
+            <option ${data?.statusKeanggotaan==="Alumni" || (!data?.statusKeanggotaan && data?.status==="Alumni")?"selected":""}>Alumni</option>
           </select>
         </div>
         <div class="field">
@@ -354,6 +355,7 @@ function _normalisasiStatusImport(v) {
   if (!key) return "Aktif";
   if (["aktif","active","a","1"].includes(key)) return "Aktif";
   if (["tidakaktif","nonaktif","inactive","tidak aktif","na","0"].includes(key.replace(/\s+/g,"")) || key === "tidak aktif") return "Tidak Aktif";
+  if (["alumni","alumnus","alumna"].includes(key)) return "Alumni";
   return null;
 }
 
@@ -382,7 +384,7 @@ function _validasiImportAnggota(rows) {
     if (niKey && existing.has(niKey)) errors.push("NI sudah terdaftar");
     if (niKey && seen.has(niKey)) errors.push("NI duplikat di file");
     if (niKey) seen.add(niKey);
-    if (!statusKeanggotaan) errors.push("Status harus Aktif/Tidak Aktif");
+    if (!statusKeanggotaan) errors.push("Status harus Aktif/Tidak Aktif/Alumni");
     if (!jabatan) errors.push("Jabatan tidak dikenali");
 
     const divisiRaw = String(r.divisi || "").trim();

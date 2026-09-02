@@ -24,7 +24,7 @@ Header memiliki alias yang aman, misalnya `Nomor Induk`, `NID`, atau `NI` dipeta
 - NI tidak boleh kosong.
 - NI tidak boleh sudah ada di database.
 - NI tidak boleh duplikat di file yang sama.
-- Status harus `Aktif` atau `Tidak Aktif`.
+- Status harus `Aktif`, `Alumni`, atau `Tidak Aktif`.
 - Jabatan harus sesuai pilihan yang didukung.
 - Maksimal 2.000 baris per proses.
 

@@ -24,9 +24,12 @@ function _memberCurrentData(user) {
   ) || (FIREBASE_ENABLED ? null : AppState.anggota.find(a => a.statusKeanggotaan === "Aktif") || AppState.anggota[0]);
 }
 
-function _memberIsActive(a) {
-  return String(a?.statusKeanggotaan || a?.status || "Aktif").toLowerCase() === "aktif";
+function _memberStatus(a) {
+  return String(a?.statusKeanggotaan || a?.status || "Aktif").trim().toLowerCase();
 }
+function _memberIsActive(a) { return _memberStatus(a) === "aktif"; }
+function _memberIsAlumni(a) { return _memberStatus(a) === "alumni"; }
+function _memberPortalAccess(a) { return _memberIsActive(a) || _memberIsAlumni(a); }
 
 function _memberPresensiStats(a) {
   const rows = AppState.presensiHistory.filter(p => String(p.anggotaId) === String(a.id));
@@ -61,13 +64,15 @@ function renderMemberPortal(el, user) {
     return;
   }
   const active = _memberIsActive(a);
+  const alumni = _memberIsAlumni(a);
+  const portalAccess = active || alumni;
   const stats = _memberPresensiStats(a);
   const iuran = active ? _memberIuran(a) : null;
   const kta = AppState.memberKta || {};
   const kegiatan = AppState.kegiatan.filter(k=>k.status !== "Dibatalkan" && String(k.tanggal) >= new Date().toISOString().slice(0,10)).sort((x,y)=>String(x.tanggal).localeCompare(String(y.tanggal))).slice(0,3);
   const piketSaya = active ? _memberJadwalSaya(AppState.piket, a.nama, a.id) : [];
   const upacaraSaya = active ? _memberJadwalSaya(AppState.upacara, a.nama, a.id) : [];
-  const statusClass = active ? "active" : "inactive";
+  const statusClass = active ? "active" : (alumni ? "alumni" : "inactive");
   const photo = _memberFoto(a);
 
   el.innerHTML = `
@@ -79,7 +84,7 @@ function renderMemberPortal(el, user) {
 
       <section class="member-hero">
         <div class="member-hero-copy"><span class="member-eyebrow">PORTAL ANGGOTA</span><h1>Halo, ${_memberEscape(a.nama)} 👋</h1><p>Semua informasi PMR kamu dalam satu tempat.</p></div>
-        <div class="member-profile-card">${photo}<div class="member-profile-info"><strong>${_memberEscape(a.nama)}</strong><span>NI: ${_memberEscape(a.nomorInduk || "—")}</span><span>${_memberEscape(a.kelas || "—")} · ${_memberEscape(a.divisi || "—")}</span></div><span class="member-status ${statusClass}"><i></i>${active?"Aktif":"Tidak Aktif"}</span></div>
+        <div class="member-profile-card">${photo}<div class="member-profile-info"><strong>${_memberEscape(a.nama)}</strong><span>NI: ${_memberEscape(a.nomorInduk || "—")}</span><span>${_memberEscape(a.kelas || "—")} · ${_memberEscape(a.divisi || "—")}</span></div><span class="member-status ${statusClass}"><i></i>${active?"Aktif":(alumni?"Alumni":"Tidak Aktif")}</span></div>
       </section>
 
       ${active ? `
@@ -88,13 +93,16 @@ function renderMemberPortal(el, user) {
         <article class="member-card member-presensi-card"><div class="member-card-title"><div><span class="member-card-kicker">PRESENSI SAYA</span><h2>${stats.pct}%</h2></div><div class="member-ring" style="--pct:${stats.pct}%"><span>${stats.hadir}</span></div></div><p>${stats.total} catatan · ${stats.hadir} Hadir · ${stats.izin} Izin · ${stats.sakit} Sakit · ${stats.alpha} Alpha</p></article>
         <article class="member-card member-iuran-card"><div><span class="member-card-kicker">IURAN BULAN INI</span><h2>${formatBulanTahun(iuran.bulan,iuran.tahun)}</h2><p>${formatRupiah(iuran.totalDibayar || 0)} dari ${formatRupiah(iuran.target || 0)}</p></div><span class="member-payment ${iuran.status === "Lunas" ? "paid" : "unpaid"}">${_memberEscape(iuran.status)}</span></article>
       </section>
-
       <section class="member-section"><div class="member-section-head"><div><span class="member-card-kicker">JADWAL</span><h2>Kegiatan Terdekat</h2></div></div><div class="member-list">${kegiatan.length ? kegiatan.map(k=>`<div class="member-list-row"><div class="member-list-icon">📅</div><div><strong>${_memberEscape(k.nama)}</strong><span>${formatTanggal(k.tanggal)} · ${_memberEscape(k.lokasi||"Lokasi belum ditentukan")}</span></div></div>`).join("") : `<div class="member-empty-inline">Belum ada kegiatan terjadwal.</div>`}</div></section>
-
       <section class="member-grid member-duty-grid"><article class="member-card"><div class="member-section-head"><h2>Piket Saya</h2></div>${piketSaya.length?piketSaya.map(p=>`<div class="member-duty-row"><strong>${formatTanggal(p.tanggal)}</strong><span>${_memberEscape(p.lokasi||"—")}</span></div>`).join(""):`<div class="member-empty-inline">Belum ada jadwal piket.</div>`}</article><article class="member-card"><div class="member-section-head"><h2>Petugas Upacara</h2></div>${upacaraSaya.length?upacaraSaya.map(p=>`<div class="member-duty-row"><strong>${formatTanggal(p.tanggal)}</strong><span>${_memberEscape(p.lokasi||p.keterangan||"—")}</span></div>`).join(""):`<div class="member-empty-inline">Belum ada jadwal upacara.</div>`}</article></section>
-      ` : `
-      <section class="member-inactive-panel"><div class="member-lock">🔒</div><div><h2>Akun tidak aktif</h2><p>Akses ke presensi, iuran, piket, dan petugas upacara dinonaktifkan sampai status keanggotaan diaktifkan kembali oleh pengurus.</p></div></section>
+      ` : alumni ? `
+      <section class="member-grid member-top-grid">
+        <article class="member-card member-kta-card"><div><span class="member-card-kicker">KTA DIGITAL</span><h2>Kartu Tanda Anggota</h2><p>KTA tetap dapat dilihat sebagai identitas alumni.</p></div><button class="member-action" id="member-open-kta">Buka KTA <span>›</span></button></article>
+        <article class="member-card"><span class="member-card-kicker">RIWAYAT KEANGGOTAAN</span><h2>Alumni PMR</h2><p>Bergabung: ${_memberEscape(a.bergabung || "—")}</p><span class="member-payment paid">Alumni</span></article>
+      </section>
       <section class="member-section"><div class="member-section-head"><div><span class="member-card-kicker">INFORMASI</span><h2>Kegiatan PMR</h2></div></div><div class="member-list">${kegiatan.length ? kegiatan.map(k=>`<div class="member-list-row"><div class="member-list-icon">📅</div><div><strong>${_memberEscape(k.nama)}</strong><span>${formatTanggal(k.tanggal)} · ${_memberEscape(k.lokasi||"—")}</span></div></div>`).join("") : `<div class="member-empty-inline">Belum ada kegiatan terjadwal.</div>`}</div></section>
+      ` : `
+      <section class="member-inactive-panel"><div class="member-lock">🔒</div><div><h2>Akun tidak aktif</h2><p>Akses portal operasional dinonaktifkan. Data historis tetap tersimpan dan dapat dikelola oleh pengurus.</p></div></section>
       `}
       <footer class="member-footer">PMR WIRA UNIT · SMK IBG 3 · © ${new Date().getFullYear()}</footer>
     </div>`;
