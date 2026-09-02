@@ -169,12 +169,74 @@ function escapeHtmlKta(v) {
 
 async function kelolaAkunKta(a, adminUser) {
   if (!a) return;
-  if (a.authUid) {
-    Modal.buka({judul:'Akun KTA', konten:`<div class="kta-account-note"><strong>${escapeHtmlKta(a.nama)}</strong><p>Akun anggota sudah terhubung. Username: <code>${escapeHtmlKta(a.nomorInduk||'—')}</code></p><p>Password tidak dapat ditampilkan kembali. Jika perlu reset, gunakan proses reset akun yang akan ditambahkan pada tahap berikutnya.</p></div>`, aksi:[{label:'Tutup',kelas:'btn-primary',id:'modal-tutup-kta-akun',onClick:()=>Modal.tutup()}]});
+  if (!a.authUid) {
+    if (!a.nomorInduk) return tampilToast('NI wajib diisi sebelum membuat akun KTA.','error');
+    Modal.buka({judul:'Buat Akun Anggota', konten:`<p>Akun akan dibuat untuk <strong>${escapeHtmlKta(a.nama)}</strong>.</p><div class="kta-credential-warning">Username: <strong>${escapeHtmlKta(a.nomorInduk)}</strong><br>Password awal akan dibuat otomatis oleh sistem.</div><p style="color:var(--ink-soft);font-size:.84rem">Setelah akun dibuat, username dan password awal akan langsung ditampilkan di Kelola Akun. Password Firebase tidak bisa dibaca kembali setelah dibuat.</p>`, aksi:[{label:'Buat Akun',kelas:'btn-primary',id:'btn-confirm-create-kta-account',onClick:async()=>{
+      const btn=document.getElementById('btn-confirm-create-kta-account'); if(btn) btn.disabled=true;
+      try {
+        const token=await firebase.auth().currentUser.getIdToken(true);
+        const r=await fetch('/api/kta-account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:token,anggotaId:a.id,action:'create'})});
+        const contentType=(r.headers.get('content-type')||'').toLowerCase();
+        const raw=await r.text(); let data={};
+        if(contentType.includes('application/json')){try{data=JSON.parse(raw||'{}')}catch(_){} } else {data={error:raw.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim()||'Server mengembalikan respons yang tidak valid.'};}
+        if(!r.ok) throw new Error(data.error||`Gagal membuat akun (HTTP ${r.status}).`);
+        if(!data.uid) throw new Error('Server tidak mengembalikan UID akun.');
+        await DB.anggota.update(a.id,{authUid:data.uid,statusAkun:'active'});
+        a.authUid=data.uid; a.ktaToken=data.ktaToken;
+        Modal.tutup();
+        tampilKredensialKta(a, data.temporaryPassword, true);
+      } catch(err){ if(btn) btn.disabled=false; tampilToast(err.message,'error'); }
+    }}]});
     return;
   }
-  if (!a.nomorInduk) return tampilToast('NI wajib diisi sebelum membuat akun KTA.','error');
-  Modal.buka({judul:'Buat Akun Anggota', konten:`<p>Akun akan dibuat untuk <strong>${escapeHtmlKta(a.nama)}</strong>.</p><div class="kta-credential-warning">Username: <strong>${escapeHtmlKta(a.nomorInduk)}</strong><br>Password awal dibuat acak oleh sistem dan hanya ditampilkan sekali.</div><p style="color:var(--ink-soft);font-size:.84rem">Setelah akun dibuat, QR KTA dapat diverifikasi publik. Login hanya diperlukan untuk membuka KTA/profil milik anggota sendiri.</p>`, aksi:[{label:'Buat Akun',kelas:'btn-primary',id:'btn-confirm-create-kta-account',onClick:async()=>{const btn=document.getElementById('btn-confirm-create-kta-account'); if(btn) btn.disabled=true; try { const token=await firebase.auth().currentUser.getIdToken(true); const r=await fetch('/api/kta-account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:token,anggotaId:a.id})}); const contentType=(r.headers.get('content-type')||'').toLowerCase(); const raw=await r.text(); let data={}; if(contentType.includes('application/json')){try{data=JSON.parse(raw||'{}')}catch(_){}} else {data={error: raw.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim() || 'Server mengembalikan respons yang tidak valid.'};} if(!r.ok) throw new Error(data.error||`Gagal membuat akun (HTTP ${r.status}).`); if(!data.uid) throw new Error('Server tidak mengembalikan UID akun.'); await DB.anggota.update(a.id,{authUid:data.uid,statusAkun:'active'}); a.authUid=data.uid; a.ktaToken=data.ktaToken; Modal.tutup(); tampilToast(`Akun dibuat. Password awal: ${data.temporaryPassword}`,'success'); } catch(err){ if(btn) btn.disabled=false; tampilToast(err.message,'error'); }}}]});
+
+  tampilKredensialKta(a, null, false);
+}
+
+function tampilKredensialKta(a, temporaryPassword=null, justCreated=false) {
+  const username = String(a.nomorInduk || '—');
+  const email = username !== '—' ? `${username}@pmr-smkibg3.app` : '—';
+  const passwordHtml = temporaryPassword
+    ? `<div class="kta-credential-box"><span>Password ${justCreated ? 'awal' : 'baru'}</span><code id="kta-password-value">${escapeHtmlKta(temporaryPassword)}</code><button type="button" class="btn btn-outline btn-sm" id="btn-copy-kta-password">Salin Password</button></div>`
+    : `<div class="kta-credential-warning"><strong>Password tidak dapat ditampilkan kembali.</strong><br>Firebase tidak menyediakan cara untuk membaca password lama. Gunakan <strong>Reset Password</strong> untuk membuat password baru.</div>`;
+
+  const actions = [];
+  if (!temporaryPassword) actions.push({label:'Reset Password',kelas:'btn-primary',id:'btn-reset-kta-password',onClick:()=>resetPasswordKta(a)});
+  actions.push({label:'Tutup',kelas:temporaryPassword?'btn-primary':'btn-outline',id:'btn-close-kta-credentials',onClick:()=>Modal.tutup()});
+
+  Modal.buka({judul:'Kelola Akun Anggota', konten:`
+    <div class="kta-account-note">
+      <strong>${escapeHtmlKta(a.nama)}</strong>
+      <p style="margin-bottom:8px">Username: <code>${escapeHtmlKta(username)}</code></p>
+      <p style="margin-top:0">Email sistem: <code>${escapeHtmlKta(email)}</code></p>
+      ${passwordHtml}
+      <p style="color:var(--ink-soft);font-size:.82rem;margin-top:12px">${temporaryPassword ? 'Simpan password ini sekarang. Setelah modal ditutup, password tersebut tidak bisa diambil kembali dari Firebase.' : 'Jika anggota lupa password, reset akan membuat password baru dan password baru akan ditampilkan satu kali.'}</p>
+    </div>`, aksi});
+
+  if (temporaryPassword) {
+    setTimeout(()=>document.getElementById('btn-copy-kta-password')?.addEventListener('click', async()=>{
+      try { await navigator.clipboard.writeText(temporaryPassword); tampilToast('Password disalin.','success'); }
+      catch(_) { tampilToast('Password tidak bisa disalin otomatis.','error'); }
+    }),0);
+  }
+}
+
+async function resetPasswordKta(a) {
+  const btn=document.getElementById('btn-reset-kta-password'); if(btn) btn.disabled=true;
+  try {
+    const token=await firebase.auth().currentUser.getIdToken(true);
+    const r=await fetch('/api/kta-account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:token,anggotaId:a.id,action:'reset'})});
+    const contentType=(r.headers.get('content-type')||'').toLowerCase();
+    const raw=await r.text(); let data={};
+    if(contentType.includes('application/json')){try{data=JSON.parse(raw||'{}')}catch(_){} } else {data={error:raw.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim()||'Server mengembalikan respons yang tidak valid.'};}
+    if(!r.ok) throw new Error(data.error||`Gagal reset password (HTTP ${r.status}).`);
+    if(!data.temporaryPassword) throw new Error('Server tidak mengembalikan password baru.');
+    Modal.tutup();
+    tampilKredensialKta(a, data.temporaryPassword, false);
+  } catch(err) {
+    if(btn) btn.disabled=false;
+    tampilToast(err.message,'error');
+  }
 }
 
 async function previewKta(a, fromAll=false) {

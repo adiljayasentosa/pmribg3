@@ -46,7 +46,7 @@ module.exports = async function handler(req, res) {
     const body = typeof req.body === 'string'
       ? JSON.parse(req.body || '{}')
       : (req.body || {});
-    const { idToken, anggotaId } = body;
+    const { idToken, anggotaId, action = 'create' } = body;
 
     if (!idToken || !anggotaId) {
       return json(res, 400, { error: 'idToken dan anggotaId wajib diisi.' });
@@ -83,6 +83,7 @@ module.exports = async function handler(req, res) {
       user = await auth.getUserByEmail(email);
     } catch (e) {
       if (e.code !== 'auth/user-not-found') throw e;
+      if (action !== 'create') return json(res, 404, { error: 'Akun anggota belum dibuat.' });
       password = randomPassword();
       user = await auth.createUser({
         email,
@@ -90,6 +91,13 @@ module.exports = async function handler(req, res) {
         displayName: String(a.nama || ni)
       });
       created = true;
+    }
+
+    if (action === 'reset') {
+      password = randomPassword();
+      await auth.updateUser(user.uid, { password });
+    } else if (action !== 'create') {
+      return json(res, 400, { error: 'Aksi akun tidak valid.' });
     }
 
     await db.collection('users').doc(user.uid).set({
@@ -121,7 +129,8 @@ module.exports = async function handler(req, res) {
       uid: user.uid,
       ktaToken,
       created,
-      temporaryPassword: password
+      temporaryPassword: password,
+      action
     });
   } catch (e) {
     console.error('[api/kta-account]', e);
