@@ -78,11 +78,18 @@ async function renderPersetujuanAnggota(el, user) {
   let pending = [];
   if (FIREBASE_ENABLED) {
     try {
-      const snap = await firebase.firestore().collection("pendaftaran").where("status", "==", "pending").get();
-      pending = snap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b) => String(b.createdAt?.toDate?.() || b.createdAt || "").localeCompare(String(a.createdAt?.toDate?.() || a.createdAt || "")));
+      const current = firebase.auth().currentUser;
+      if (!current) throw new Error("Sesi login tidak ditemukan.");
+      const token = await current.getIdToken(true);
+      const resp = await fetch("/api/pendaftaran", { headers: { Authorization: `Bearer ${token}` } });
+      const raw = await resp.text();
+      let data = {};
+      try { data = raw ? JSON.parse(raw) : {}; } catch { throw new Error("Server mengembalikan respons tidak valid."); }
+      if (!resp.ok) throw new Error(data.error || `Gagal memuat pendaftaran (${resp.status}).`);
+      pending = Array.isArray(data.data) ? data.data : [];
     } catch (e) {
       console.error("[PMR] Gagal memuat pendaftaran:", e);
-      el.innerHTML = `<div class="page-head"><div><h1>Persetujuan Anggota PMR</h1><p class="page-sub">Kelola pendaftaran yang menunggu aktivasi.</p></div></div><div class="alert alert-danger" style="display:flex">Gagal memuat pendaftaran: ${escapeHtmlKta(e.message || "akses Firestore ditolak")}</div>`;
+      el.innerHTML = `<div class="page-head"><div><h1>Persetujuan Anggota PMR</h1><p class="page-sub">Kelola pendaftaran yang menunggu aktivasi.</p></div></div><div class="alert alert-danger" style="display:flex">Gagal memuat pendaftaran: ${escapeHtmlKta(e.message || "gagal mengambil data")}</div>`;
       return;
     }
   }

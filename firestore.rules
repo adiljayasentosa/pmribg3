@@ -142,8 +142,8 @@ service cloud.firestore {
     // ═══════════════════════════════════════════════════
     match /anggota/{anggotaId} {
 
-      // READ: Semua user login — termasuk akun anggota shared.
-      // Aman karena field sensitif sudah tidak ada.
+      // READ: Semua user login — hanya field operasional yang aman disimpan
+      // di collection ini. Data pribadi pendaftaran berada di anggota_private.
       allow read: if isLoggedIn();
 
       // CREATE & UPDATE: Admin, ketua, sekretaris.
@@ -153,6 +153,18 @@ service cloud.firestore {
 
       // DELETE: Admin dan ketua — operasi destruktif.
       allow delete: if hasAnyRole(['admin', 'ketua']);
+    }
+
+
+    // ═══════════════════════════════════════════════════
+    // COLLECTION: anggota_private
+    //
+    // Data pribadi anggota hasil pendaftaran. Browser tidak boleh
+    // menulis langsung; approval dilakukan melalui Admin SDK API.
+    // ═══════════════════════════════════════════════════
+    match /anggota_private/{anggotaId} {
+      allow read: if hasAnyRole(['admin', 'ketua', 'wakil', 'sekretaris']) || isMyMemberId(anggotaId);
+      allow create, update, delete: if false;
     }
 
 

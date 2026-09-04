@@ -53,14 +53,27 @@ module.exports = async function handler(req, res) {
     if (!existingNi.empty) return json(res, 409, { error: 'Nomor Induk PMR tersebut sudah digunakan.' });
 
     const anggotaRef = db.collection('anggota').doc();
+    /* Data operasional yang aman untuk collection anggota tetap minimal.
+       Data pribadi pendaftaran disimpan terpisah agar tidak ikut terbaca
+       oleh seluruh akun login yang memang membutuhkan daftar anggota. */
     const anggotaData = {
       nama: p.nama || '', nomorInduk, kelas: p.kelas || '', divisi: p.divisi || 'Pertolongan Pertama',
       jabatan: 'Anggota', statusKeanggotaan: 'Aktif', statusAkun: 'pending', sumberData: 'registration',
       foto: p.linkDrive || '', linkDrive: p.linkDrive || '', bergabung: new Date().toISOString().slice(0, 10),
       createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp()
     };
+    const anggotaPrivateData = {
+      anggotaId: anggotaRef.id,
+      nik: p.nik || '', tempatLahir: p.tempatLahir || '', tanggalLahir: p.tanggalLahir || '',
+      agama: p.agama || '', jenisKelamin: p.jenisKelamin || '', noHandphone: p.noHandphone || '',
+      golonganDarah: p.golonganDarah || '', provinsi: p.provinsi || '', kabKota: p.kabKota || '',
+      kecamatan: p.kecamatan || '', desaKelurahan: p.desaKelurahan || '', alamat: p.alamat || '',
+      unitPmiKabKota: p.unitPmiKabKota || '', linkDrive: p.linkDrive || '',
+      createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp()
+    };
     await db.runTransaction(async tx => {
       tx.set(anggotaRef, anggotaData);
+      tx.set(db.collection('anggota_private').doc(anggotaRef.id), anggotaPrivateData);
       tx.update(ref, { status: 'approved', anggotaId: anggotaRef.id, nomorInduk, diprosesOleh: decoded.uid, diprosesPada: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
     });
     return json(res, 200, { ok: true, status: 'approved', anggotaId: anggotaRef.id, nomorInduk });

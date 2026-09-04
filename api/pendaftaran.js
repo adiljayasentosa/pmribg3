@@ -20,7 +20,7 @@ function getServiceAccount() {
 }
 
 module.exports = async function handler(req, res) {
-  if (req.method !== 'POST') return json(res, 405, { error: 'Method tidak diizinkan.' });
+  if (!['GET', 'POST'].includes(req.method)) return json(res, 405, { error: 'Method tidak diizinkan.' });
   try {
     const { initializeApp, cert, getApps } = require('firebase-admin/app');
     const { getFirestore, FieldValue } = require('firebase-admin/firestore');
@@ -28,6 +28,31 @@ module.exports = async function handler(req, res) {
       const serviceAccount = getServiceAccount();
       if (!serviceAccount) return json(res, 500, { error: 'Backend Firebase belum dikonfigurasi.' });
       initializeApp({ credential: cert(serviceAccount) });
+    }
+
+    /* GET dipakai halaman Persetujuan Anggota. Query dilakukan lewat
+       Admin SDK supaya halaman admin tidak bergantung pada Firestore
+       client rules untuk membaca collection sensitif `pendaftaran`. */
+    if (req.method === 'GET') {
+      const { getAuth } = require('firebase-admin/auth');
+      const tokenHeader = String(req.headers.authorization || '');
+      const idToken = tokenHeader.replace(/^Bearer\s+/i, '').trim();
+      if (!idToken) return json(res, 401, { error: 'Token autentikasi diperlukan.' });
+      const decoded = await getAuth().verifyIdToken(idToken, true);
+      const db = getFirestore();
+      const adminDoc = await db.collection('users').doc(decoded.uid).get();
+      const role = adminDoc.exists ? String(adminDoc.data().role || '') : '';
+      if (!['admin', 'ketua', 'wakil', 'sekretaris'].includes(role)) {
+        return json(res, 403, { error: 'Tidak berwenang melihat pendaftaran.' });
+      }
+      const snap = await db.collection('pendaftaran').where('status', '==', 'pending').get();
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      data.sort((a, b) => {
+        const av = a.createdAt?.toMillis?.() ?? new Date(a.createdAt || 0).getTime();
+        const bv = b.createdAt?.toMillis?.() ?? new Date(b.createdAt || 0).getTime();
+        return bv - av;
+      });
+      return json(res, 200, { ok: true, data });
     }
 
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});

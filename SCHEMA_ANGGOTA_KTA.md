@@ -39,3 +39,25 @@ Admin, Ketua, Wakil Ketua, dan Sekretaris dapat mengelola data anggota dan perse
 - QR KTA mengarah ke `kta-member.html?kta=<token>` dan dapat diverifikasi publik melalui endpoint server; login hanya diperlukan untuk membuka KTA/profil milik akun sendiri.
 - Halaman scan QR menampilkan informasi verifikasi publik yang disanitasi. Jika anggota login, token QR tetap diverifikasi agar hanya akun pemilik yang dapat membuka tampilan KTA pribadi.
 - Template depan/belakang berasal dari desain KTA yang disediakan.
+
+## Data pribadi hasil pendaftaran
+
+Collection `anggota_private/{anggotaId}` menyimpan data pribadi yang dikumpulkan dari formulir pendaftaran, terpisah dari `anggota` agar tidak terbaca oleh seluruh akun login.
+
+- `anggotaId`: string, ID dokumen anggota terkait
+- `nik`: string
+- `tempatLahir`: string
+- `tanggalLahir`: string
+- `agama`: string
+- `jenisKelamin`: string
+- `noHandphone`: string
+- `golonganDarah`: string
+- `provinsi`: string
+- `kabKota`: string
+- `kecamatan`: string
+- `desaKelurahan`: string
+- `alamat`: string
+- `unitPmiKabKota`: string
+- `linkDrive`: string, link dokumen/foto KTA di Google Drive
+
+Penulisan collection ini hanya dilakukan oleh API approval menggunakan Firebase Admin SDK. Pengurus berwenang dapat membaca data tersebut melalui aturan Firestore.
