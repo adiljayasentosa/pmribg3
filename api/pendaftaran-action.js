@@ -68,7 +68,7 @@ module.exports = async function handler(req, res) {
       agama: p.agama || '', jenisKelamin: p.jenisKelamin || '', noHandphone: p.noHandphone || '',
       golonganDarah: p.golonganDarah || '', provinsi: p.provinsi || '', kabKota: p.kabKota || '',
       kecamatan: p.kecamatan || '', desaKelurahan: p.desaKelurahan || '', alamat: p.alamat || '',
-      unitPmiKabKota: p.unitPmiKabKota || '', linkDrive: p.linkDrive || '',
+      linkDrive: p.linkDrive || '',
       createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp()
     };
     await db.runTransaction(async tx => {

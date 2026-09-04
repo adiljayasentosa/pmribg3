@@ -57,7 +57,6 @@ Collection `anggota_private/{anggotaId}` menyimpan data pribadi yang dikumpulkan
 - `kecamatan`: string
 - `desaKelurahan`: string
 - `alamat`: string
-- `unitPmiKabKota`: string
 - `linkDrive`: string, link dokumen/foto KTA di Google Drive
 
 Penulisan collection ini hanya dilakukan oleh API approval menggunakan Firebase Admin SDK. Pengurus berwenang dapat membaca data tersebut melalui aturan Firestore.

@@ -38,21 +38,41 @@ module.exports = async function handler(req, res) {
       const tokenHeader = String(req.headers.authorization || '');
       const idToken = tokenHeader.replace(/^Bearer\s+/i, '').trim();
       if (!idToken) return json(res, 401, { error: 'Token autentikasi diperlukan.' });
-      const decoded = await getAuth().verifyIdToken(idToken, true);
+      const decoded = await getAuth().verifyIdToken(idToken, false);
       const db = getFirestore();
       const adminDoc = await db.collection('users').doc(decoded.uid).get();
       const role = adminDoc.exists ? String(adminDoc.data().role || '') : '';
       if (!['admin', 'ketua', 'wakil', 'sekretaris'].includes(role)) {
         return json(res, 403, { error: 'Tidak berwenang melihat pendaftaran.' });
       }
-      const snap = await db.collection('pendaftaran').where('status', '==', 'pending').get();
+
+      // Detail tidak ikut dikirim saat halaman pertama dibuka. Ini menjaga
+      // payload ringan, terutama ketika jumlah pendaftar mulai banyak.
+      const detailId = String(req.query?.id || '').trim();
+      if (detailId) {
+        const doc = await db.collection('pendaftaran').doc(detailId).get();
+        if (!doc.exists) return json(res, 404, { error: 'Pendaftaran tidak ditemukan.' });
+        const data = doc.data() || {};
+        if (String(data.status || '') !== 'pending') {
+          return json(res, 409, { error: 'Pendaftaran ini sudah diproses.' });
+        }
+        return json(res, 200, { ok: true, data: { id: doc.id, ...data } });
+      }
+
+      // Hanya field yang diperlukan tabel yang dikirim. Batas 50 mencegah
+      // satu halaman admin mengunduh seluruh data pendaftaran sekaligus.
+      const snap = await db.collection('pendaftaran')
+        .where('status', '==', 'pending')
+        .select('nama', 'nik', 'kelas', 'divisi', 'nomorInduk', 'createdAt')
+        .limit(50)
+        .get();
       const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       data.sort((a, b) => {
         const av = a.createdAt?.toMillis?.() ?? new Date(a.createdAt || 0).getTime();
         const bv = b.createdAt?.toMillis?.() ?? new Date(b.createdAt || 0).getTime();
         return bv - av;
       });
-      return json(res, 200, { ok: true, data });
+      return json(res, 200, { ok: true, data, limited: snap.size >= 50 });
     }
 
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
@@ -74,7 +94,6 @@ module.exports = async function handler(req, res) {
       kecamatan: clean(body.kecamatan, 100),
       desaKelurahan: clean(body.desaKelurahan, 100),
       alamat: clean(body.alamat, 500),
-      unitPmiKabKota: clean(body.unitPmiKabKota, 150),
       divisi: clean(body.divisi, 80),
       linkDrive: clean(body.linkDrive, 1000),
       status: 'pending',
@@ -89,7 +108,7 @@ module.exports = async function handler(req, res) {
       ['noHandphone', 'Nomor handphone'], ['golonganDarah', 'Golongan darah'],
       ['provinsi', 'Provinsi'], ['kabKota', 'Kab/Kota'], ['kecamatan', 'Kecamatan'],
       ['desaKelurahan', 'Desa/Kelurahan'], ['alamat', 'Alamat'],
-      ['unitPmiKabKota', 'Unit PMI Kab/Kota'], ['kelas', 'Kelas']
+      ['kelas', 'Kelas']
     ];
     const missing = required.find(([key]) => !data[key]);
     if (missing) return json(res, 400, { error: `${missing[1]} wajib diisi.` });

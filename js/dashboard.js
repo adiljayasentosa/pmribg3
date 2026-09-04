@@ -80,8 +80,8 @@ async function renderPersetujuanAnggota(el, user) {
     try {
       const current = firebase.auth().currentUser;
       if (!current) throw new Error("Sesi login tidak ditemukan.");
-      const token = await current.getIdToken(true);
-      const resp = await fetch("/api/pendaftaran", { headers: { Authorization: `Bearer ${token}` } });
+      const token = await current.getIdToken();
+      const resp = await fetch("/api/pendaftaran", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
       const raw = await resp.text();
       let data = {};
       try { data = raw ? JSON.parse(raw) : {}; } catch { throw new Error("Server mengembalikan respons tidak valid."); }
@@ -123,7 +123,7 @@ async function renderPersetujuanAnggota(el, user) {
     const alamat = [a.alamat,a.desaKelurahan,a.kecamatan,a.kabKota,a.provinsi].filter(Boolean).join(", ");
     return `<div class="registration-admin-detail">
       <div class="detail-hero"><div class="avatar">${getInisial(a.nama||"?")}</div><div><div class="detail-nama">${escapeHtmlKta(a.nama||"—")}</div><div class="detail-kelas">${escapeHtmlKta(a.kelas||"—")} · ${escapeHtmlKta(a.divisi||"—")}</div></div></div>
-      ${a.foto?`<div style="text-align:center;margin:14px 0"><img src="${escapeHtmlKta(a.foto)}" alt="Foto KTA ${escapeHtmlKta(a.nama)}" style="max-width:180px;max-height:180px;border-radius:14px;object-fit:cover;border:1px solid var(--gray-200)"></div>`:""}
+      ${a.foto?`<div style="text-align:center;margin:14px 0"><img src="${escapeHtmlKta(a.foto)}" alt="Foto wajah ${escapeHtmlKta(a.nama)} untuk KTA" style="max-width:180px;max-height:180px;border-radius:14px;object-fit:cover;border:1px solid var(--gray-200)"></div>`:""}
       <div class="detail-info-grid" style="margin-top:0">
         <div class="detail-info-item"><div class="lbl">NIK</div><div class="val">${escapeHtmlKta(a.nik||"—")}</div></div>
         <div class="detail-info-item"><div class="lbl">Nomor Induk PMR</div><div class="val">${escapeHtmlKta(a.nomorInduk||"Belum ditentukan")}</div></div>
@@ -132,16 +132,36 @@ async function renderPersetujuanAnggota(el, user) {
         <div class="detail-info-item"><div class="lbl">Jenis Kelamin</div><div class="val">${escapeHtmlKta(a.jenisKelamin||"—")}</div></div>
         <div class="detail-info-item"><div class="lbl">No Handphone</div><div class="val">${escapeHtmlKta(a.noHandphone||"—")}</div></div>
         <div class="detail-info-item"><div class="lbl">Golongan Darah</div><div class="val">${escapeHtmlKta(a.golonganDarah||"—")}</div></div>
-        <div class="detail-info-item"><div class="lbl">Unit PMI</div><div class="val">${escapeHtmlKta(a.unitPmiKabKota||"—")}</div></div>
         <div class="detail-info-item" style="grid-column:1/-1"><div class="lbl">Alamat</div><div class="val">${escapeHtmlKta(alamat||"—")}</div></div>
       </div>
       <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-outline btn-sm" href="${escapeHtmlKta(a.linkDrive||"#")}" target="_blank" rel="noopener noreferrer">↗ Buka Google Drive</a></div>
     </div>`;
   };
 
+  async function bukaDetailPendaftaran(id) {
+    if (!FIREBASE_ENABLED || !id) return;
+    Modal.buka({judul:"Detail Pendaftaran", ukuran:"modal-lg", konten:`<div style="padding:28px;text-align:center;color:var(--ink-soft)">Memuat detail pendaftaran…</div>`, aksi:[{label:"Tutup",kelas:"btn-primary",id:"reg-detail-close",onClick:()=>Modal.tutup()}]});
+    try {
+      const current = firebase.auth().currentUser;
+      if (!current) throw new Error("Sesi login tidak ditemukan.");
+      const token = await current.getIdToken();
+      const resp = await fetch(`/api/pendaftaran?id=${encodeURIComponent(id)}`, {
+        headers: { Authorization: `Bearer ${token}` }, cache: "no-store"
+      });
+      const raw = await resp.text();
+      let data = {};
+      try { data = raw ? JSON.parse(raw) : {}; } catch { throw new Error("Server mengembalikan respons tidak valid."); }
+      if (!resp.ok) throw new Error(data.error || `Gagal memuat detail (${resp.status}).`);
+      const a = data.data;
+      if (!a) throw new Error("Detail pendaftaran tidak ditemukan.");
+      Modal.buka({judul:"Detail Pendaftaran", ukuran:"modal-lg", konten:detailHtml(a), aksi:[{label:"Tutup",kelas:"btn-primary",id:"reg-detail-close",onClick:()=>Modal.tutup()}]});
+    } catch (e) {
+      Modal.buka({judul:"Detail Pendaftaran", ukuran:"modal-lg", konten:`<div class="alert alert-danger" style="display:flex">Gagal memuat detail: ${escapeHtmlKta(e.message || "gagal mengambil data")}</div>`, aksi:[{label:"Tutup",kelas:"btn-primary",id:"reg-detail-close",onClick:()=>Modal.tutup()}]});
+    }
+  }
+
   el.querySelectorAll("[data-registration-detail]").forEach(btn => btn.addEventListener("click", () => {
-    const a = findPending(btn.dataset.registrationDetail); if (!a) return;
-    Modal.buka({judul:"Detail Pendaftaran", ukuran:"modal-lg", konten:detailHtml(a), aksi:[{label:"Tutup",kelas:"btn-primary",id:"reg-detail-close",onClick:()=>Modal.tutup()}]});
+    bukaDetailPendaftaran(btn.dataset.registrationDetail);
   }));
 
   async function processRegistration(a, action) {
@@ -158,7 +178,7 @@ async function renderPersetujuanAnggota(el, user) {
     try {
       const userFirebase = firebase.auth().currentUser;
       if (!userFirebase) throw new Error("Sesi login tidak ditemukan.");
-      const token = await userFirebase.getIdToken(true);
+      const token = await userFirebase.getIdToken();
       const resp = await fetch("/api/pendaftaran-action", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({idToken:token,pendaftaranId:a.id,action,nomorInduk})});
       const raw = await resp.text(); let data={}; try{data=raw?JSON.parse(raw):{}}catch{throw new Error("Server mengembalikan respons tidak valid.");}
       if(!resp.ok) throw new Error(data.error||`Aksi gagal (${resp.status}).`);

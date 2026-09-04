@@ -57,8 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
       ['Agama', value('reg-agama')], ['Jenis Kelamin', value('reg-gender')], ['No Handphone', value('reg-hp')],
       ['Golongan Darah', value('reg-darah')], ['Divisi', value('reg-divisi')],
       ['Alamat', `${value('reg-alamat')}, ${value('reg-desa')}, ${value('reg-kec')}, ${value('reg-kab')}, ${value('reg-provinsi')}`],
-      ['Unit PMI Kab/Kota', value('reg-unit-pmi')], ['Nomor Induk PMR', value('reg-ni') || 'Akan ditentukan pengurus'],
-      ['Foto KTA', 'Melalui link Google Drive'], ['Link Google Drive', value('reg-drive')]
+      ['Nomor Induk PMR', value('reg-ni') || 'Akan ditentukan pengurus'],
+      ['Foto Wajah untuk KTA', 'Melalui link Google Drive'], ['Link Google Drive', value('reg-drive')]
     ];
     document.getElementById('registration-summary').innerHTML = rows.map(([k,v]) => `<div class="registration-summary-row"><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join('');
   }
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tempatLahir:value('reg-tempat'), tanggalLahir:value('reg-tanggal'), agama:value('reg-agama'),
         jenisKelamin:value('reg-gender'), noHandphone:value('reg-hp'), golonganDarah:value('reg-darah'),
         provinsi:value('reg-provinsi'), kabKota:value('reg-kab'), kecamatan:value('reg-kec'),
-        desaKelurahan:value('reg-desa'), alamat:value('reg-alamat'), unitPmiKabKota:value('reg-unit-pmi'),
+        desaKelurahan:value('reg-desa'), alamat:value('reg-alamat'),
         divisi:value('reg-divisi'), foto:'', linkDrive:value('reg-drive'),
         website:value('reg-honeypot')
       };
