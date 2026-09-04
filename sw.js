@@ -25,7 +25,7 @@
    deploy yang mengubah isi file apa pun, karena inilah yang membuat
    browser mendeteksi ada versi sw.js baru (lihat penjelasan mekanisme
    update di README-PWA.md). */
-const APP_VERSION = "1.1.18";
+const APP_VERSION = "1.1.19";
 
 const CACHE_STATIC  = `pmr-static-${APP_VERSION}`;   // app shell: html/css/js/icon/logo
 const CACHE_RUNTIME = `pmr-runtime-${APP_VERSION}`;  // font & aset eksternal lain
@@ -67,6 +67,7 @@ const PRECACHE_URLS = [
   "/poster.html",
   "/dokumentasi.html",
   "/offline.html",
+  "/pendaftaran-selesai.html",
 
   // CSS yang dipakai halaman publik
   "/css/variables.css",
@@ -91,6 +92,7 @@ const PRECACHE_URLS = [
   // Aset & manifest
   "/assets/logo.svg",
   "/assets/app-mockup.svg",
+  "/assets/registration-success.svg",
   "/assets/icons/icon-192.png",
   "/assets/icons/icon-512.png",
   "/assets/icons/icon-maskable-192.png",

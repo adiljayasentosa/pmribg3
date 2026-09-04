@@ -1,0 +1,102 @@
+/* =========================================================
+   PENDAFTARAN ANGGOTA PMR
+   ========================================================= */
+.registration-screen{min-height:100vh;background:#f4f4f6;padding:24px 16px 44px}
+.registration-shell{max-width:760px;margin:0 auto}
+.registration-head{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.registration-back{width:42px;height:42px;border-radius:50%;border:1px solid var(--gray-200);background:#fff;color:var(--ink);display:grid;place-items:center;font-size:1.3rem;box-shadow:var(--shadow-sm)}
+.registration-brand{text-align:center;margin:6px 0 24px}
+.registration-brand img{width:76px;height:76px;display:block;margin:0 auto 12px}
+.registration-brand .brand-title{font-family:var(--font-display);font-size:1.35rem;font-weight:800;line-height:1.1}
+.registration-brand .brand-sub{color:var(--ink-soft);margin-top:4px}
+.registration-card{background:#fff;border:1px solid var(--gray-200);border-radius:24px;box-shadow:var(--shadow-md);padding:26px}
+.registration-title{font-family:var(--font-display);font-size:1.35rem;margin:0}
+.registration-lead{color:var(--ink-soft);margin:5px 0 20px}
+.registration-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:26px}
+.registration-step{display:flex;flex-direction:column;align-items:center;gap:7px;color:var(--gray-400);font-size:.72rem;text-align:center;position:relative}
+.registration-step:not(:last-child)::after{content:'';position:absolute;top:14px;left:62%;width:76%;height:1px;background:var(--gray-200);z-index:0}
+.registration-step .num{width:29px;height:29px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--gray-300);background:#fff;position:relative;z-index:1;font-weight:700}
+.registration-step.active{color:var(--pmr-red);font-weight:700}.registration-step.active .num{background:var(--pmr-red);border-color:var(--pmr-red);color:#fff}.registration-step.done{color:var(--success)}.registration-step.done .num{background:var(--success-bg);border-color:var(--success);color:var(--success)}
+.registration-panel{display:none}.registration-panel.active{display:block}
+.registration-panel h2{font-family:var(--font-display);font-size:1rem;margin:0 0 14px}
+.registration-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.registration-grid .field-full{grid-column:1/-1}
+.registration-grid .field label{display:block;font-size:.78rem;font-weight:600;margin-bottom:6px}
+.registration-grid input,.registration-grid select,.registration-grid textarea{width:100%;border:1px solid var(--gray-300);border-radius:12px;background:#fff;padding:12px 13px;font:inherit;color:var(--ink);outline:none;transition:border-color .15s,box-shadow .15s}
+.registration-grid input:focus,.registration-grid select:focus,.registration-grid textarea:focus{border-color:var(--pmr-red);box-shadow:0 0 0 3px var(--pmr-red-light)}
+.registration-grid textarea{min-height:120px;resize:vertical}
+.registration-help{font-size:.72rem;color:var(--ink-soft);margin-top:5px}
+.registration-upload{border:1.5px dashed var(--gray-300);border-radius:16px;padding:24px;text-align:center;background:#fafafa;cursor:pointer}
+.registration-upload:hover{border-color:var(--pmr-red)}
+.registration-upload .upload-icon{font-size:1.8rem;color:var(--pmr-red);margin-bottom:7px}.registration-upload strong{display:block}.registration-upload span{font-size:.72rem;color:var(--ink-soft)}
+.registration-preview{max-width:150px;max-height:150px;border-radius:12px;object-fit:cover;margin:12px auto 0;display:none}
+.registration-note{display:flex;gap:10px;align-items:flex-start;background:var(--pmr-red-light);border:1px solid rgba(200,16,46,.16);border-radius:12px;padding:12px;font-size:.75rem;color:var(--ink-soft);margin-top:16px}
+.registration-summary{border:1px solid var(--gray-200);border-radius:14px;overflow:hidden}.registration-summary-row{display:flex;justify-content:space-between;gap:18px;padding:11px 13px;border-bottom:1px solid var(--gray-200);font-size:.78rem}.registration-summary-row:last-child{border-bottom:0}.registration-summary-row span{color:var(--ink-soft)}.registration-summary-row strong{text-align:right;max-width:62%;word-break:break-word}
+.registration-actions{display:flex;justify-content:space-between;gap:10px;margin-top:22px}.registration-actions .btn{min-width:120px}
+.registration-success{text-align:center;padding:20px 8px}.registration-success .success-icon{width:72px;height:72px;border-radius:50%;background:var(--success-bg);color:var(--success);display:grid;place-items:center;font-size:2rem;margin:0 auto 14px}.registration-success h2{font-family:var(--font-display);font-size:1.35rem;margin:0 0 8px}.registration-success p{color:var(--ink-soft);line-height:1.6}
+@media(max-width:620px){.registration-screen{padding:12px 10px 28px}.registration-card{padding:18px;border-radius:20px}.registration-grid{grid-template-columns:1fr}.registration-grid .field-full{grid-column:auto}.registration-actions{flex-direction:row}.registration-actions .btn{min-width:0;flex:1}.registration-steps{gap:3px}.registration-step{font-size:.62rem}.registration-step:not(:last-child)::after{width:64%}}
+.registration-admin-detail .detail-info-item{min-width:0}.registration-admin-detail .detail-info-item .val{word-break:break-word}
+
+.registration-drive-guide {
+  border: 1px solid rgba(200,16,46,.18);
+  background: rgba(200,16,46,.045);
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 2px;
+}
+.registration-drive-guide .drive-guide-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.registration-drive-guide .drive-guide-head > div {
+  display: grid;
+  gap: 3px;
+}
+.registration-drive-guide .drive-guide-head strong { font-size: .9rem; }
+.registration-drive-guide .drive-guide-head span:not(.drive-guide-icon) { font-size: .76rem; color: var(--ink-soft); }
+.drive-guide-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  background: #fff;
+  border: 1px solid rgba(200,16,46,.16);
+  font-weight: 800;
+  color: var(--primary, #C8102E);
+}
+.registration-drive-guide ol {
+  margin: 13px 0 12px 20px;
+  padding: 0;
+  color: var(--ink);
+  font-size: .78rem;
+  line-height: 1.55;
+}
+.registration-drive-guide li { margin: 6px 0; padding-left: 3px; }
+.registration-drive-guide li strong { font-weight: 700; }
+.registration-warning {
+  border-radius: 11px;
+  padding: 10px 12px;
+  background: rgba(245,158,11,.10);
+  border: 1px solid rgba(245,158,11,.22);
+  color: var(--ink);
+  font-size: .75rem;
+  line-height: 1.5;
+}
+
+/* ── Halaman sukses pendaftaran ───────────────────────────── */
+.success-screen{display:flex;align-items:center}
+.success-screen .registration-shell{width:100%}
+.registration-success-card{text-align:center;padding:28px 30px 32px;overflow:hidden}
+.success-illustration-wrap{max-width:420px;margin:0 auto 4px}
+.success-illustration{display:block;width:100%;height:auto}
+.success-badge{display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:999px;background:var(--success-bg);color:var(--success);font-size:.72rem;font-weight:700;margin:4px 0 12px}
+.success-badge span{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:var(--success);color:#fff;font-size:.68rem}
+.registration-success-card h1{font-family:var(--font-display);font-size:1.55rem;line-height:1.2;margin:0 0 8px}
+.success-lead{margin:0;color:var(--ink-soft);font-size:.9rem;line-height:1.55}
+.success-message{display:inline-block;margin:18px auto 10px;padding:11px 16px;border-radius:12px;background:var(--success-bg);border:1px solid rgba(22,163,74,.18);color:var(--success);font-size:.86rem;font-weight:800}
+.success-detail{max-width:570px;margin:0 auto;color:var(--ink-soft);font-size:.78rem;line-height:1.65}
+.success-home-btn{display:inline-flex;margin-top:22px;min-width:180px;justify-content:center}
+@media(max-width:620px){.success-screen{align-items:flex-start}.registration-success-card{padding:20px 17px 24px}.success-illustration-wrap{margin-top:-4px}.registration-success-card h1{font-size:1.35rem}.success-message{font-size:.8rem}.success-detail{font-size:.75rem}}

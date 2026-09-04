@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Pendaftaran Anggota · PMR WIRA UNIT SMK IBG 3</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml"/>
+  <meta name="theme-color" content="#C8102E"/>
+  <link rel="stylesheet" href="css/variables.css"/>
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/components.css"/>
+  <link rel="stylesheet" href="css/pendaftaran.css"/>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+<main class="registration-screen">
+  <div class="registration-shell">
+    <div class="registration-head">
+      <a class="registration-back" href="login.html" aria-label="Kembali ke login">←</a>
+      <div><strong>Pendaftaran Anggota</strong><div style="font-size:.72rem;color:var(--ink-soft)">PMR WIRA UNIT SMK IBG 3</div></div>
+    </div>
+
+    <div class="registration-brand">
+      <img src="assets/logo.svg" alt="Logo PMR"/>
+      <div class="brand-title">PMR WIRA UNIT</div>
+      <div class="brand-sub">SMK IBG 3</div>
+    </div>
+
+    <section class="registration-card">
+      <h1 class="registration-title">Pendaftaran Anggota PMR</h1>
+      <p class="registration-lead">Lengkapi data dengan benar. Pendaftaran akan diperiksa oleh pengurus sebelum akun anggota diaktifkan.</p>
+
+      <div class="registration-steps" id="registration-steps">
+        <div class="registration-step active" data-step-indicator="1"><span class="num">1</span><span>Data Diri</span></div>
+        <div class="registration-step" data-step-indicator="2"><span class="num">2</span><span>Alamat</span></div>
+        <div class="registration-step" data-step-indicator="3"><span class="num">3</span><span>KTA & Dokumen</span></div>
+        <div class="registration-step" data-step-indicator="4"><span class="num">4</span><span>Konfirmasi</span></div>
+      </div>
+
+      <div id="registration-error" class="alert alert-danger" style="display:none;margin-bottom:16px" role="alert"></div>
+
+      <form id="registration-form" novalidate>
+        <section class="registration-panel active" data-step="1">
+          <h2>Data Diri</h2>
+          <div class="registration-grid">
+            <div class="field field-full"><label for="reg-nama">Nama Lengkap</label><input id="reg-nama" name="nama" placeholder="Masukkan nama lengkap" required></div>
+            <div class="field field-full"><label for="reg-nik">Nomor Induk Kependudukan (NIK)</label><input id="reg-nik" name="nik" inputmode="numeric" maxlength="20" placeholder="Masukkan NIK" required></div>
+            <div class="field"><label for="reg-tempat">Tempat Lahir</label><input id="reg-tempat" name="tempatLahir" placeholder="Tempat lahir" required></div>
+            <div class="field"><label for="reg-tanggal">Tanggal Lahir</label><input id="reg-tanggal" name="tanggalLahir" type="date" required></div>
+            <div class="field"><label for="reg-agama">Agama</label><select id="reg-agama" name="agama" required><option value="">Pilih agama</option><option>Islam</option><option>Kristen</option><option>Katolik</option><option>Hindu</option><option>Buddha</option><option>Konghucu</option></select></div>
+            <div class="field"><label for="reg-gender">Jenis Kelamin</label><select id="reg-gender" name="jenisKelamin" required><option value="">Pilih jenis kelamin</option><option>Laki-laki</option><option>Perempuan</option></select></div>
+            <div class="field field-full"><label for="reg-hp">No Handphone</label><input id="reg-hp" name="noHandphone" type="tel" inputmode="tel" placeholder="08xxxxxxxxxx" required></div>
+            <div class="field"><label for="reg-darah">Golongan Darah</label><select id="reg-darah" name="golonganDarah" required><option value="">Pilih golongan darah</option><option>A</option><option>B</option><option>AB</option><option>O</option><option>Tidak tahu</option></select></div>
+            <div class="field"><label for="reg-kelas">Kelas</label><input id="reg-kelas" name="kelas" placeholder="Contoh: XI TKJ" required></div>
+            <div class="field"><label for="reg-divisi">Divisi</label><select id="reg-divisi" name="divisi"><option value="Pertolongan Pertama">Pertolongan Pertama</option><option value="Tandu">Tandu</option></select></div>
+            <div class="field"><label for="reg-ni">Nomor Induk PMR <span style="font-weight:400;color:var(--ink-soft)">(jika sudah ada)</span></label><input id="reg-ni" name="nomorInduk" placeholder="Akan ditentukan pengurus jika kosong"></div>
+          </div>
+        </section>
+
+        <section class="registration-panel" data-step="2">
+          <h2>Alamat</h2>
+          <div class="registration-grid">
+            <div class="field"><label for="reg-provinsi">Provinsi</label><input id="reg-provinsi" name="provinsi" placeholder="Contoh: Jawa Barat" required></div>
+            <div class="field"><label for="reg-kab">Kab/Kota</label><input id="reg-kab" name="kabKota" placeholder="Contoh: Kabupaten Bogor" required></div>
+            <div class="field"><label for="reg-kec">Kecamatan</label><input id="reg-kec" name="kecamatan" placeholder="Kecamatan" required></div>
+            <div class="field"><label for="reg-desa">Desa/Kelurahan</label><input id="reg-desa" name="desaKelurahan" placeholder="Desa/Kelurahan" required></div>
+            <div class="field field-full"><label for="reg-alamat">Alamat Lengkap</label><textarea id="reg-alamat" name="alamat" placeholder="Nama jalan, RT/RW, nomor rumah, dan detail lainnya" required></textarea></div>
+            <div class="field field-full"><label for="reg-unit-pmi">Unit PMI Kab/Kota</label><input id="reg-unit-pmi" name="unitPmiKabKota" placeholder="Contoh: PMI Kabupaten Bogor" required></div>
+          </div>
+          <div class="registration-note">📍 Pastikan alamat ditulis lengkap agar data administrasi anggota tidak membingungkan saat diperiksa.</div>
+        </section>
+
+        <section class="registration-panel" data-step="3">
+          <h2>KTA & Dokumen</h2>
+          <div class="registration-drive-guide">
+            <div class="drive-guide-head"><span class="drive-guide-icon">↗</span><div><strong>Siapkan foto KTA di Google Drive</strong><span>Link Google Drive wajib dan harus bisa dibuka oleh pengurus.</span></div></div>
+            <ol>
+              <li>Upload foto KTA yang diperlukan ke <strong>Google Drive</strong>.</li>
+              <li>Buka file/folder tersebut, lalu pilih <strong>Bagikan</strong>.</li>
+              <li>Pada bagian <strong>Akses umum</strong>, ubah <strong>Dibatasi</strong> menjadi <strong>Siapa saja yang memiliki link</strong>.</li>
+              <li>Pastikan izin aksesnya <strong>Pelihat (Viewer)</strong>, bukan Editor.</li>
+              <li>Pilih <strong>Salin link</strong>, lalu tempelkan link tersebut di kolom di bawah.</li>
+            </ol>
+            <div class="registration-warning">⚠️ <strong>Wajib publik melalui link.</strong> Jangan gunakan akses Dibatasi/Private. Jika pengurus tidak bisa membuka link, pendaftaran dapat dikembalikan untuk diperbaiki.</div>
+          </div>
+          <div class="field" style="margin-top:18px">
+            <label for="reg-drive">Link Google Drive (Wajib)</label>
+            <input id="reg-drive" name="linkDrive" type="url" placeholder="https://drive.google.com/..." required>
+            <div class="registration-help">Contoh: link file atau folder Google Drive yang berisi foto KTA. Akses harus <strong>Siapa saja yang memiliki link → Pelihat (Viewer)</strong>.</div>
+          </div>
+          <div class="registration-note">📎 Tidak ada upload foto langsung di halaman ini. Foto KTA dikirim melalui <strong>Link Google Drive</strong> agar pengurus menggunakan sumber dokumen yang sama saat verifikasi.</div>
+        </section>
+
+        <section class="registration-panel" data-step="4">
+          <h2>Konfirmasi Pendaftaran</h2>
+          <p style="font-size:.8rem;color:var(--ink-soft);margin-top:-6px;margin-bottom:14px">Periksa kembali data sebelum dikirim. Setelah dikirim, data masuk ke menu Persetujuan Anggota PMR.</p>
+          <div id="registration-summary" class="registration-summary"></div>
+          <div class="registration-note">⚠️ Setelah dikirim, pendaftaran berstatus <strong>Menunggu Persetujuan</strong>. Pengurus akan memeriksa data sebelum kamu resmi menjadi anggota PMR.</div>
+        </section>
+
+        <div class="registration-actions">
+          <button type="button" class="btn btn-outline" id="reg-prev" style="display:none">← Sebelumnya</button>
+          <button type="button" class="btn btn-primary" id="reg-next">Selanjutnya →</button>
+          <button type="submit" class="btn btn-primary" id="reg-submit" style="display:none">Kirim Pendaftaran</button>
+        </div>
+        <input id="reg-honeypot" name="website" type="text" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0">
+      </form>
+    </section>
+  </div>
+</main>
+<script src="js/firebase-config.js"></script>
+<script src="js/core/storage.js"></script>
+<script src="js/pendaftaran.js"></script>
+</body>
+</html>

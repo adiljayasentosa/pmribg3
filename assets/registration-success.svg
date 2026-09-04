@@ -1,0 +1,23 @@
+<svg width="420" height="260" viewBox="0 0 420 260" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pendaftaran berhasil">
+  <rect width="420" height="260" rx="28" fill="#FFF7F8"/>
+  <path d="M42 55C52 47 62 47 72 55" stroke="#C8102E" stroke-width="4" stroke-linecap="round" opacity=".18"/>
+  <path d="M348 49C358 41 368 41 378 49" stroke="#C8102E" stroke-width="4" stroke-linecap="round" opacity=".18"/>
+  <circle cx="54" cy="94" r="5" fill="#C8102E" opacity=".18"/>
+  <circle cx="365" cy="102" r="5" fill="#16A34A" opacity=".2"/>
+  <path d="M93 74L99 85L111 87L102 95L104 107L93 101L82 107L84 95L75 87L87 85L93 74Z" fill="#C8102E" opacity=".16"/>
+  <path d="M328 79L333 88L343 90L336 97L338 107L328 102L318 107L320 97L313 90L323 88L328 79Z" fill="#16A34A" opacity=".16"/>
+  <rect x="111" y="67" width="198" height="130" rx="22" fill="white" stroke="#E9D6DA" stroke-width="2"/>
+  <rect x="141" y="92" width="78" height="12" rx="6" fill="#C8102E" opacity=".14"/>
+  <rect x="141" y="113" width="124" height="9" rx="4.5" fill="#E5E7EB"/>
+  <rect x="141" y="131" width="101" height="9" rx="4.5" fill="#E5E7EB"/>
+  <rect x="141" y="149" width="69" height="9" rx="4.5" fill="#E5E7EB"/>
+  <circle cx="284" cy="155" r="35" fill="#DCFCE7"/>
+  <circle cx="284" cy="155" r="27" fill="#16A34A"/>
+  <path d="M271 155L280 164L298 144" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M72 178L78 190L91 192L82 201L84 214L72 207L60 214L62 201L53 192L66 190L72 178Z" fill="#C8102E" opacity=".12"/>
+  <path d="M350 177L355 187L366 189L358 197L360 208L350 203L340 208L342 197L334 189L345 187L350 177Z" fill="#16A34A" opacity=".13"/>
+  <circle cx="102" cy="213" r="4" fill="#C8102E" opacity=".3"/>
+  <circle cx="318" cy="218" r="4" fill="#C8102E" opacity=".3"/>
+  <path d="M128 42L132 50L141 52L134 58L136 67L128 62L120 67L122 58L115 52L124 50L128 42Z" fill="#C8102E" opacity=".12"/>
+  <path d="M294 39L298 47L307 49L300 55L302 64L294 59L286 64L288 55L281 49L290 47L294 39Z" fill="#16A34A" opacity=".13"/>
+</svg>

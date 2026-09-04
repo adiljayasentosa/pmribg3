@@ -122,6 +122,19 @@ service cloud.firestore {
 
 
     // ═══════════════════════════════════════════════════
+    // COLLECTION: pendaftaran
+    //
+    // Data pendaftar bersifat sensitif. Public submit dilakukan
+    // melalui /api/pendaftaran (Admin SDK), bukan direct write dari
+    // browser. Hanya pengurus berwenang yang boleh membaca.
+    // ═══════════════════════════════════════════════════
+    match /pendaftaran/{pendaftaranId} {
+      allow read: if hasAnyRole(['admin', 'ketua', 'wakil', 'sekretaris']);
+      allow create, update, delete: if false;
+    }
+
+
+    // ═══════════════════════════════════════════════════
     // COLLECTION: anggota
     //
     // Data publik: nama, divisi, jabatan, status.

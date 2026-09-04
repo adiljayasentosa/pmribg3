@@ -71,13 +71,100 @@ function _setLoadingState(loading) {
    PAGES — Registry router. render() masing-masing entry
    didefinisikan di js/pages/*.js (dimuat sebelum file ini).
 ───────────────────────────────────────────────────────── */
-function renderPersetujuanAnggota(el, user) {
+async function renderPersetujuanAnggota(el, user) {
   const allowed = ["admin","ketua","wakil","sekretaris"].includes(user.role);
   if (!allowed) { el.innerHTML = `<div class="empty-state"><p>Akses hanya untuk pengurus yang berwenang.</p></div>`; return; }
-  const pending = AppState.anggota.filter(a => (a.statusAkun || "active") === "pending");
-  el.innerHTML = `<div class="page-head"><div><h1>Persetujuan Anggota PMR</h1><p class="page-sub">Kelola pendaftaran yang menunggu aktivasi.</p></div></div><div class="card"><div class="table-wrap"><table class="data-table"><thead><tr><th>Nama</th><th>Nomor Induk</th><th>Jabatan</th><th>Aksi</th></tr></thead><tbody>${pending.length ? pending.map(a=>`<tr><td>${a.nama}</td><td>${a.nomorInduk||"—"}</td><td>${a.jabatan||"Anggota"}</td><td><button class="btn btn-primary btn-sm" data-approve="${a.id}">Setujui</button> <button class="btn btn-ghost btn-sm" data-reject="${a.id}">Tolak</button></td></tr>`).join("") : `<tr><td colspan="4" style="text-align:center;color:var(--ink-soft)">Tidak ada pendaftaran yang menunggu.</td></tr>`}</tbody></table></div></div>`;
-  el.querySelectorAll("[data-approve]").forEach(btn=>btn.addEventListener("click", async()=>{ await DB.anggota.update(btn.dataset.approve,{statusAkun:"active",statusKeanggotaan:"Aktif"}); if(!FIREBASE_ENABLED) renderPersetujuanAnggota(el,user); tampilToast("Anggota disetujui.","success"); }));
-  el.querySelectorAll("[data-reject]").forEach(btn=>btn.addEventListener("click", async()=>{ await DB.anggota.update(btn.dataset.reject,{statusAkun:"rejected"}); if(!FIREBASE_ENABLED) renderPersetujuanAnggota(el,user); tampilToast("Pendaftaran ditolak.","default"); }));
+
+  let pending = [];
+  if (FIREBASE_ENABLED) {
+    try {
+      const snap = await firebase.firestore().collection("pendaftaran").where("status", "==", "pending").get();
+      pending = snap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b) => String(b.createdAt?.toDate?.() || b.createdAt || "").localeCompare(String(a.createdAt?.toDate?.() || a.createdAt || "")));
+    } catch (e) {
+      console.error("[PMR] Gagal memuat pendaftaran:", e);
+      el.innerHTML = `<div class="page-head"><div><h1>Persetujuan Anggota PMR</h1><p class="page-sub">Kelola pendaftaran yang menunggu aktivasi.</p></div></div><div class="alert alert-danger" style="display:flex">Gagal memuat pendaftaran: ${escapeHtmlKta(e.message || "akses Firestore ditolak")}</div>`;
+      return;
+    }
+  }
+
+  const formatCreated = v => {
+    try { const d = v?.toDate ? v.toDate() : new Date(v); return isNaN(d) ? "—" : d.toLocaleDateString("id-ID", {day:"2-digit",month:"short",year:"numeric"}); } catch { return "—"; }
+  };
+  el.innerHTML = `
+    <div class="page-head">
+      <div><h1>Persetujuan Anggota PMR</h1><p class="page-sub">Kelola pendaftaran yang menunggu aktivasi.</p></div>
+      <div class="badge badge-warning">${pending.length} menunggu</div>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Nama</th><th>NIK</th><th>Kelas</th><th>Divisi</th><th>Tanggal</th><th>Aksi</th></tr></thead>
+          <tbody>${pending.length ? pending.map(a=>`<tr>
+            <td><strong>${escapeHtmlKta(a.nama||"—")}</strong></td>
+            <td>${escapeHtmlKta(a.nik||"—")}</td>
+            <td>${escapeHtmlKta(a.kelas||"—")}</td>
+            <td>${escapeHtmlKta(a.divisi||"—")}</td>
+            <td>${formatCreated(a.createdAt)}</td>
+            <td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" data-registration-detail="${a.id}">Detail</button><button class="btn btn-primary btn-sm" data-registration-approve="${a.id}">Setujui</button><button class="btn btn-ghost btn-sm" data-registration-reject="${a.id}">Tolak</button></div></td>
+          </tr>`).join("") : `<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:24px">Tidak ada pendaftaran yang menunggu.</td></tr>`}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  const findPending = id => pending.find(x => x.id === id);
+  const detailHtml = a => {
+    const alamat = [a.alamat,a.desaKelurahan,a.kecamatan,a.kabKota,a.provinsi].filter(Boolean).join(", ");
+    return `<div class="registration-admin-detail">
+      <div class="detail-hero"><div class="avatar">${getInisial(a.nama||"?")}</div><div><div class="detail-nama">${escapeHtmlKta(a.nama||"—")}</div><div class="detail-kelas">${escapeHtmlKta(a.kelas||"—")} · ${escapeHtmlKta(a.divisi||"—")}</div></div></div>
+      ${a.foto?`<div style="text-align:center;margin:14px 0"><img src="${escapeHtmlKta(a.foto)}" alt="Foto KTA ${escapeHtmlKta(a.nama)}" style="max-width:180px;max-height:180px;border-radius:14px;object-fit:cover;border:1px solid var(--gray-200)"></div>`:""}
+      <div class="detail-info-grid" style="margin-top:0">
+        <div class="detail-info-item"><div class="lbl">NIK</div><div class="val">${escapeHtmlKta(a.nik||"—")}</div></div>
+        <div class="detail-info-item"><div class="lbl">Nomor Induk PMR</div><div class="val">${escapeHtmlKta(a.nomorInduk||"Belum ditentukan")}</div></div>
+        <div class="detail-info-item"><div class="lbl">Tempat, Tgl Lahir</div><div class="val">${escapeHtmlKta([a.tempatLahir,a.tanggalLahir].filter(Boolean).join(", ")||"—")}</div></div>
+        <div class="detail-info-item"><div class="lbl">Agama</div><div class="val">${escapeHtmlKta(a.agama||"—")}</div></div>
+        <div class="detail-info-item"><div class="lbl">Jenis Kelamin</div><div class="val">${escapeHtmlKta(a.jenisKelamin||"—")}</div></div>
+        <div class="detail-info-item"><div class="lbl">No Handphone</div><div class="val">${escapeHtmlKta(a.noHandphone||"—")}</div></div>
+        <div class="detail-info-item"><div class="lbl">Golongan Darah</div><div class="val">${escapeHtmlKta(a.golonganDarah||"—")}</div></div>
+        <div class="detail-info-item"><div class="lbl">Unit PMI</div><div class="val">${escapeHtmlKta(a.unitPmiKabKota||"—")}</div></div>
+        <div class="detail-info-item" style="grid-column:1/-1"><div class="lbl">Alamat</div><div class="val">${escapeHtmlKta(alamat||"—")}</div></div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-outline btn-sm" href="${escapeHtmlKta(a.linkDrive||"#")}" target="_blank" rel="noopener noreferrer">↗ Buka Google Drive</a></div>
+    </div>`;
+  };
+
+  el.querySelectorAll("[data-registration-detail]").forEach(btn => btn.addEventListener("click", () => {
+    const a = findPending(btn.dataset.registrationDetail); if (!a) return;
+    Modal.buka({judul:"Detail Pendaftaran", ukuran:"modal-lg", konten:detailHtml(a), aksi:[{label:"Tutup",kelas:"btn-primary",id:"reg-detail-close",onClick:()=>Modal.tutup()}]});
+  }));
+
+  async function processRegistration(a, action) {
+    if (!a || !FIREBASE_ENABLED) return;
+    let nomorInduk = a.nomorInduk || "";
+    if (action === "approve" && !nomorInduk) {
+      Modal.buka({judul:"Setujui Pendaftaran", konten:`<p>Data <strong>${escapeHtmlKta(a.nama)}</strong> sudah lengkap. Tentukan Nomor Induk PMR sebelum anggota dibuat.</p><div class="field"><label>Nomor Induk PMR</label><input id="approve-nomor-induk" type="text" placeholder="Nomor induk resmi PMR"></div>`, aksi:[{label:"Batal",kelas:"btn-ghost",id:"approve-cancel",onClick:()=>Modal.tutup()},{label:"Setujui",kelas:"btn-primary",id:"approve-confirm",onClick:async()=>{const v=document.getElementById("approve-nomor-induk")?.value.trim();if(!v){tampilToast("Nomor Induk PMR wajib diisi.","error");return;} Modal.tutup(); await sendAction(a,"approve",v);}}]});
+      return;
+    }
+    await sendAction(a, action, nomorInduk);
+  }
+
+  async function sendAction(a, action, nomorInduk) {
+    try {
+      const userFirebase = firebase.auth().currentUser;
+      if (!userFirebase) throw new Error("Sesi login tidak ditemukan.");
+      const token = await userFirebase.getIdToken(true);
+      const resp = await fetch("/api/pendaftaran-action", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({idToken:token,pendaftaranId:a.id,action,nomorInduk})});
+      const raw = await resp.text(); let data={}; try{data=raw?JSON.parse(raw):{}}catch{throw new Error("Server mengembalikan respons tidak valid.");}
+      if(!resp.ok) throw new Error(data.error||`Aksi gagal (${resp.status}).`);
+      tampilToast(action === "approve" ? "Pendaftaran disetujui dan data anggota dibuat." : "Pendaftaran ditolak.", action === "approve" ? "success" : "default");
+      await renderPersetujuanAnggota(el,user);
+    } catch(e) { tampilToast(e.message||"Gagal memproses pendaftaran.","error"); }
+  }
+
+  el.querySelectorAll("[data-registration-approve]").forEach(btn => btn.addEventListener("click", () => processRegistration(findPending(btn.dataset.registrationApprove), "approve")));
+  el.querySelectorAll("[data-registration-reject]").forEach(btn => btn.addEventListener("click", () => {
+    const a = findPending(btn.dataset.registrationReject); if(!a) return;
+    Modal.konfirmasi(`Tolak pendaftaran <strong>${escapeHtmlKta(a.nama)}</strong>?`, () => processRegistration(a,"reject"));
+  }));
 }
 
 async function renderKta(el, user) {
