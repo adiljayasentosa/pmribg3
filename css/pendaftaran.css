@@ -1,3 +1,36 @@
+
+/* =========================================================
+   OPENING REGISTRATION SCREEN
+   Visual reference: simple mobile account-registration layout.
+   Functionality remains the existing 4-step PMR registration.
+   ========================================================= */
+.registration-screen{min-height:100vh;background:#f1f1f3;padding:24px 16px 44px}
+.registration-shell{max-width:620px;margin:0 auto}
+.registration-head{position:relative;display:flex;align-items:center;justify-content:center;margin:0 0 48px;padding:0;min-height:44px}
+.registration-head strong{font-family:var(--font-display);font-size:2rem;font-weight:800;color:#111;line-height:1}
+.registration-back{position:absolute;left:0;top:50%;transform:translateY(-50%);width:44px;height:44px;border:0;background:transparent;box-shadow:none;border-radius:0;color:#111;font-size:2.45rem;font-weight:300;line-height:1;display:grid;place-items:center;padding:0}
+.registration-brand{display:none}
+.registration-card{background:transparent;border:0;border-radius:0;box-shadow:none;padding:0}
+.registration-title,.registration-lead{display:none}
+.registration-steps{display:none}
+.registration-panel h2{display:none}
+.registration-grid{gap:28px 18px}
+.registration-grid .field input,.registration-grid .field select,.registration-grid .field textarea,.registration-card input,.registration-card select,.registration-card textarea{background:#fff;border:0;border-radius:22px;min-height:72px;padding:0 30px;box-shadow:none;font-size:1rem;color:#222}
+.registration-grid .field textarea{padding-top:22px;min-height:120px}
+.registration-grid .field label{display:none}
+.registration-actions{margin-top:34px;display:block}
+.registration-actions .btn{width:100%;min-height:72px;border-radius:999px;font-size:1rem;font-weight:800}
+.registration-actions #reg-prev{margin-bottom:12px}
+.registration-help,.registration-note,.registration-drive-guide{border-radius:18px}
+.registration-error{border-radius:16px}
+@media(max-width:620px){
+  .registration-screen{padding:22px 16px 34px}
+  .registration-head{margin-bottom:46px}
+  .registration-head strong{font-size:2rem}
+  .registration-grid{grid-template-columns:1fr;gap:22px}
+  .registration-grid .field-full{grid-column:auto}
+  .registration-grid .field input,.registration-grid .field select{min-height:72px;border-radius:20px;padding:0 30px}
+}
 /* =========================================================
    PENDAFTARAN ANGGOTA PMR
    ========================================================= */

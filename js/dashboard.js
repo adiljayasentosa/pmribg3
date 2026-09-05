@@ -170,7 +170,7 @@ async function renderPersetujuanAnggota(el, user) {
       const birth = String(a.tanggalLahir || "");
       const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(birth);
       const kodeTanggal = m ? `${m[3]}${m[2]}${m[1].slice(-2)}` : "tanggal lahir";
-      Modal.buka({judul:"Setujui Pendaftaran", konten:`<p>Data <strong>${escapeHtmlKta(a.nama)}</strong> sudah lengkap.</p><div class="kta-credential-warning"><strong>Nomor Induk akan dibuat otomatis</strong><br><span style="font-size:.86rem;color:var(--ink-soft)">Format: 270124 + ${escapeHtmlKta(kodeTanggal)} + nomor urut 4 digit.</span><br><span style="font-size:.86rem;color:var(--ink-soft)">Contoh: <code>270124${escapeHtmlKta(kodeTanggal)}0001</code></span></div><p style="color:var(--ink-soft);font-size:.84rem">Pengurus tidak perlu memasukkan Nomor Induk secara manual.</p>`, aksi:[{label:"Batal",kelas:"btn-ghost",id:"approve-cancel",onClick:()=>Modal.tutup()},{label:"Setujui",kelas:"btn-primary",id:"approve-confirm",onClick:async()=>{Modal.tutup(); await sendAction(a,"approve");}}]});
+      Modal.buka({judul:"Setujui Pendaftaran", konten:`<p>Data <strong>${escapeHtmlKta(a.nama)}</strong> (${escapeHtmlKta(a.kelas || "—")}) sudah lengkap.</p><div class="kta-credential-warning"><strong>NIN akan dibuat otomatis oleh sistem.</strong><br><span style="font-size:.86rem;color:var(--ink-soft)">NIN menggunakan awalan <strong>240124</strong> dan nomor urut berikutnya dimulai dari <strong>0097</strong>.</span></div><p style="color:var(--ink-soft);font-size:.84rem">Setelah disetujui, sistem akan menampilkan NIN untuk anggota ini.</p>`, aksi:[{label:"Batal",kelas:"btn-ghost",id:"approve-cancel",onClick:()=>Modal.tutup()},{label:"Setujui",kelas:"btn-primary",id:"approve-confirm",onClick:async()=>{Modal.tutup(); await sendAction(a,"approve");}}]});
       return;
     }
     await sendAction(a, action);
@@ -184,7 +184,16 @@ async function renderPersetujuanAnggota(el, user) {
       const resp = await fetch("/api/pendaftaran-action", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({idToken:token,pendaftaranId:a.id,action})});
       const raw = await resp.text(); let data={}; try{data=raw?JSON.parse(raw):{}}catch{throw new Error("Server mengembalikan respons tidak valid.");}
       if(!resp.ok) throw new Error(data.error||`Aksi gagal (${resp.status}).`);
-      tampilToast(action === "approve" ? "Pendaftaran disetujui dan data anggota dibuat." : "Pendaftaran ditolak.", action === "approve" ? "success" : "default");
+      if (action === "approve") {
+        const nin = String(data.nomorInduk || "").trim();
+        if (nin) {
+          Modal.buka({judul:"NIN Anggota", konten:`<div style="padding:8px 0 4px"><p style="font-size:1rem;margin:0 0 10px">NINnya adalah <strong style="font-size:1.08rem;letter-spacing:.04em">${escapeHtmlKta(nin)}</strong> untuk <strong>${escapeHtmlKta(a.nama)}</strong> dan <strong>${escapeHtmlKta(a.kelas || "—")}</strong>.</p><p style="color:var(--ink-soft);font-size:.84rem;margin:0">NIN telah dibuat otomatis dan disimpan pada data anggota.</p></div>`, aksi:[{label:"Selesai",kelas:"btn-primary",id:"nin-success-close",onClick:()=>Modal.tutup()}]});
+        } else {
+          tampilToast("Pendaftaran disetujui dan data anggota dibuat.", "success");
+        }
+      } else {
+        tampilToast("Pendaftaran ditolak.", "default");
+      }
       await renderPersetujuanAnggota(el,user);
     } catch(e) { tampilToast(e.message||"Gagal memproses pendaftaran.","error"); }
   }

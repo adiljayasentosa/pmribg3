@@ -47,7 +47,7 @@ module.exports = async function handler(req, res) {
     }
 
     // Nomor Induk dibuat otomatis dari prefix tetap + tanggal lahir (DDMMYY) + urutan 4 digit.
-    // Contoh: 270124 + 270409 + 0028 = 2701242704090028.
+    // Contoh: 240124 + 270409 + 0097 = 2401242704090097.
     const tanggalLahir = clean(p.tanggalLahir, 20);
     const matchTanggal = /^(\d{4})-(\d{2})-(\d{2})$/.exec(tanggalLahir);
     if (!matchTanggal) return json(res, 400, { error: 'Tanggal lahir pendaftaran tidak valid untuk pembentukan Nomor Induk.' });
@@ -80,7 +80,7 @@ module.exports = async function handler(req, res) {
       const nextNumber = lastNumber + 1;
       if (nextNumber > 9999) throw new Error('Nomor urut anggota sudah mencapai batas 9999.');
       const nomorUrut = String(nextNumber).padStart(4, '0');
-      nomorInduk = `270124${kodeTanggalLahir}${nomorUrut}`;
+      nomorInduk = `240124${kodeTanggalLahir}${nomorUrut}`;
 
       const existingNi = await tx.get(db.collection('anggota').where('nomorInduk', '==', nomorInduk).limit(1));
       if (!existingNi.empty) throw new Error('Nomor Induk PMR yang terbentuk sudah digunakan. Silakan proses pendaftaran kembali.');
