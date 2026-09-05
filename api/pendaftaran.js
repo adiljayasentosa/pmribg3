@@ -81,7 +81,6 @@ module.exports = async function handler(req, res) {
     const data = {
       nama: clean(body.nama, 120),
       nik: clean(body.nik, 32),
-      nomorInduk: clean(body.nomorInduk, 64),
       kelas: clean(body.kelas, 60),
       tempatLahir: clean(body.tempatLahir, 100),
       tanggalLahir: clean(body.tanggalLahir, 20),

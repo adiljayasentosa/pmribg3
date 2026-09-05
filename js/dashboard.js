@@ -166,12 +166,14 @@ async function renderPersetujuanAnggota(el, user) {
 
   async function processRegistration(a, action) {
     if (!a || !FIREBASE_ENABLED) return;
-    let nomorInduk = a.nomorInduk || "";
-    if (action === "approve" && !nomorInduk) {
-      Modal.buka({judul:"Setujui Pendaftaran", konten:`<p>Data <strong>${escapeHtmlKta(a.nama)}</strong> sudah lengkap. Tentukan Nomor Induk PMR sebelum anggota dibuat.</p><div class="field"><label>Nomor Induk PMR</label><input id="approve-nomor-induk" type="text" placeholder="Nomor induk resmi PMR"></div>`, aksi:[{label:"Batal",kelas:"btn-ghost",id:"approve-cancel",onClick:()=>Modal.tutup()},{label:"Setujui",kelas:"btn-primary",id:"approve-confirm",onClick:async()=>{const v=document.getElementById("approve-nomor-induk")?.value.trim();if(!v){tampilToast("Nomor Induk PMR wajib diisi.","error");return;} Modal.tutup(); await sendAction(a,"approve",v);}}]});
+    if (action === "approve") {
+      const birth = String(a.tanggalLahir || "");
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(birth);
+      const kodeTanggal = m ? `${m[3]}${m[2]}${m[1].slice(-2)}` : "tanggal lahir";
+      Modal.buka({judul:"Setujui Pendaftaran", konten:`<p>Data <strong>${escapeHtmlKta(a.nama)}</strong> sudah lengkap.</p><div class="kta-credential-warning"><strong>Nomor Induk akan dibuat otomatis</strong><br><span style="font-size:.86rem;color:var(--ink-soft)">Format: 270124 + ${escapeHtmlKta(kodeTanggal)} + nomor urut 4 digit.</span><br><span style="font-size:.86rem;color:var(--ink-soft)">Contoh: <code>270124${escapeHtmlKta(kodeTanggal)}0001</code></span></div><p style="color:var(--ink-soft);font-size:.84rem">Pengurus tidak perlu memasukkan Nomor Induk secara manual.</p>`, aksi:[{label:"Batal",kelas:"btn-ghost",id:"approve-cancel",onClick:()=>Modal.tutup()},{label:"Setujui",kelas:"btn-primary",id:"approve-confirm",onClick:async()=>{Modal.tutup(); await sendAction(a,"approve");}}]});
       return;
     }
-    await sendAction(a, action, nomorInduk);
+    await sendAction(a, action);
   }
 
   async function sendAction(a, action, nomorInduk) {
@@ -179,7 +181,7 @@ async function renderPersetujuanAnggota(el, user) {
       const userFirebase = firebase.auth().currentUser;
       if (!userFirebase) throw new Error("Sesi login tidak ditemukan.");
       const token = await userFirebase.getIdToken();
-      const resp = await fetch("/api/pendaftaran-action", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({idToken:token,pendaftaranId:a.id,action,nomorInduk})});
+      const resp = await fetch("/api/pendaftaran-action", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({idToken:token,pendaftaranId:a.id,action})});
       const raw = await resp.text(); let data={}; try{data=raw?JSON.parse(raw):{}}catch{throw new Error("Server mengembalikan respons tidak valid.");}
       if(!resp.ok) throw new Error(data.error||`Aksi gagal (${resp.status}).`);
       tampilToast(action === "approve" ? "Pendaftaran disetujui dan data anggota dibuat." : "Pendaftaran ditolak.", action === "approve" ? "success" : "default");

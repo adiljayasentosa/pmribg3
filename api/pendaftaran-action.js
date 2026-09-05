@@ -46,13 +46,47 @@ module.exports = async function handler(req, res) {
       return json(res, 200, { ok: true, status: 'rejected' });
     }
 
-    const nomorInduk = clean(body.nomorInduk || p.nomorInduk, 64);
-    if (!nomorInduk) return json(res, 400, { error: 'Nomor Induk PMR wajib ditentukan sebelum menyetujui.' });
-
-    const existingNi = await db.collection('anggota').where('nomorInduk', '==', nomorInduk).limit(1).get();
-    if (!existingNi.empty) return json(res, 409, { error: 'Nomor Induk PMR tersebut sudah digunakan.' });
-
+    // Nomor Induk dibuat otomatis dari prefix tetap + tanggal lahir (DDMMYY) + urutan 4 digit.
+    // Contoh: 270124 + 270409 + 0028 = 2701242704090028.
+    const tanggalLahir = clean(p.tanggalLahir, 20);
+    const matchTanggal = /^(\d{4})-(\d{2})-(\d{2})$/.exec(tanggalLahir);
+    if (!matchTanggal) return json(res, 400, { error: 'Tanggal lahir pendaftaran tidak valid untuk pembentukan Nomor Induk.' });
+    const [, tahun, bulan, hari] = matchTanggal;
+    const kodeTanggalLahir = `${hari}${bulan}${tahun.slice(-2)}`;
+    const counterRef = db.collection('system_counters').doc('nomor_induk_anggota');
     const anggotaRef = db.collection('anggota').doc();
+    let nomorInduk = '';
+
+    await db.runTransaction(async tx => {
+      const counterSnap = await tx.get(counterRef);
+      let lastNumber = counterSnap.exists ? Number(counterSnap.data().lastNumber || 0) : 0;
+
+      // Nomor urut lama PMR saat ini berhenti di 0096. Jadikan 0096 sebagai
+      // batas bawah agar pendaftaran baru selalu melanjutkan dari 0097,
+      // tanpa menghitung ulang berdasarkan jumlah anggota di database.
+      lastNumber = Math.max(lastNumber, 96);
+
+      // Saat pertama kali counter dipakai, sinkronkan dengan NIN lama yang sudah ada
+      // agar tidak menimpa nomor yang pernah diterbitkan.
+      if (!counterSnap.exists) {
+        const existingMembers = await tx.get(db.collection('anggota').select('nomorInduk'));
+        for (const doc of existingMembers.docs) {
+          const ni = String(doc.data().nomorInduk || '');
+          const suffix = Number(ni.slice(-4));
+          if (/^\d{16}$/.test(ni) && Number.isInteger(suffix)) lastNumber = Math.max(lastNumber, suffix);
+        }
+      }
+
+      const nextNumber = lastNumber + 1;
+      if (nextNumber > 9999) throw new Error('Nomor urut anggota sudah mencapai batas 9999.');
+      const nomorUrut = String(nextNumber).padStart(4, '0');
+      nomorInduk = `270124${kodeTanggalLahir}${nomorUrut}`;
+
+      const existingNi = await tx.get(db.collection('anggota').where('nomorInduk', '==', nomorInduk).limit(1));
+      if (!existingNi.empty) throw new Error('Nomor Induk PMR yang terbentuk sudah digunakan. Silakan proses pendaftaran kembali.');
+
+      tx.set(counterRef, { lastNumber: nextNumber, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    });
     /* Data operasional yang aman untuk collection anggota tetap minimal.
        Data pribadi pendaftaran disimpan terpisah agar tidak ikut terbaca
        oleh seluruh akun login yang memang membutuhkan daftar anggota. */

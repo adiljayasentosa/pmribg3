@@ -269,3 +269,7 @@ Made with ❤️ by PMR WIRA UNIT — *Siap, Peduli, Bersahabat*
 - KTA admin preview/generator menggunakan template depan & belakang.
 - QR mengarah ke login KTA anggota.
 - Provision akun anggota: NI sebagai username, password acak dari backend.
+
+## Statistik Publik Anggota Aktif
+
+Halaman publik menampilkan jumlah anggota berstatus `Aktif` melalui `/api/public-stats` dan melakukan sinkronisasi otomatis berkala. Data anggota tidak dibuka ke pengunjung.

@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ['Agama', value('reg-agama')], ['Jenis Kelamin', value('reg-gender')], ['No Handphone', value('reg-hp')],
       ['Golongan Darah', value('reg-darah')], ['Divisi', value('reg-divisi')],
       ['Alamat', `${value('reg-alamat')}, ${value('reg-desa')}, ${value('reg-kec')}, ${value('reg-kab')}, ${value('reg-provinsi')}`],
-      ['Nomor Induk PMR', value('reg-ni') || 'Akan ditentukan pengurus'],
+      ['Nomor Induk PMR', 'Akan dibuat otomatis setelah pendaftaran disetujui'],
       ['Foto Wajah untuk KTA', 'Melalui link Google Drive'], ['Link Google Drive', value('reg-drive')]
     ];
     document.getElementById('registration-summary').innerHTML = rows.map(([k,v]) => `<div class="registration-summary-row"><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join('');
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     submit.disabled = true; submit.textContent = 'Mengirim…';
     try {
       const payload = {
-        nama:value('reg-nama'), nik:value('reg-nik'), nomorInduk:value('reg-ni'), kelas:value('reg-kelas'),
+        nama:value('reg-nama'), nik:value('reg-nik'), kelas:value('reg-kelas'),
         tempatLahir:value('reg-tempat'), tanggalLahir:value('reg-tanggal'), agama:value('reg-agama'),
         jenisKelamin:value('reg-gender'), noHandphone:value('reg-hp'), golonganDarah:value('reg-darah'),
         provinsi:value('reg-provinsi'), kabKota:value('reg-kab'), kecamatan:value('reg-kec'),

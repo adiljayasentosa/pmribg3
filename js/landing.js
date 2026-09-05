@@ -35,6 +35,48 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  /* =========================================================
+     STATISTIK ANGGOTA AKTIF — sinkronisasi otomatis
+     Halaman publik tidak membaca collection `anggota` langsung karena
+     Firestore rules memang tidak membuka data anggota ke pengunjung.
+     API publik hanya mengembalikan angka anggota aktif, lalu halaman
+     melakukan refresh berkala agar angka mengikuti data terbaru.
+     ========================================================= */
+  const activeMemberCounter = document.querySelector('.js-counter[data-stat="active-members"]');
+  let activeMemberPollTimer = null;
+
+  const updateActiveMemberCount = async () => {
+    if (!activeMemberCounter) return;
+    try {
+      const response = await fetch(`/api/public-stats?ts=${Date.now()}`, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      if (data?.ok && Number.isFinite(Number(data.activeMembers))) {
+        activeMemberCounter.textContent = String(Number(data.activeMembers));
+        activeMemberCounter.dataset.target = String(Number(data.activeMembers));
+        activeMemberCounter.setAttribute('aria-label', `${Number(data.activeMembers)} anggota aktif`);
+      }
+    } catch (err) {
+      // Jika API sementara gagal, angka terakhir tetap ditampilkan.
+      console.warn('[PMR] Statistik anggota aktif belum tersinkron:', err);
+    }
+  };
+
+  const startActiveMemberPolling = () => {
+    if (!activeMemberCounter) return;
+    updateActiveMemberCount();
+    if (activeMemberPollTimer) clearInterval(activeMemberPollTimer);
+    activeMemberPollTimer = setInterval(() => {
+      if (!document.hidden) updateActiveMemberCount();
+    }, 15000);
+  };
+
+  startActiveMemberPolling();
+
   /* Animasi stat counter di hero */
   const counters = document.querySelectorAll(".js-counter");
   const observer = new IntersectionObserver((entries) => {
