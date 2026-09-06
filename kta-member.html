@@ -97,38 +97,124 @@ async function loadPublic(){
   }
 }
 
-async function loadOwn(){
-  const u=firebase.auth().currentUser;if(!u)return;
-  const us=await firebase.firestore().collection('users').doc(u.uid).get();
-  if(!us.exists||us.data().role!=='anggota')throw new Error('Akun anggota tidak valid.');
+function withTimeout(promise, ms, label) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(label || 'Permintaan terlalu lama.')), ms);
+    })
+  ]).finally(() => clearTimeout(timer));
+}
+
+async function loadOwn(userOverride=null){
+  const u=userOverride || firebase.auth().currentUser;
+  if(!u) throw new Error('Sesi login tidak ditemukan.');
+
+  const fdb=firebase.firestore();
+  let us;
+  try {
+    us=await withTimeout(
+      fdb.collection('users').doc(u.uid).get(),
+      12000,
+      'Profil akun tidak merespons. Periksa koneksi internet.'
+    );
+  } catch(e) {
+    if(e.code==='permission-denied') throw new Error('Akun berhasil login, tetapi akses profil ditolak oleh aturan Firestore. Periksa data users/{UID}.');
+    throw e;
+  }
+  if(!us.exists||us.data().role!=='anggota') throw new Error('Akun berhasil login, tetapi profil akun anggota belum terhubung. Hubungi pengurus.');
+
   const d=us.data();
-  const ktaSnap=await firebase.firestore().collection('kta').doc(d.anggotaId).get();
-  if(!ktaSnap.exists)throw new Error('KTA belum diaktifkan untuk akun ini.');
+  if(!d.anggotaId) throw new Error('Akun anggota belum memiliki ID anggota. Hubungi pengurus.');
+
+  let ktaSnap;
+  try {
+    ktaSnap=await withTimeout(
+      fdb.collection('kta').doc(d.anggotaId).get(),
+      12000,
+      'Data KTA tidak merespons. Periksa koneksi internet.'
+    );
+  } catch(e) {
+    if(e.code==='permission-denied') throw new Error('Akun berhasil login, tetapi akses KTA ditolak. Periksa hubungan akun dengan data anggota.');
+    throw e;
+  }
+  if(!ktaSnap.exists) throw new Error('KTA belum diaktifkan untuk akun ini. Hubungi pengurus.');
   const kta=ktaSnap.data();
-  if(targetToken && kta.ktaToken!==targetToken)throw new Error('QR KTA ini bukan milik akun yang sedang login.');
-  const snap=await firebase.firestore().collection('anggota').doc(d.anggotaId).get();
-  if(!snap.exists)throw new Error('Data anggota tidak ditemukan.');
+  if(targetToken && kta.ktaToken!==targetToken) throw new Error('QR KTA ini bukan milik akun yang sedang login.');
+
+  let snap;
+  try {
+    snap=await withTimeout(
+      fdb.collection('anggota').doc(d.anggotaId).get(),
+      12000,
+      'Data anggota tidak merespons. Periksa koneksi internet.'
+    );
+  } catch(e) {
+    if(e.code==='permission-denied') throw new Error('Akun berhasil login, tetapi akses data anggota ditolak oleh aturan Firestore.');
+    throw e;
+  }
+  if(!snap.exists) throw new Error('Data anggota tidak ditemukan. Hubungi pengurus.');
   const a=snap.data();
-  if(a.statusKeanggotaan==='Tidak Aktif')throw new Error('KTA ini tidak aktif.');
+  if(a.statusKeanggotaan==='Tidak Aktif') throw new Error('KTA ini tidak aktif.');
+
   showOnly(ktaCard);
   document.getElementById('member-name').textContent=a.nama||'Anggota PMR';
   document.getElementById('member-meta').textContent=[a.nomorInduk,a.kelas,a.jabatan,a.divisi].filter(Boolean).join(' · ');
 }
 
+let loginInProgress=false;
+let skipNextAuthUid='';
+
 document.getElementById('btn-member-login')?.addEventListener('click',()=>showOnly(loginCard));
 document.getElementById('btn-public-home')?.addEventListener('click',()=>location.href='/');
 document.getElementById('btn-login')?.addEventListener('click',async()=>{
+  if(loginInProgress) return;
+  const btn=document.getElementById('btn-login');
+  const ni=document.getElementById('ni').value.trim();
+  const pw=document.getElementById('pw').value;
+  if(!ni||!pw){m('Nomor Induk dan password wajib diisi.','error');return;}
+
+  loginInProgress=true;
+  if(btn){btn.disabled=true;btn.textContent='Memverifikasi…';}
   m('Memverifikasi…');
-  try{const ni=document.getElementById('ni').value;const pw=document.getElementById('pw').value;await firebase.auth().signInWithEmailAndPassword(email(ni),pw);m('');}
-  catch(e){m(e.code==='auth/invalid-credential'?'Nomor Induk atau password salah.':e.message,'error')}
+  try {
+    const cred=await withTimeout(
+      firebase.auth().signInWithEmailAndPassword(email(ni),pw),
+      15000,
+      'Login terlalu lama. Periksa koneksi internet lalu coba lagi.'
+    );
+    skipNextAuthUid=cred.user.uid;
+    await loadOwn(cred.user);
+    m('');
+  } catch(e) {
+    console.error('[KTA] Login gagal:',e);
+    try { if(firebase.auth().currentUser) await firebase.auth().signOut(); } catch(_) {}
+    const code=e.code||'';
+    const message = code==='auth/invalid-credential' || code==='auth/wrong-password' || code==='auth/user-not-found'
+      ? 'Nomor Induk atau password salah.'
+      : code==='auth/network-request-failed'
+        ? 'Gagal terhubung ke Firebase. Periksa koneksi internet.'
+        : e.message || 'Login gagal.';
+    m(message,'error');
+  } finally {
+    loginInProgress=false;
+    if(btn){btn.disabled=false;btn.textContent='Masuk';}
+  }
 });
 document.getElementById('btn-logout')?.addEventListener('click',()=>firebase.auth().signOut().then(()=>targetToken?loadPublic():location.reload()));
 
 firebase.auth().onAuthStateChanged(u=>{
-  if(u){loadOwn().catch(e=>{m(e.message,'error');targetToken?loadPublic():showOnly(loginCard)})}
-  else if(targetToken)loadPublic();
+  if(loginInProgress) return;
+  if(u){
+    if(skipNextAuthUid && skipNextAuthUid===u.uid){skipNextAuthUid='';return;}
+    loadOwn(u).catch(async e=>{
+      m(e.message,'error');
+      try { await firebase.auth().signOut(); } catch(_) {}
+      targetToken?loadPublic():showOnly(loginCard);
+    });
+  } else if(targetToken) loadPublic();
   else showOnly(loginCard);
-});
-</script>
+});</script>
 </body>
 </html>

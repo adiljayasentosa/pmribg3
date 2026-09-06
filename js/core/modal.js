@@ -4,6 +4,7 @@
    ========================================================= */
 const Modal = (() => {
   let overlayEl = null;
+  let closeTimer = null;
 
   function _ensureRoot() {
     if (overlayEl) return;
@@ -34,6 +35,15 @@ const Modal = (() => {
    */
   function buka({ judul = "", konten = "", ukuran = "", aksi = [] } = {}) {
     _ensureRoot();
+
+    /* Jika modal baru dibuka saat modal sebelumnya masih dalam masa
+       transisi penutupan, batalkan timer pembersihan lama. Tanpa ini,
+       callback tutup() pertama dapat menghapus isi modal kedua 220ms
+       kemudian, menyisakan overlay blur tanpa dialog. */
+    if (closeTimer) {
+      clearTimeout(closeTimer);
+      closeTimer = null;
+    }
 
     const aksiBtns = aksi.map((a) =>
       `<button class="btn ${a.kelas || "btn-ghost"}" id="${a.id || ""}">${a.label}</button>`
@@ -79,8 +89,9 @@ const Modal = (() => {
        transparan ini menutupi & memblokir seluruh sidebar/topbar. */
     overlayEl.style.pointerEvents = "none";
 
-    setTimeout(() => {
+    closeTimer = setTimeout(() => {
       overlayEl.innerHTML = "";
+      closeTimer = null;
     }, 220);
   }
 
