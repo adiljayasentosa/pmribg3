@@ -74,9 +74,6 @@
     }
   ],
   "functions": {
-    "api/backup-verify.js": {
-      "maxDuration": 60
-    },
     "api/backup-restore.js": {
       "maxDuration": 60
     }

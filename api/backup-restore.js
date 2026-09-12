@@ -26,6 +26,42 @@ const KOLEKSI_BACKUP = [
 const MAX_DOCS = 20000;
 const PLAN_TTL_MS = 10 * 60 * 1000;
 
+function serializeValue(value) {
+  if (value instanceof Timestamp) {
+    return { __pmrType: "timestamp", seconds: value.seconds, nanoseconds: value.nanoseconds };
+  }
+  if (value instanceof GeoPoint) {
+    return { __pmrType: "geopoint", latitude: value.latitude, longitude: value.longitude };
+  }
+  if (value && value.constructor?.name === "Bytes" && typeof value.toBase64 === "function") {
+    return { __pmrType: "bytes", base64: value.toBase64() };
+  }
+  if (Array.isArray(value)) return value.map(serializeValue);
+  if (value && typeof value === "object") {
+    const out = {};
+    for (const [key, item] of Object.entries(value)) out[key] = serializeValue(item);
+    return out;
+  }
+  return value;
+}
+
+async function createBackup(uid) {
+  const fdb = getFirestore();
+  const collections = {};
+  await Promise.all(KOLEKSI_BACKUP.map(async (nama) => {
+    const snap = await fdb.collection(nama).get();
+    collections[nama] = snap.docs.map((d) => ({ id: d.id, data: serializeValue(d.data()) }));
+  }));
+  return {
+    backupFormatVersion: 2,
+    appVersion: "1.1.26",
+    project: "pmr-wira-unit",
+    generatedAt: new Date().toISOString(),
+    generatedByUid: uid,
+    collections
+  };
+}
+
 function secret() {
   return process.env.FIREBASE_SERVICE_ACCOUNT_KEY || "";
 }
@@ -226,7 +262,7 @@ module.exports = async function handler(req, res) {
   try {
     const { idToken, action, backup, confirmToken } = req.body || {};
     if (!idToken || typeof idToken !== "string") return res.status(400).json({ error: "idToken wajib diisi." });
-    if (!['preview', 'restore'].includes(action)) return res.status(400).json({ error: "Action tidak valid." });
+    if (!['backup', 'preview', 'restore'].includes(action)) return res.status(400).json({ error: "Action tidak valid." });
 
     let decoded;
     try { decoded = await getAuth().verifyIdToken(idToken, true); }
@@ -242,8 +278,26 @@ module.exports = async function handler(req, res) {
       return res.status(401).json({ error: "Sesi admin sudah terlalu lama. Login ulang sebelum melakukan restore." });
     }
 
-    const validation = validateBackup(backup);
     const fdb = getFirestore();
+
+    if (action === 'backup') {
+      const startedAt = Date.now();
+      const generated = await createBackup(decoded.uid);
+      const payload = JSON.stringify(generated);
+      const payloadBytes = Buffer.byteLength(payload, "utf8");
+      console.log(`[api/backup-restore] Backup siap: ${payloadBytes} bytes dalam ${Date.now() - startedAt} ms`);
+      if (payloadBytes > 4_200_000) {
+        return res.status(413).json({
+          error: "Backup terlalu besar untuk dikirim langsung dari Vercel.",
+          bytes: payloadBytes,
+          limitBytes: 4_200_000
+        });
+      }
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      return res.status(200).send(payload);
+    }
+
+    const validation = validateBackup(backup);
     const backupHash = hashBackup(backup);
 
     if (action === 'preview') {

@@ -107,10 +107,10 @@ async function _parseApiJson(res, label = "Permintaan") {
 
 async function _ambilBackupServer() {
   const idToken = await firebase.auth().currentUser.getIdToken();
-  const res = await fetch("/api/backup-verify", {
+  const res = await fetch("/api/backup-restore", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idToken })
+    body: JSON.stringify({ idToken, action: "backup" })
   });
   const data = await _parseApiJson(res, "Backup");
   return { data, idToken };

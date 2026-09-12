@@ -15,7 +15,7 @@
 
    Alur upload (browser → ImageKit langsung, sesuai arsitektur
    yang diminta):
-     1. fetch GET /api/imagekit-auth  → server hitung signature
+     1. fetch GET /api/imagekit  → server hitung signature
         pakai IMAGEKIT_PRIVATE_KEY (privateKey TIDAK PERNAH
         dikirim ke browser — lihat api/imagekit-auth.js)
      2. Browser POST file + token/expire/signature LANGSUNG ke
@@ -151,13 +151,13 @@ function _simulasiProgress(onProgress, dibatalkanFn) {
  * an error, you should always send a new token".)
  *
  * Perbaikan: SELALU minta token/signature/expire BARU dari
- * /api/imagekit-auth untuk SETIAP percobaan upload — tidak ada cache
+ * /api/imagekit untuk SETIAP percobaan upload — tidak ada cache
  * sama sekali. Endpoint ini ringan (hanya hitung HMAC di server, tidak
  * ada I/O ke database), jadi memanggilnya per-file tidak jadi masalah
  * performa, dan ini justru satu-satunya cara yang sesuai spesifikasi
  * resmi ImageKit. */
 async function _ambilAuthImageKit() {
-  const resp = await fetch("/api/imagekit-auth");
+  const resp = await fetch("/api/imagekit");
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
     throw new Error(err.error || `Gagal mengambil otentikasi ImageKit (status ${resp.status}).`);
@@ -287,7 +287,7 @@ async function deleteImage(pathAtauUrl) {
     return;
   }
   try {
-    const resp = await fetch("/api/imagekit-delete", {
+    const resp = await fetch("/api/imagekit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ fileId: pathAtauUrl })
@@ -420,7 +420,7 @@ function _pasangEventWidget(container, folder, multiple, getItems, setItems, ren
 }
 
 function _tanganiFileWidget(fileList, folder, multiple, getItems, setItems, render, getReplaceTarget, setReplaceTargetVal, onChange) {
-  /* [Phase 2 — PWA] Upload ImageKit wajib online (butuh /api/imagekit-auth
+  /* [Phase 2 — PWA] Upload ImageKit wajib online (butuh /api/imagekit
      + endpoint upload.imagekit.io). Blokir di titik tunggal ini SEBELUM
      compressImage/uploadImage dipanggil sama sekali — logic upload di
      bawah TIDAK diubah, hanya tidak dijalankan saat offline. */
