@@ -21,7 +21,8 @@
 .nav-links{ display:flex; gap:28px; }
 .nav-links a{ font-size:0.9rem; font-weight:600; color:var(--ink-soft); transition:color var(--transition); }
 .nav-links a:hover{ color:var(--pmr-red); }
-.nav-actions{ display:flex; align-items:center; gap:12px; }
+.nav-actions{ display:flex; align-items:center; gap:10px; }
+.nav-actions .pmr-cs-nav-btn{ flex:0 0 auto; }
 .nav-toggle{
   display:none;
   width:40px; height:40px;
@@ -432,6 +433,7 @@
   .nav-links.open{ display:flex; }
   .nav-toggle{ display:flex; }
   .nav-actions .btn-outline{ display:none; }
+  .nav-actions .pmr-cs-nav-btn{ display:inline-flex; }
 }
 
 /* =========================================================

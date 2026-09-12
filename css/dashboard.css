@@ -262,7 +262,7 @@
   padding:0 24px;
   position:sticky; top:0; z-index:40;
 }
-.topbar-left{ display:flex; align-items:center; gap:14px; }
+.topbar-left{ display:flex; align-items:center; gap:10px; }
 .sidebar-toggle{
   display:none;
   width:38px; height:38px;
