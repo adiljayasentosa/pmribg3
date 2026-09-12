@@ -58,7 +58,7 @@ function _hitungRekapIuran(bulan, tahun) {
         riwayatPembayaran: n.riwayatPembayaran
       };
     })
-    .sort((a,b) => a.nama.localeCompare(b.nama));
+    .sort(compareAnggotaKelasNama);
 
   const sudahLunas  = baris.filter(b => b.statusIuran === "Lunas");
   const belumLunas  = baris.filter(b => b.statusIuran === "Belum Lunas");

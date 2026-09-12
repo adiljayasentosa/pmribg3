@@ -17,7 +17,8 @@ const ROLES = {
   sekretaris: { label: "Sekretaris",  badge: "badge-info"    },
   bendahara:  { label: "Bendahara",   badge: "badge-success" },
   pj:         { label: "PJ Divisi",   badge: "badge-warning" },
-  anggota:    { label: "Anggota PMR", badge: "badge-gray"    }
+  anggota:    { label: "Anggota PMR", badge: "badge-gray"    },
+  demo:       { label: "Demo",        badge: "badge-info"     }
 };
 
 /** Akun demo untuk mode tanpa backend.
@@ -32,7 +33,8 @@ const DUMMY_USERS = [
   { username:"sekretaris", password:"sekre123",    role:"sekretaris", nama:"Dewi Lestari"    },
   { username:"bendahara",  password:"bendahara123",role:"bendahara",  nama:"Putri Ramadhani" },
   { username:"pj",         password:"pj123",       role:"pj",         nama:"Raka Pratama",    divisi:"Dokumentasi" },
-  { username:"anggota",    password:"anggota123",  role:"anggota",    nama:"Raka Pratama", anggotaId:"1" }
+  { username:"anggota",    password:"anggota123",  role:"anggota",    nama:"Raka Pratama", anggotaId:"1" },
+  { username:"demo",       password:"demo123",     role:"demo",       nama:"Demo Client" }
 ];
 
 /** Cache user aktif di memori (sinkron setelah init) */
@@ -70,16 +72,34 @@ async function login(username, password, role) {
     const fdb = firebase.firestore();
     const uid = cred.user.uid;
 
-    /* Cari profil berdasarkan UID — semua akun kini menggunakan UID langsung */
-    const snap = await fdb.collection("users").doc(uid).get();
+    /* Cari profil berdasarkan UID. Untuk akun lama yang masih menyimpan
+       profil users/{Auto-ID}, sinkronisasi dilakukan lewat Admin SDK API
+       hanya ketika profil UID belum ada. Rules Firestore sengaja tidak
+       mengizinkan client membuat users/{uid} sendiri. */
+    let snap = await fdb.collection("users").doc(uid).get();
+    let profile = snap.exists ? snap.data() : null;
 
-    if (!snap.exists) {
+    if (!profile) {
+      const idToken = await cred.user.getIdToken(true);
+      const response = await fetch("/api/auth-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken })
+      });
+      let data = {};
+      try { data = await response.json(); } catch (_) {}
+      if (!response.ok || !data.ok) {
+        await firebase.auth().signOut();
+        return { ok:false, message:data.error || "Profil pengguna belum dibuat. Hubungi admin." };
+      }
+      profile = data.profile || null;
+    }
+
+    if (!profile) {
       await firebase.auth().signOut();
       return { ok:false, message:"Profil pengguna belum dibuat. Hubungi admin." };
     }
-
-    const profile = snap.data();
-    if (profile.role !== role) {
+    if (profile.role !== "demo" && profile.role !== role) {
       await firebase.auth().signOut();
       return { ok:false, message:"Role tidak sesuai dengan akun ini." };
     }
@@ -158,6 +178,20 @@ function initAuth(onUser, onNoUser) {
           user = snap.data();
           localStorage.setItem(SESSION_KEY, JSON.stringify(user));
           _currentUser = user;
+        } else {
+          const idToken = await firebaseUser.getIdToken(true);
+          const response = await fetch("/api/auth-profile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idToken })
+          });
+          let data = {};
+          try { data = await response.json(); } catch (_) {}
+          if (response.ok && data.ok && data.profile) {
+            user = { ...data.profile, authUid: firebaseUser.uid };
+            localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+            _currentUser = user;
+          }
         }
       } catch(e) {
         console.error("[PMR] Gagal ambil profil:", e);

@@ -72,11 +72,11 @@ function _setLoadingState(loading) {
    didefinisikan di js/pages/*.js (dimuat sebelum file ini).
 ───────────────────────────────────────────────────────── */
 async function renderPersetujuanAnggota(el, user) {
-  const allowed = ["admin","ketua","wakil","sekretaris"].includes(user.role);
+  const allowed = ["admin","ketua","wakil","sekretaris","demo"].includes(user.role);
   if (!allowed) { el.innerHTML = `<div class="empty-state"><p>Akses hanya untuk pengurus yang berwenang.</p></div>`; return; }
 
   let pending = [];
-  if (FIREBASE_ENABLED) {
+  if (FIREBASE_ENABLED && user.role !== "demo") {
     try {
       const current = firebase.auth().currentUser;
       if (!current) throw new Error("Sesi login tidak ditemukan.");
@@ -206,10 +206,10 @@ async function renderPersetujuanAnggota(el, user) {
 }
 
 async function renderKta(el, user) {
-  const allowed = ["admin","ketua","wakil","sekretaris"].includes(user.role);
+  const allowed = ["admin","ketua","wakil","sekretaris","demo"].includes(user.role);
   if (!allowed) { el.innerHTML = `<div class="empty-state"><p>Akses hanya untuk pengurus yang berwenang.</p></div>`; return; }
 
-  if (FIREBASE_ENABLED) {
+  if (FIREBASE_ENABLED && user.role !== "demo") {
     try {
       const fdb = firebase.firestore();
       await Promise.all(AppState.anggota.map(async a => {
@@ -220,7 +220,7 @@ async function renderKta(el, user) {
 
   const active = AppState.anggota
     .filter(a => (a.statusAkun || "active") === "active")
-    .sort((a,b) => String(a.nama||"").localeCompare(String(b.nama||""), "id", {sensitivity:"base"}));
+    .sort(compareAnggotaKelasNama);
 
   el.innerHTML = `
     <div class="page-head kta-head">

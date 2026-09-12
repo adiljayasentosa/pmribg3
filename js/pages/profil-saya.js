@@ -56,8 +56,8 @@ function _renderPemilihProfil(el) {
   function tampilkanDaftar(query = "") {
     const q = query.toLowerCase().trim();
     const hasil = q
-      ? AppState.anggota.filter(a => a.nama.toLowerCase().includes(q))
-      : AppState.anggota;
+      ? sortAnggotaByKelasNama(AppState.anggota.filter(a => a.nama.toLowerCase().includes(q)))
+      : sortAnggotaByKelasNama(AppState.anggota);
 
     if (hasil.length === 0) {
       daftarEl.innerHTML = `<div class="empty-state" style="padding:20px"><p>Nama tidak ditemukan.</p></div>`;

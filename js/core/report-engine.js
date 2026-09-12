@@ -61,7 +61,7 @@ const LAPORAN_ORG = {
    RBAC di inventaris.js/piket.js), begitu juga Pengumuman
    karena sumber datanya sama dengan Kegiatan.
 ───────────────────────────────────────────────────────── */
-const _SEMUA_ROLE = ["admin","ketua","wakil","sekretaris","bendahara","pj","anggota"];
+const _SEMUA_ROLE = ["admin","ketua","wakil","sekretaris","bendahara","pj","anggota","demo"];
 
 const REPORT_ROLE_ACCESS = {
   anggota:    _SEMUA_ROLE.filter(r => r !== "anggota"),
@@ -138,7 +138,7 @@ function _dataRekapIuranPeriode(period) {
       row.total += n.totalDibayar || 0;
     });
     return row;
-  }).sort((a,b) => a.nama.localeCompare(b.nama));
+  }).sort(compareAnggotaKelasNama);
 }
 
 function _kolomRekapIuranPeriode(period) {
@@ -210,7 +210,7 @@ const REPORT_DEFINITIONS = [
       { key:"noHp",      label:"No. HP", format:r => r.noHp || "—" },
       { key:"bergabung", label:"Bergabung", format:r => formatTanggal(r.bergabung) }
     ],
-    getData: () => AppState.anggota,
+    getData: () => sortAnggotaByKelasNama(AppState.anggota),
     summary: rows => [
       { label:"Total Anggota", value:rows.length },
       { label:"Aktif",         value:rows.filter(a=>(a.statusKeanggotaan || a.status)==="Aktif").length },
@@ -347,7 +347,7 @@ const REPORT_DEFINITIONS = [
       { key:"status",     label:"Status" },
       { key:"keterangan", label:"Keterangan", format:r => r.keterangan || "—" }
     ],
-    getData: () => AppState.piket
+    getData: () => (AppState.piket || []).map(p => ({...p, petugas:[...(p.petugas||[])].sort((a,b)=>{ const aa=AppState.anggota.find(x=>x.id===a.id)||a; const bb=AppState.anggota.find(x=>x.id===b.id)||b; return compareAnggotaKelasNama(aa,bb); }) }))
   },
   {
     key: "pengumuman", label: "Pengumuman", emoji: "📢",

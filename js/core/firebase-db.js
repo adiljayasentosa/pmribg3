@@ -25,8 +25,8 @@
    pj           : anggota, kegiatan, pengurus, presensi
    admin/ketua/wakil : semua collection
 ───────────────────────────────────────────────────────── */
-const ROLE_AKSES_KEUANGAN = ['admin', 'ketua', 'wakil', 'bendahara'];
-const ROLE_AKSES_PRESENSI = ['admin', 'ketua', 'wakil', 'sekretaris', 'pj'];
+const ROLE_AKSES_KEUANGAN = ['admin', 'ketua', 'wakil', 'bendahara', 'demo'];
+const ROLE_AKSES_PRESENSI = ['admin', 'ketua', 'wakil', 'sekretaris', 'pj', 'demo'];
 
 /* [Phase 2 — PWA] Helper read-only: laporkan ke UI apakah snapshot
    Firestore yang baru diterima berasal dari cache lokal (offline/
@@ -184,9 +184,16 @@ function setReRenderHandler(fn) { _reRenderPage = fn; }
 ───────────────────────────────────────────────────────── */
 const DB = {
   _listeners: [],
+  _assertWritable() {
+    if (getCurrentUser()?.role === 'demo') throw new Error('Akun demo hanya dapat melihat tampilan dan data contoh. Perubahan data dinonaktifkan.');
+  },
 
   /* ── Init: muat data awal (role-aware) ── */
   async init() {
+    if (getCurrentUser()?.role === 'demo') {
+      _seedAppStateFromDummy();
+      return;
+    }
     if (!FIREBASE_ENABLED) {
       _seedAppStateFromDummy();
       return;
@@ -199,7 +206,7 @@ const DB = {
        Data operasional yang sensitif dibatasi lagi oleh Firestore Rules. */
     if (role === 'anggota') {
       const snapAnggota = await fdb.collection("anggota").orderBy("nama").get();
-      AppState.anggota = snapAnggota.docs.map(d => _normalisasiAnggota({id:d.id,...d.data()}));
+      AppState.anggota = snapAnggota.docs.map(d => _normalisasiAnggota({id:d.id,...d.data()})).sort(compareAnggotaKelasNama);
       const me = AppState.anggota.find(a =>
         (getCurrentUser()?.anggotaId && String(a.id) === String(getCurrentUser().anggotaId)) ||
         (firebase.auth().currentUser?.uid && String(a.authUid || '') === String(firebase.auth().currentUser.uid)) ||
@@ -240,7 +247,7 @@ const DB = {
       fdb.collection("upacara").orderBy("tanggal", "desc").get()
     ]);
 
-    AppState.anggota    = snapAnggota.docs.map(d => _normalisasiAnggota({ id: d.id, ...d.data() }));
+    AppState.anggota    = snapAnggota.docs.map(d => _normalisasiAnggota({ id: d.id, ...d.data() })).sort(compareAnggotaKelasNama);
     AppState.kegiatan   = snapKegiatan.docs.map(d => ({ id: d.id, ...d.data() }));
     AppState.inventaris = snapInventaris.docs.map(d => ({ id: d.id, ...d.data() }));
     AppState.piket      = snapPiket.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -301,7 +308,7 @@ const DB = {
 
   /* ── Real-time listeners (role-aware) ── */
   initListeners() {
-    if (!FIREBASE_ENABLED) return; /* demo mode: tidak perlu listener */
+    if (!FIREBASE_ENABLED || getCurrentUser()?.role === 'demo') return; /* demo mode: tidak perlu listener */
     const fdb  = firebase.firestore();
     const role = getCurrentUser()?.role || 'none';
 
@@ -312,7 +319,7 @@ const DB = {
         (getCurrentUser()?.username && String(a.nomorInduk || '').toLowerCase() === String(getCurrentUser().username).toLowerCase())
       );
       this._listeners.push(
-        fdb.collection("anggota").orderBy("nama").onSnapshot(snap=>{ _laporkanStatusCache(snap); AppState.anggota=snap.docs.map(d=>_normalisasiAnggota({id:d.id,...d.data()})); _reRenderPage(); }),
+        fdb.collection("anggota").orderBy("nama").onSnapshot(snap=>{ _laporkanStatusCache(snap); AppState.anggota=snap.docs.map(d=>_normalisasiAnggota({id:d.id,...d.data()})).sort(compareAnggotaKelasNama); _reRenderPage(); }),
         fdb.collection("kegiatan").orderBy("tanggal","desc").onSnapshot(snap=>{ _laporkanStatusCache(snap); AppState.kegiatan=snap.docs.map(d=>({id:d.id,...d.data()})); _reRenderPage(); })
       );
       if (me && String(me.statusKeanggotaan || me.status || 'Aktif').toLowerCase() === 'aktif') {
@@ -398,6 +405,7 @@ const DB = {
   /* ──────────────────── ANGGOTA ──────────────────── */
   anggota: {
     async tambah(data) {
+      this._assertWritable();
       const now = new Date().toISOString();
       const payload = {
         ...data,
@@ -407,7 +415,7 @@ const DB = {
       if (!FIREBASE_ENABLED) {
         const id = String(Math.max(0, ...AppState.anggota.map(a => +a.id || 0)) + 1);
         AppState.anggota.push(_normalisasiAnggota({ id, ...payload }));
-        AppState.anggota.sort((a,b) => a.nama.localeCompare(b.nama));
+        AppState.anggota.sort(compareAnggotaKelasNama);
         _hitungRingkasan();
         return id;
       }
@@ -429,6 +437,7 @@ const DB = {
        bisa mencoret baris-baris itu dari daftar sebelum retry — mencegah
        baris yang sama diimport dua kali saat user klik ulang. */
     async importBatch(rows) {
+      this._assertWritable();
       const items = Array.isArray(rows) ? rows : [];
       if (!items.length) return { imported: 0, total: 0 };
       const now = new Date().toISOString();
@@ -444,7 +453,7 @@ const DB = {
           };
           AppState.anggota.push(_normalisasiAnggota(payload));
         });
-        AppState.anggota.sort((a,b) => a.nama.localeCompare(b.nama));
+        AppState.anggota.sort(compareAnggotaKelasNama);
         _hitungRingkasan();
         return { imported: items.length, total: items.length };
       }
@@ -476,6 +485,7 @@ const DB = {
       return { imported, total: items.length };
     },
     async update(id, data) {
+      this._assertWritable();
       const now = new Date().toISOString();
       if (!FIREBASE_ENABLED) {
         const idx = AppState.anggota.findIndex(a => a.id === id);
@@ -494,6 +504,7 @@ const DB = {
       await firebase.firestore().collection("anggota").doc(id).update(payload);
     },
     async hapus(id) {
+      this._assertWritable();
       if (!FIREBASE_ENABLED) {
         AppState.anggota = AppState.anggota.filter(a => a.id !== id);
         _hitungRingkasan();
@@ -506,6 +517,7 @@ const DB = {
   /* ──────────────────── KEGIATAN ──────────────────── */
   kegiatan: {
     async tambah(data) {
+      this._assertWritable();
       if (!FIREBASE_ENABLED) {
         const id = String(Math.max(0, ...AppState.kegiatan.map(k => +k.id || 0)) + 1);
         AppState.kegiatan.unshift({ id, ...data });
@@ -516,6 +528,7 @@ const DB = {
       return ref.id;
     },
     async update(id, data) {
+      this._assertWritable();
       if (!FIREBASE_ENABLED) {
         const idx = AppState.kegiatan.findIndex(k => k.id === id);
         if (idx !== -1) AppState.kegiatan[idx] = { ...AppState.kegiatan[idx], ...data };
@@ -525,6 +538,7 @@ const DB = {
       await firebase.firestore().collection("kegiatan").doc(id).update(data);
     },
     async hapus(id) {
+      this._assertWritable();
       if (!FIREBASE_ENABLED) {
         AppState.kegiatan = AppState.kegiatan.filter(k => k.id !== id);
         _hitungRingkasan();
@@ -537,6 +551,7 @@ const DB = {
   /* ──────────────────── KEUANGAN ──────────────────── */
   keuangan: {
     async tambah(data) {
+      this._assertWritable();
       if (!FIREBASE_ENABLED) {
         const id = String(Math.max(0, ...AppState.keuangan.map(t => +t.id || 0)) + 1);
         AppState.keuangan.unshift({ id, ...data });
@@ -547,6 +562,7 @@ const DB = {
       return ref.id;
     },
     async update(id, data) {
+      this._assertWritable();
       if (!FIREBASE_ENABLED) {
         const idx = AppState.keuangan.findIndex(t => t.id === id);
         if (idx !== -1) AppState.keuangan[idx] = { ...AppState.keuangan[idx], ...data };
@@ -556,6 +572,7 @@ const DB = {
       await firebase.firestore().collection("keuangan").doc(id).update(data);
     },
     async hapus(id) {
+      this._assertWritable();
       if (!FIREBASE_ENABLED) {
         AppState.keuangan = AppState.keuangan.filter(t => t.id !== id);
         _hitungRingkasan();
@@ -573,6 +590,7 @@ const DB = {
      * @param {string} tanggal  ISO date string (dipakai sebagai partition key)
      */
     async simpan(rows, tanggal) {
+      this._assertWritable();
       if (!FIREBASE_ENABLED) {
         /* Hapus data lama pertemuan tanggal tsb lalu tambah baru */
         AppState.presensiHistory = AppState.presensiHistory.filter(p => p.tanggal !== tanggal);
@@ -597,6 +615,7 @@ const DB = {
   /* ──────────────────── INVENTARIS (F4.0) ──────────────────── */
   inventaris: {
     async tambah(data) {
+      this._assertWritable();
       if (!FIREBASE_ENABLED) {
         const id = String(Math.max(0, ...AppState.inventaris.map(x => +x.id || 0)) + 1);
         AppState.inventaris.push({ id, ...data });
@@ -607,6 +626,7 @@ const DB = {
       return ref.id;
     },
     async update(id, data) {
+      this._assertWritable();
       if (!FIREBASE_ENABLED) {
         const idx = AppState.inventaris.findIndex(x => x.id === id);
         if (idx !== -1) AppState.inventaris[idx] = { ...AppState.inventaris[idx], ...data };
@@ -615,6 +635,7 @@ const DB = {
       await firebase.firestore().collection("inventaris").doc(id).update(data);
     },
     async hapus(id) {
+      this._assertWritable();
       if (!FIREBASE_ENABLED) {
         AppState.inventaris = AppState.inventaris.filter(x => x.id !== id);
         return;
@@ -626,6 +647,7 @@ const DB = {
   /* ──────────────────── PIKET (F4.1) ──────────────────── */
   piket: {
     async tambah(data) {
+      this._assertWritable();
       if (!FIREBASE_ENABLED) {
         const id = String(Math.max(0, ...AppState.piket.map(x => +x.id || 0)) + 1);
         AppState.piket.unshift({ id, ...data });
@@ -635,6 +657,7 @@ const DB = {
       return ref.id;
     },
     async update(id, data) {
+      this._assertWritable();
       if (!FIREBASE_ENABLED) {
         const idx = AppState.piket.findIndex(x => x.id === id);
         if (idx !== -1) AppState.piket[idx] = { ...AppState.piket[idx], ...data };
@@ -643,6 +666,7 @@ const DB = {
       await firebase.firestore().collection("piket").doc(id).update(data);
     },
     async hapus(id) {
+      this._assertWritable();
       if (!FIREBASE_ENABLED) {
         AppState.piket = AppState.piket.filter(x => x.id !== id);
         return;
@@ -663,6 +687,7 @@ const DB = {
      duplikasi yang berarti. */
   upacara: {
     async tambah(data) {
+      this._assertWritable();
       if (!FIREBASE_ENABLED) {
         const id = String(Math.max(0, ...AppState.upacara.map(x => +x.id || 0)) + 1);
         AppState.upacara.unshift({ id, ...data });
@@ -672,6 +697,7 @@ const DB = {
       return ref.id;
     },
     async update(id, data) {
+      this._assertWritable();
       if (!FIREBASE_ENABLED) {
         const idx = AppState.upacara.findIndex(x => x.id === id);
         if (idx !== -1) AppState.upacara[idx] = { ...AppState.upacara[idx], ...data };
@@ -680,6 +706,7 @@ const DB = {
       await firebase.firestore().collection("upacara").doc(id).update(data);
     },
     async hapus(id) {
+      this._assertWritable();
       if (!FIREBASE_ENABLED) {
         AppState.upacara = AppState.upacara.filter(x => x.id !== id);
         return;
@@ -727,6 +754,7 @@ const DB = {
      *  membuat total melebihi target — project ini belum punya
      *  mekanisme kelebihan bayar, jadi ini murni pencegahan. */
     async tambahPembayaran({ anggotaId, anggotaNama, bulan, tahun, nominalBayar }) {
+      this._assertWritable();
       if (!nominalBayar || nominalBayar <= 0) {
         throw new Error("Nominal pembayaran harus lebih dari 0.");
       }
@@ -816,6 +844,7 @@ const DB = {
      *  dan konsisten dengan alur cicilan. Tidak melakukan apa-apa jika
      *  sudah Lunas (sisa 0). */
     async lunasiSisa({ anggotaId, anggotaNama, bulan, tahun }) {
+      this._assertWritable();
       const existing = AppState.iuran.find(r =>
         r.anggotaId === anggotaId && r.bulan === bulan && r.tahun === tahun);
       const n = _normalisasiIuranRecord(existing, AppState.nominalIuranStandar);
@@ -827,6 +856,7 @@ const DB = {
      *  transaksi keuangan terkait sekaligus, supaya Buku Kas tidak pernah
      *  menyisakan entri "hantu" yang sudah tidak berlaku lagi. */
     async batalkan(anggotaId, bulan, tahun) {
+      this._assertWritable();
       const existing = AppState.iuran.find(r =>
         r.anggotaId === anggotaId && r.bulan === bulan && r.tahun === tahun);
       if (!existing) return;
@@ -852,6 +882,7 @@ const DB = {
        admin+bendahara — cocok persis dengan siapa yang boleh mengubah
        nominal ini di UI (lihat canEdit di keuangan.js). */
     async setNominalStandar(nominal) {
+      this._assertWritable();
       AppState.nominalIuranStandar = nominal;
       if (!FIREBASE_ENABLED) return;
       await firebase.firestore().collection("iuran").doc("_pengaturan")
@@ -862,6 +893,7 @@ const DB = {
   /* ──────────────────── PENGURUS ──────────────────── */
   pengurus: {
     async simpanStruktur(strukturBaru) {
+      this._assertWritable();
       /* Kapasitas PJ selalu 3 slot, termasuk saat menyimpan struktur lama. */
       strukturBaru = strukturBaru.map(jabatan => ({
         ...jabatan,

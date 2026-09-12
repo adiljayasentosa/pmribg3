@@ -228,7 +228,7 @@ function _renderTabRiwayatUpacara() {
   const data = AppState.anggota
     .filter(a => a.statusKeanggotaan === "Aktif")
     .map(a => ({ ...a, ...(riwayat[a.id] || { jumlah:0, terakhir:null }) }))
-    .sort((x,y) => x.jumlah - y.jumlah);
+    .sort(compareAnggotaKelasNama);
 
   c.innerHTML = `
   <div class="card">
@@ -349,8 +349,7 @@ function bukaFormUpacara(data, onSimpan) {
     const wrapKandidat = document.getElementById("daftar-kandidat-petugas-upacara");
     if (!q) { wrapKandidat.style.display = "none"; wrapKandidat.innerHTML = ""; return; }
 
-    const hasil = AppState.anggota
-      .filter(a => a.statusKeanggotaan === "Aktif")
+    const hasil = anggotaAktifSorted(AppState.anggota)
       .filter(a => a.nama.toLowerCase().includes(q))
       .filter(a => !_petugasTerpilihUpacara.some(p => p.id === a.id))
       .slice(0, 8);

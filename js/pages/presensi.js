@@ -32,7 +32,7 @@ function renderPresensi(el) {
 function renderTabInput() {
   const c = document.getElementById("tab-content");
   const tanggalHari = new Date().toISOString().split("T")[0];
-  const anggota = AppState.anggota;
+  const anggota = anggotaAktifSorted(AppState.anggota);
 
   /* Muat data presensi yang sudah tersimpan untuk tanggal hari ini (jika ada).
      Jika belum ada data → semua checkbox unchecked (bukan acak). */
@@ -126,7 +126,7 @@ function hitungJumlahPertemuanPresensi() {
  */
 function hitungRekapPresensi() {
   const jumlahPtm = hitungJumlahPertemuanPresensi();
-  return AppState.anggota.map(a => {
+  return anggotaAktifSorted(AppState.anggota).map(a => {
     const riwayat = AppState.presensiHistory.filter(p=>p.anggotaId===a.id);
     const hadir   = riwayat.filter(p=>getStatusPresensi(p)==="hadir").length;
     const alpha   = riwayat.filter(p=>getStatusPresensi(p)==="alpha").length;
@@ -134,7 +134,7 @@ function hitungRekapPresensi() {
     const izin    = riwayat.filter(p=>getStatusPresensi(p)==="izin").length;
     const pct     = jumlahPtm ? Math.round(hadir/jumlahPtm*100) : 0;
     return {...a, hadir, alpha, sakit, izin, pct};
-  }).sort((a,b)=>b.pct-a.pct);
+  }).sort(compareAnggotaKelasNama);
 }
 
 function renderTabRekap() {

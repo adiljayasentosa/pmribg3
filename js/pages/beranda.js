@@ -103,7 +103,7 @@ function _hitungReminder(user) {
      ROLE_AKSES_PRESENSI di core/firebase-db.js (dibaca sebagai
      referensi, tidak diubah). Granularitas per-tanggal (bukan
      per-kegiatan) — keputusan final F4.2 poin 3. */
-  const bolehLihatPresensi = ["admin","ketua","wakil","sekretaris","pj"].includes(user.role);
+  const bolehLihatPresensi = ["admin","ketua","wakil","sekretaris","pj","demo"].includes(user.role);
   if (bolehLihatPresensi) {
     const tanggalKegiatanLewat = [...new Set(
       AppState.kegiatan.filter(k => k.tanggal < sekarang && k.status !== "Dibatalkan").map(k => k.tanggal)
@@ -189,8 +189,8 @@ function renderBerandaPengurus(el, user) {
      dan ROLE_AKSES_PRESENSI di core/firebase-db.js (tidak diubah, hanya
      dibaca sebagai referensi) — supaya kartu tidak menampilkan "Rp 0"
      atau "0%" palsu untuk role yang datanya memang tidak pernah di-fetch. */
-  const bolehLihatKeuangan  = ["admin","ketua","wakil","bendahara"].includes(user.role);
-  const bolehLihatPresensi  = ["admin","ketua","wakil","sekretaris","pj"].includes(user.role);
+  const bolehLihatKeuangan  = ["admin","ketua","wakil","bendahara","demo"].includes(user.role);
+  const bolehLihatPresensi  = ["admin","ketua","wakil","sekretaris","pj","demo"].includes(user.role);
 
   const statCards = [
     statCard("Anggota Aktif", r.anggotaAktif, "dari "+r.totalAnggota+" total", "neutral",
@@ -232,7 +232,7 @@ function renderBerandaPengurus(el, user) {
     aksi.push({ icon:"📦", label:"Tambah Barang", onClick: () =>
       bukaFormInventaris(null, () => renderBeranda(el, user)) });
   }
-  if (["admin","ketua","wakil","sekretaris","pj"].includes(user.role)) {
+  if (["admin","ketua","wakil","sekretaris","pj","demo"].includes(user.role)) {
     aksi.push({ icon:"🗓️", label:"Generate Jadwal", onClick: () => {
       /* Navigasi lalu trigger tombol Generate di halaman Piket.
          click() bersifat sinkron dan navigateTo() me-render halaman
@@ -244,7 +244,7 @@ function renderBerandaPengurus(el, user) {
       document.getElementById("btn-generate-piket")?.click();
     }});
   }
-  if (["admin","ketua","wakil","sekretaris","pj"].includes(user.role)) {
+  if (["admin","ketua","wakil","sekretaris","pj","demo"].includes(user.role)) {
     aksi.push({ icon:"📋", label:"Input Presensi", onClick: () => {
       location.hash = "presensi";
       document.querySelector('.sidebar-link[data-page="presensi"]')?.click();

@@ -172,7 +172,7 @@ const DB = {
       if (!FIREBASE_ENABLED) {
         const id = String(Math.max(0, ...AppState.anggota.map(a => +a.id || 0)) + 1);
         AppState.anggota.push(_normalisasiAnggota({ id, ...payload }));
-        AppState.anggota.sort((a,b) => a.nama.localeCompare(b.nama));
+        AppState.anggota.sort(compareAnggotaKelasNama);
         _hitungRingkasan();
         return id;
       }

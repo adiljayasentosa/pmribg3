@@ -259,7 +259,7 @@ function _renderTabRiwayat() {
   const data = AppState.anggota
     .filter(a => a.statusKeanggotaan === "Aktif")
     .map(a => ({ ...a, ...riwayat[a.id] }))
-    .sort((x,y) => x.jumlahPiket - y.jumlahPiket);
+    .sort(compareAnggotaKelasNama);
 
   c.innerHTML = `
   <div class="card">
@@ -381,8 +381,7 @@ function bukaFormPiket(data, onSimpan) {
     const wrapKandidat = document.getElementById("daftar-kandidat-petugas");
     if (!q) { wrapKandidat.style.display = "none"; wrapKandidat.innerHTML = ""; return; }
 
-    const hasil = AppState.anggota
-      .filter(a => a.statusKeanggotaan === "Aktif")
+    const hasil = anggotaAktifSorted(AppState.anggota)
       .filter(a => a.nama.toLowerCase().includes(q))
       .filter(a => !_petugasTerpilih.some(p => p.id === a.id))
       .slice(0, 8);

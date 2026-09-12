@@ -3,6 +3,33 @@
    Fungsi pembantu yang dipakai lintas modul.
    ========================================================= */
 
+/**
+ * Urutan standar data anggota di seluruh aplikasi: kelas XII → XI → X,
+ * lalu Alumni/Belum ditentukan. Di dalam kelas, nama A-Z.
+ */
+function kelasAnggotaRank(kelas) {
+  const v = String(kelas || "").trim().toUpperCase();
+  if (/^XII(?:\b|\s|[-_])/.test(v) || v === "XII") return 0;
+  if (/^XI(?:\b|\s|[-_])/.test(v) || v === "XI") return 1;
+  if (/^X(?:\b|\s|[-_])/.test(v) || v === "X") return 2;
+  if (/^ALUMNI(?:\b|\s|[-_])/.test(v) || v === "ALUMNI") return 3;
+  return 4;
+}
+
+function compareAnggotaKelasNama(a, b) {
+  const rank = kelasAnggotaRank(a?.kelas) - kelasAnggotaRank(b?.kelas);
+  if (rank !== 0) return rank;
+  return String(a?.nama || "").localeCompare(String(b?.nama || ""), "id", { sensitivity: "base" });
+}
+
+function sortAnggotaByKelasNama(rows) {
+  return [...(rows || [])].sort(compareAnggotaKelasNama);
+}
+
+function anggotaAktifSorted(rows = AppState?.anggota || []) {
+  return sortAnggotaByKelasNama(rows.filter(a => String(a.statusKeanggotaan || a.status || "").trim() === "Aktif"));
+}
+
 /** Format angka ke Rupiah: 2450000 → "Rp 2.450.000" */
 function formatRupiah(angka) {
   return "Rp " + Number(angka).toLocaleString("id-ID");

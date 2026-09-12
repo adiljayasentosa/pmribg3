@@ -64,7 +64,7 @@ const ContentDB = {
    * perilaku). */
   async fetchLatest(koleksi, n = 3) {
     _cekKoleksi(koleksi);
-    if (!FIREBASE_ENABLED) {
+    if (!FIREBASE_ENABLED || getCurrentUser()?.role === "demo") {
       return _urutTerbaru(_demoData(koleksi).filter(x => x.publish)).slice(0, n);
     }
     try {
@@ -94,7 +94,7 @@ const ContentDB = {
   async fetchAll(koleksi, opts = {}) {
     _cekKoleksi(koleksi);
     const { kategori = null } = opts;
-    if (!FIREBASE_ENABLED) {
+    if (!FIREBASE_ENABLED || getCurrentUser()?.role === "demo") {
       let list = _urutTerbaru(_demoData(koleksi).filter(x => x.publish));
       if (kategori) list = list.filter(x => x.kategori === kategori);
       return list;
@@ -125,7 +125,7 @@ const ContentDB = {
   /** Satu item berdasar slug — dipakai halaman detail publik. */
   async fetchBySlug(koleksi, slug) {
     _cekKoleksi(koleksi);
-    if (!FIREBASE_ENABLED) {
+    if (!FIREBASE_ENABLED || getCurrentUser()?.role === "demo") {
       return _demoData(koleksi).find(x => x.slug === slug && x.publish) || null;
     }
     try {
@@ -148,7 +148,7 @@ const ContentDB = {
    *  internal (Manajemen Konten), bukan halaman publik. */
   async fetchAllUntukAdmin(koleksi) {
     _cekKoleksi(koleksi);
-    if (!FIREBASE_ENABLED) {
+    if (!FIREBASE_ENABLED || getCurrentUser()?.role === "demo") {
       return _urutTerbaru(_demoData(koleksi));
     }
     try {
@@ -176,6 +176,7 @@ const ContentDB = {
 
   async create(koleksi, data) {
     _cekKoleksi(koleksi);
+    if (getCurrentUser()?.role === "demo") throw new Error("Akun demo hanya dapat melihat data contoh. Perubahan dinonaktifkan.");
     if (!FIREBASE_ENABLED) {
       const id = koleksi[0] + Date.now();
       _demoData(koleksi).unshift({ id, ...data });
@@ -190,6 +191,7 @@ const ContentDB = {
 
   async update(koleksi, id, data) {
     _cekKoleksi(koleksi);
+    if (getCurrentUser()?.role === "demo") throw new Error("Akun demo hanya dapat melihat data contoh. Perubahan dinonaktifkan.");
     if (!FIREBASE_ENABLED) {
       const list = _demoData(koleksi);
       const idx = list.findIndex(x => x.id === id);
@@ -201,6 +203,7 @@ const ContentDB = {
 
   async remove(koleksi, id) {
     _cekKoleksi(koleksi);
+    if (getCurrentUser()?.role === "demo") throw new Error("Akun demo hanya dapat melihat data contoh. Perubahan dinonaktifkan.");
     if (!FIREBASE_ENABLED) {
       const list = _demoData(koleksi);
       const idx = list.findIndex(x => x.id === id);
