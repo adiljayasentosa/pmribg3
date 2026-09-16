@@ -18,7 +18,7 @@ const ROLES = {
   bendahara:  { label: "Bendahara",   badge: "badge-success" },
   pj:         { label: "PJ Divisi",   badge: "badge-warning" },
   anggota:    { label: "Anggota PMR", badge: "badge-gray"    },
-  demo:       { label: "Visitor",     badge: "badge-info"     }
+  demo:       { label: "Demo",        badge: "badge-info"     }
 };
 
 /** Akun demo untuk mode tanpa backend.
@@ -56,10 +56,10 @@ async function login(username, password, role) {
   if (!FIREBASE_ENABLED) {
     const user = DUMMY_USERS.find(u => u.username === username);
     if (!user)               return { ok:false, message:"Username tidak ditemukan." };
-    if (user.role !== role && user.role !== "demo")  return { ok:false, message:"Role tidak sesuai dengan akun ini." };
+    if (user.role !== role)  return { ok:false, message:"Role tidak sesuai dengan akun ini." };
     if (user.password !== password) return { ok:false, message:"Password salah." };
 
-    _currentUser = { nama:user.nama, username, role:user.role, anggotaId:user.anggotaId || null };
+    _currentUser = { nama:user.nama, username, role, anggotaId:user.anggotaId || null };
     localStorage.setItem(SESSION_KEY, JSON.stringify(_currentUser));
     return { ok:true };
   }

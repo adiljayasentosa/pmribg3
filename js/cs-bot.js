@@ -60,58 +60,12 @@
   function togglePanel(){panel.classList.toggle('open'); if(panel.classList.contains('open')) input.focus()}
   root.querySelector('#pmr-cs-close').onclick=()=>panel.classList.remove('open');
   function add(text,who){const d=document.createElement('div');d.className='pmr-cs-msg '+who;d.textContent=text;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return d}
-
-  /* Data publik CS: hanya informasi yang memang ditampilkan untuk umum.
-     Struktur pengurus dibaca dari sumber yang sama dengan landing page.
-     Jumlah anggota memakai endpoint statistik publik agar tidak membuka
-     data anggota satu per satu ke browser. */
-  let publicContextPromise = null;
-  function sanitizeStructure(raw){
-    const groups = Array.isArray(raw?.jabatan) ? raw.jabatan : [];
-    return groups.map(g => ({
-      jabatan: String(g?.jabatan || '').trim(),
-      anggota: Array.isArray(g?.anggota) ? g.anggota.map(a => String(a?.nama || '').trim()).filter(Boolean).slice(0, 10) : []
-    })).filter(g => g.jabatan && g.anggota.length);
-  }
-  async function getPublicContext(){
-    if(publicContextPromise) return publicContextPromise;
-    publicContextPromise = (async()=>{
-      const out = {
-        creator: 'Fradil',
-        contactWhatsapp: '0895355289983',
-        activeMembers: null,
-        structure: []
-      };
-      try {
-        const current = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
-        if(current?.role === 'demo' && typeof DUMMY_DATA !== 'undefined'){
-          out.structure = sanitizeStructure({jabatan: DUMMY_DATA.strukturPengurus});
-          out.activeMembers = Array.isArray(DUMMY_DATA.anggota)
-            ? DUMMY_DATA.anggota.filter(a => String(a?.statusKeanggotaan || a?.status || '').toLowerCase() === 'aktif').length
-            : null;
-          return out;
-        }
-        const tasks = [];
-        if(typeof FIREBASE_ENABLED !== 'undefined' && FIREBASE_ENABLED && window.firebase?.firestore){
-          tasks.push(firebase.firestore().collection('pengurus').doc('struktur').get());
-        } else tasks.push(Promise.resolve(null));
-        tasks.push(fetch('/api/public-stats').then(r=>r.ok?r.json():null).catch(()=>null));
-        const [strukturSnap, stats] = await Promise.all(tasks);
-        if(strukturSnap?.exists) out.structure = sanitizeStructure(strukturSnap.data());
-        if(stats?.ok && Number.isFinite(Number(stats.activeMembers))) out.activeMembers = Number(stats.activeMembers);
-      } catch(err){ console.warn('[PMR] CS public context unavailable:', err); }
-      return out;
-    })();
-    return publicContextPromise;
-  }
-
   form.addEventListener('submit',async(e)=>{
     e.preventDefault(); const message=input.value.trim(); if(!message||send.disabled)return;
     add(message,'user'); input.value=''; send.disabled=true; input.disabled=true;
     const loading=add('Mengetik…','bot');
     try{
-      const publicContext = await getPublicContext();
-      const r=await fetch('/api/cs-bot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message, publicContext})});
+      const r=await fetch('/api/cs-bot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message})});
       const data=await r.json().catch(()=>({})); loading.remove(); add(r.ok&&data.ok?data.reply:(data.error||'CS Bot sedang tidak tersedia.'),'bot');
     }catch(_){loading.remove();add('CS Bot tidak dapat terhubung ke server. Periksa koneksi internet.','bot')}
     finally{send.disabled=false;input.disabled=false;input.focus()}

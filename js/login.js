@@ -89,12 +89,27 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  /* ── Demo: isi otomatis ── */
-  document.getElementById("demo-fill")?.addEventListener("click", () => {
-    document.getElementById("input-username").value = selectedRole;
-    document.getElementById("input-password").value =
-      selectedRole === "sekretaris" ? "sekre123" :
-      selectedRole === "bendahara"  ? "bendahara123" :
-      `${selectedRole}123`;
+  /* ── Akses Demo ── */
+  document.getElementById("btn-demo-login")?.addEventListener("click", async () => {
+    errEl.style.display = "none";
+    const btnDemo = document.getElementById("btn-demo-login");
+    btnDemo.disabled = true;
+    btnDemo.textContent = "Membuka Demo…";
+
+    /* Demo tetap login melalui jalur autentikasi yang sama,
+       hanya kredensialnya diisi otomatis. */
+    if (FIREBASE_ENABLED) {
+      await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    }
+
+    const result = await login("demo", "demo123", "demo");
+    if (result.ok) {
+      btnDemo.textContent = "✓ Demo dibuka";
+      setTimeout(() => (window.location.href = "dashboard.html"), 250);
+    } else {
+      showError(result.message || "Akun Demo belum tersedia. Buat akun Demo melalui Setup terlebih dahulu.");
+      btnDemo.disabled = false;
+      btnDemo.textContent = "Coba Demo";
+    }
   });
 });
