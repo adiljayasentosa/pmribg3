@@ -13,20 +13,212 @@ function renderPresensi(el) {
     <div><h1>Presensi</h1><p class="page-sub">Input & rekap kehadiran</p></div>
   </div>
   <div class="tab-bar">
-    <button class="tab-btn active" id="tab-input">Input Presensi</button>
+    <button class="tab-btn active" id="tab-scan">📷 Scan KTA</button>
+    <button class="tab-btn" id="tab-input">Input Presensi</button>
     <button class="tab-btn" id="tab-rekap">Rekap Bulanan</button>
   </div>
   <div id="tab-content"></div>`;
 
   function tampilTab(tab) {
+    document.getElementById("tab-scan").classList.toggle("active", tab==="scan");
     document.getElementById("tab-input").classList.toggle("active", tab==="input");
     document.getElementById("tab-rekap").classList.toggle("active", tab==="rekap");
-    if (tab==="input") renderTabInput();
+    if (tab==="scan") renderTabScan();
+    else if (tab==="input") renderTabInput();
     else renderTabRekap();
   }
+  document.getElementById("tab-scan").addEventListener("click", ()=>tampilTab("scan"));
   document.getElementById("tab-input").addEventListener("click", ()=>tampilTab("input"));
   document.getElementById("tab-rekap").addEventListener("click", ()=>tampilTab("rekap"));
-  tampilTab("input");
+  tampilTab("scan");
+}
+
+
+/* ─────────────────────────────────────────────────────────
+   SCAN KTA — presensi berbasis QR KTA
+   QR lama berbentuk URL kta-member.html?kta=<token>.
+   Scanner juga menerima payload NIN langsung sebagai fallback.
+───────────────────────────────────────────────────────── */
+let _ktaScanStream = null;
+let _ktaScanTimer = null;
+let _ktaScanBusy = false;
+
+function _stopKtaScanner() {
+  if (_ktaScanTimer) { clearTimeout(_ktaScanTimer); _ktaScanTimer = null; }
+  if (_ktaScanStream) {
+    _ktaScanStream.getTracks().forEach(t => t.stop());
+    _ktaScanStream = null;
+  }
+  const video = document.getElementById("kta-scan-video");
+  if (video) { try { video.pause(); } catch (_) {} video.srcObject = null; }
+  _ktaScanBusy = false;
+}
+
+function _extractKtaIdentifier(raw) {
+  const text = String(raw || "").trim();
+  if (!text) return { type: "unknown", value: "" };
+  try {
+    const url = new URL(text, location.origin);
+    const token = url.searchParams.get("kta");
+    const nin = url.searchParams.get("nin") || url.searchParams.get("nomorInduk");
+    if (token) return { type: "token", value: token, nin: nin || "" };
+  } catch (_) {}
+  return { type: "nin", value: text };
+}
+
+function _findAnggotaByKtaPayload(raw) {
+  const parsed = _extractKtaIdentifier(raw);
+  let anggota = null;
+  if (parsed.type === "token") {
+    anggota = AppState.anggota.find(a => String(a.ktaToken || "") === String(parsed.value));
+    if (anggota && parsed.nin && String(anggota.nomorInduk || "") !== String(parsed.nin)) anggota = null;
+  } else {
+    anggota = AppState.anggota.find(a => String(a.nomorInduk || "") === String(parsed.value));
+  }
+  return { anggota, parsed };
+}
+
+async function _catatPresensiScan(anggota, tanggal) {
+  const existing = AppState.presensiHistory.find(p =>
+    String(p.anggotaId) === String(anggota.id) && p.tanggal === tanggal
+  );
+  if (existing && getStatusPresensi(existing) === "hadir") {
+    return { duplicate: true };
+  }
+  await DB.presensi.tambahSatu({
+    anggotaId: String(anggota.id),
+    tanggal,
+    status: "hadir",
+    hadir: true,
+    ket: "Scan KTA"
+  });
+  return { duplicate: false };
+}
+
+function _renderScanResult(anggota, message, tone="success") {
+  const box = document.getElementById("kta-scan-result");
+  if (!box) return;
+  const isOk = tone === "success";
+  box.innerHTML = anggota ? `
+    <div class="kta-scan-result-card ${isOk ? "is-success" : "is-warning"}">
+      <div class="kta-scan-avatar">${getInisial(anggota.nama)}</div>
+      <div class="kta-scan-result-main">
+        <div class="kta-scan-result-title">${escapeHtml(anggota.nama || "Anggota")}</div>
+        <div class="kta-scan-result-meta">NIN ${escapeHtml(anggota.nomorInduk || "—")} · ${escapeHtml(anggota.kelas || "—")}</div>
+        <div class="kta-scan-result-message">${escapeHtml(message)}</div>
+      </div>
+    </div>` : `<div class="kta-scan-empty ${tone}">${escapeHtml(message)}</div>`;
+}
+
+async function _startKtaScanner() {
+  const video = document.getElementById("kta-scan-video");
+  const status = document.getElementById("kta-scan-status");
+  const btn = document.getElementById("btn-kta-start");
+  if (!video || !status) return;
+  if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+    status.textContent = "Kamera membutuhkan HTTPS dan dukungan browser.";
+    _renderScanResult(null, "Buka website melalui HTTPS untuk menggunakan scanner.", "danger");
+    return;
+  }
+  if (!("BarcodeDetector" in window)) {
+    status.textContent = "Scanner QR native tidak tersedia di browser ini.";
+    _renderScanResult(null, "Browser ini belum mendukung BarcodeDetector. Coba Chrome Android.", "danger");
+    return;
+  }
+  try {
+    const detector = new BarcodeDetector({ formats: ["qr_code"] });
+    _ktaScanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+    video.srcObject = _ktaScanStream;
+    await video.play();
+    btn.disabled = true;
+    status.textContent = "Arahkan kamera ke QR KTA…";
+    _ktaScanBusy = false;
+
+    const loop = async () => {
+      if (!_ktaScanStream || !video.srcObject) return;
+      try {
+        const codes = await detector.detect(video);
+        if (codes.length && !_ktaScanBusy) {
+          _ktaScanBusy = true;
+          const raw = codes[0].rawValue || "";
+          const { anggota, parsed } = _findAnggotaByKtaPayload(raw);
+          const tanggal = document.getElementById("kta-scan-tanggal")?.value || new Date().toISOString().split("T")[0];
+          if (!anggota) {
+            _renderScanResult(null, parsed.type === "token" ? "QR KTA tidak cocok dengan data anggota." : "NIN tidak ditemukan di data anggota.", "danger");
+            status.textContent = "QR ditolak. Coba KTA yang terdaftar.";
+          } else if (String(anggota.statusKeanggotaan || anggota.status || "Aktif").toLowerCase() !== "aktif") {
+            _renderScanResult(anggota, "Anggota tidak berstatus Aktif. Presensi ditolak.", "danger");
+            status.textContent = "Anggota tidak aktif.";
+          } else if (!String(anggota.nomorInduk || "").trim()) {
+            _renderScanResult(anggota, "Data NIN anggota kosong. Presensi ditolak.", "danger");
+            status.textContent = "NIN anggota belum tersedia.";
+          } else {
+            try {
+              const result = await _catatPresensiScan(anggota, tanggal);
+              if (result.duplicate) {
+                _renderScanResult(anggota, `Sudah tercatat Hadir pada ${tanggal}.`, "warning");
+                status.textContent = "Scan duplikat.";
+              } else {
+                _renderScanResult(anggota, `Hadir tercatat · ${tanggal}`, "success");
+                status.textContent = "Presensi berhasil dicatat.";
+              }
+            } catch (err) {
+              _renderScanResult(anggota, err?.message || "Gagal menyimpan presensi.", "danger");
+              status.textContent = "Gagal menyimpan.";
+            }
+          }
+          setTimeout(() => { _ktaScanBusy = false; }, 1400);
+        }
+      } catch (err) {
+        console.warn("[PMR] QR scanner:", err);
+      }
+      _ktaScanTimer = setTimeout(loop, 180);
+    };
+    loop();
+  } catch (err) {
+    btn.disabled = false;
+    _stopKtaScanner();
+    status.textContent = "Kamera tidak dapat dibuka.";
+    _renderScanResult(null, err?.name === "NotAllowedError" ? "Izin kamera ditolak. Izinkan kamera untuk halaman ini." : (err?.message || "Gagal membuka kamera."), "danger");
+  }
+}
+
+function renderTabScan() {
+  _stopKtaScanner();
+  const c = document.getElementById("tab-content");
+  const tanggalHari = new Date().toISOString().split("T")[0];
+  c.innerHTML = `
+    <div class="card kta-scan-card">
+      <div class="kta-scan-head">
+        <div>
+          <div class="card-title">Scan KTA untuk Presensi</div>
+          <p class="page-sub">Scan QR pada KTA. NIN/identitas QR wajib cocok dengan data anggota yang terdaftar dan berstatus Aktif.</p>
+        </div>
+        <div class="field" style="margin:0"><label>Tanggal</label><input type="date" id="kta-scan-tanggal" value="${tanggalHari}"></div>
+      </div>
+      <div class="kta-scan-grid">
+        <div class="kta-camera-box">
+          <video id="kta-scan-video" playsinline muted></video>
+          <div class="kta-scan-frame" aria-hidden="true"></div>
+          <div id="kta-scan-status" class="kta-scan-status">Tekan tombol untuk membuka kamera.</div>
+        </div>
+        <div class="kta-scan-side">
+          <div class="kta-scan-info"><strong>Alur</strong><span>QR KTA → validasi anggota → Hadir → Firebase</span></div>
+          <button class="btn btn-primary" id="btn-kta-start">📷 Mulai Scan</button>
+          <button class="btn btn-outline" id="btn-kta-stop" type="button">⏹ Hentikan Kamera</button>
+          <div id="kta-scan-result" class="kta-scan-result"><div class="kta-scan-empty">Belum ada hasil scan.</div></div>
+          <div class="kta-scan-note">Scan kedua pada anggota yang sama di tanggal yang sama tidak membuat presensi baru.</div>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById("btn-kta-start")?.addEventListener("click", _startKtaScanner);
+  document.getElementById("btn-kta-stop")?.addEventListener("click", () => {
+    _stopKtaScanner();
+    const status = document.getElementById("kta-scan-status");
+    const btn = document.getElementById("btn-kta-start");
+    if (status) status.textContent = "Kamera dihentikan.";
+    if (btn) btn.disabled = false;
+  });
 }
 
 function renderTabInput() {

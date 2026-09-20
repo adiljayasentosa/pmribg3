@@ -348,3 +348,21 @@
 
 /* Presensi: status berbentuk checklist, default Hadir */
 .status-checks{display:flex;flex-wrap:wrap;gap:6px}.status-check{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;border:1px solid var(--gray-300);border-radius:999px;padding:5px 9px;cursor:pointer}.status-check input{accent-color:var(--pmr-red);margin:0}.status-check:has(input:checked){border-color:var(--pmr-red);background:var(--danger-bg);color:var(--pmr-red);font-weight:700}
+
+
+/* v1.1.30 — Scan KTA */
+.kta-scan-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px}
+.kta-scan-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);gap:20px;align-items:start}
+.kta-camera-box{position:relative;background:#111;border-radius:16px;overflow:hidden;min-height:340px;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center}
+.kta-camera-box video{width:100%;height:100%;object-fit:cover;display:block}
+.kta-scan-frame{position:absolute;left:50%;top:50%;width:min(62%,280px);aspect-ratio:1;border:3px solid rgba(255,255,255,.9);border-radius:18px;transform:translate(-50%,-50%);box-shadow:0 0 0 999px rgba(0,0,0,.18)}
+.kta-scan-status{position:absolute;left:12px;right:12px;bottom:12px;background:rgba(0,0,0,.68);color:#fff;border-radius:10px;padding:9px 12px;text-align:center;font-size:.82rem}
+.kta-scan-side{display:flex;flex-direction:column;gap:12px}
+.kta-scan-info,.kta-scan-note{background:var(--gray-100);border:1px solid var(--gray-200);border-radius:12px;padding:12px 14px;font-size:.84rem}
+.kta-scan-info strong{display:block;margin-bottom:4px}.kta-scan-info span{color:var(--gray-600)}
+.kta-scan-result{min-height:92px}.kta-scan-empty{padding:18px;border:1px dashed var(--gray-300);border-radius:12px;color:var(--gray-600);font-size:.86rem}.kta-scan-empty.danger{border-color:var(--danger);color:var(--danger)}
+.kta-scan-result-card{display:flex;gap:12px;align-items:center;padding:14px;border-radius:12px;border:1px solid var(--gray-200);background:var(--gray-50)}
+.kta-scan-result-card.is-success{border-color:var(--success)}.kta-scan-result-card.is-warning{border-color:var(--warning)}
+.kta-scan-avatar{width:44px;height:44px;flex:0 0 44px;border-radius:50%;display:grid;place-items:center;background:var(--pmr-red);color:#fff;font-weight:800}
+.kta-scan-result-title{font-weight:800}.kta-scan-result-meta{font-size:.78rem;color:var(--gray-600);margin-top:2px}.kta-scan-result-message{font-size:.82rem;margin-top:6px}
+@media(max-width:800px){.kta-scan-grid{grid-template-columns:1fr}.kta-camera-box{min-height:300px}.kta-scan-head{display:block}.kta-scan-head .field{margin-top:12px!important}}

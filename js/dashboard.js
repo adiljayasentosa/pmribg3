@@ -275,10 +275,10 @@ async function renderKta(el, user) {
     try {
       for (let i=0;i<ready.length;i++) {
         const a=ready[i];
-        const canvas=await buildKtaCanvas(a,`${location.origin}/kta-member.html?kta=${encodeURIComponent(a.ktaToken)}`);
+        const canvas=await buildKtaCanvas(a,`${location.origin}/kta-member.html?kta=${encodeURIComponent(a.ktaToken)}&nin=${encodeURIComponent(a.nomorInduk || "")}`);
         const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
         zip.file(`KTA-${safeFile(a.nomorInduk||a.nama)}-depan.png`,blob);
-        const backCanvas=await buildKtaBackCanvas(a,`${location.origin}/kta-member.html?kta=${encodeURIComponent(a.ktaToken)}`);
+        const backCanvas=await buildKtaBackCanvas(a,`${location.origin}/kta-member.html?kta=${encodeURIComponent(a.ktaToken)}&nin=${encodeURIComponent(a.nomorInduk || "")}`);
         const back=await new Promise(r=>backCanvas.toBlob(r,'image/png'));
         zip.file(`KTA-${safeFile(a.nomorInduk||a.nama)}-belakang.png`,back);
         const pct=Math.round((i+1)/ready.length*100); const st=document.getElementById('kta-batch-status'); const pr=document.getElementById('kta-batch-progress'); if(st)st.textContent=`Memproses ${i+1}/${ready.length}: ${a.nama}`; if(pr)pr.style.width=pct+'%';
@@ -403,7 +403,7 @@ async function previewKta(a, fromAll=false) {
   if (!a) return;
   const hasPhoto = !!String(a.foto||'').trim();
   const token = a.ktaToken || `member-${a.id}`;
-  const target = `${location.origin}/kta-member.html?kta=${encodeURIComponent(token)}`;
+  const target = `${location.origin}/kta-member.html?kta=${encodeURIComponent(token)}&nin=${encodeURIComponent(a.nomorInduk || "")}`;
   Modal.buka({judul:`Preview KTA · ${escapeHtmlKta(a.nama)}`, ukuran:'modal-xl', konten:`
     <div class="kta-preview-wrap">
       <div class="kta-preview-card"><div class="kta-preview-label">DEPAN</div><canvas id="kta-front-canvas" width="993" height="1536"></canvas></div>

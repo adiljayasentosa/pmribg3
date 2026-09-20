@@ -54,7 +54,7 @@ async function createBackup(uid) {
   }));
   return {
     backupFormatVersion: 2,
-    appVersion: "1.1.26",
+    appVersion: "1.1.30",
     project: "pmr-wira-unit",
     generatedAt: new Date().toISOString(),
     generatedByUid: uid,

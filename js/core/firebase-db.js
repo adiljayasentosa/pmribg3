@@ -584,6 +584,27 @@ const DB = {
 
   /* ──────────────────── PRESENSI ──────────────────── */
   presensi: {
+    /** Tambahkan satu presensi tanpa menghapus baris lain pada tanggal yang sama. */
+    async tambahSatu(data) {
+      this._assertWritable();
+      const row = { ...data, anggotaId: String(data.anggotaId) };
+      if (!FIREBASE_ENABLED) {
+        const idx = AppState.presensiHistory.findIndex(p => String(p.anggotaId) === row.anggotaId && p.tanggal === row.tanggal);
+        if (idx >= 0) AppState.presensiHistory[idx] = { ...AppState.presensiHistory[idx], ...row };
+        else AppState.presensiHistory.push({ id: String(Date.now()), ...row });
+        _hitungRingkasan();
+        return;
+      }
+      const fdb = firebase.firestore();
+      const dup = await fdb.collection("presensi")
+        .where("anggotaId", "==", row.anggotaId)
+        .where("tanggal", "==", row.tanggal)
+        .limit(1).get();
+      if (!dup.empty) return dup.docs[0].id;
+      const ref = await fdb.collection("presensi").add(row);
+      return ref.id;
+    },
+
     /**
      * Simpan/perbarui baris presensi untuk satu pertemuan.
      * @param {Array} rows  [{anggotaId, tanggal, hadir, ket}]
