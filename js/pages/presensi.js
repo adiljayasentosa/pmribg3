@@ -36,8 +36,8 @@ function renderPresensi(el) {
 
 /* ─────────────────────────────────────────────────────────
    SCAN KTA — presensi berbasis QR KTA
-   QR lama berbentuk URL kta-member.html?kta=<token>.
-   Scanner juga menerima payload NIN langsung sebagai fallback.
+   QR KTA menggunakan URL kta-member.html?kta=<token>.
+   Scanner mengambil parameter kta sebagai token dan mempertahankan fallback NIN untuk kompatibilitas.
 ───────────────────────────────────────────────────────── */
 let _ktaScanStream = null;
 let _ktaScanTimer = null;
@@ -114,6 +114,8 @@ async function _startKtaScanner() {
   const video = document.getElementById("kta-scan-video");
   const status = document.getElementById("kta-scan-status");
   const btn = document.getElementById("btn-kta-start");
+  const stopBtn = document.getElementById("btn-kta-stop");
+  const cameraBox = document.querySelector(".kta-camera-box");
   if (!video || !status) return;
   if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
     status.textContent = "Kamera membutuhkan HTTPS dan dukungan browser.";
@@ -131,6 +133,9 @@ async function _startKtaScanner() {
     video.srcObject = _ktaScanStream;
     await video.play();
     btn.disabled = true;
+    btn.innerHTML = "📷 Kamera Aktif";
+    if (stopBtn) stopBtn.hidden = false;
+    if (cameraBox) cameraBox.classList.add("is-active");
     status.textContent = "Arahkan kamera ke QR KTA…";
     _ktaScanBusy = false;
 
@@ -177,6 +182,9 @@ async function _startKtaScanner() {
     loop();
   } catch (err) {
     btn.disabled = false;
+    btn.innerHTML = "📷 Mulai Scan";
+    if (stopBtn) stopBtn.hidden = true;
+    if (cameraBox) cameraBox.classList.remove("is-active");
     _stopKtaScanner();
     status.textContent = "Kamera tidak dapat dibuka.";
     _renderScanResult(null, err?.name === "NotAllowedError" ? "Izin kamera ditolak. Izinkan kamera untuk halaman ini." : (err?.message || "Gagal membuka kamera."), "danger");
@@ -205,7 +213,7 @@ function renderTabScan() {
         <div class="kta-scan-side">
           <div class="kta-scan-info"><strong>Alur</strong><span>QR KTA → validasi anggota → Hadir → Firebase</span></div>
           <button class="btn btn-primary" id="btn-kta-start">📷 Mulai Scan</button>
-          <button class="btn btn-outline" id="btn-kta-stop" type="button">⏹ Hentikan Kamera</button>
+          <button class="btn btn-outline" id="btn-kta-stop" type="button" hidden>⏹ Hentikan Kamera</button>
           <div id="kta-scan-result" class="kta-scan-result"><div class="kta-scan-empty">Belum ada hasil scan.</div></div>
           <div class="kta-scan-note">Scan kedua pada anggota yang sama di tanggal yang sama tidak membuat presensi baru.</div>
         </div>
@@ -216,8 +224,12 @@ function renderTabScan() {
     _stopKtaScanner();
     const status = document.getElementById("kta-scan-status");
     const btn = document.getElementById("btn-kta-start");
+    const box = document.querySelector(".kta-camera-box");
     if (status) status.textContent = "Kamera dihentikan.";
-    if (btn) btn.disabled = false;
+    if (box) box.classList.remove("is-active");
+    if (btn) { btn.disabled = false; btn.innerHTML = "📷 Mulai Scan"; }
+    const stopBtn = document.getElementById("btn-kta-stop");
+    if (stopBtn) stopBtn.hidden = true;
   });
 }
 
