@@ -218,8 +218,12 @@ async function renderKta(el, user) {
     } catch (_) {}
   }
 
+  // Status keanggotaan menentukan apakah anggota aktif.
+  // statusAkun hanya menunjukkan apakah akun login Firebase sudah dibuat.
+  // Anggota hasil approval pendaftaran memang bisa berstatus akun "pending"
+  // tetapi tetap harus muncul di halaman KTA karena status keanggotaannya Aktif.
   const active = AppState.anggota
-    .filter(a => (a.statusAkun || "active") === "active")
+    .filter(a => String(a.statusKeanggotaan || a.status || "Aktif").trim().toLowerCase() === "aktif")
     .sort(compareAnggotaKelasNama);
 
   el.innerHTML = `
