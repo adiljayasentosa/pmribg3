@@ -67,16 +67,30 @@ async function _loadKtaJsQR() {
 
 function _decodeKtaWithJsQR(video, canvas, jsQR) {
   if (!video.videoWidth || !video.videoHeight || !jsQR) return "";
-  const maxW = 960;
-  const scale = Math.min(1, maxW / video.videoWidth);
-  const w = Math.max(1, Math.round(video.videoWidth * scale));
-  const h = Math.max(1, Math.round(video.videoHeight * scale));
-  canvas.width = w; canvas.height = h;
+  const vw = video.videoWidth, vh = video.videoHeight;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  ctx.drawImage(video, 0, 0, w, h);
-  const image = ctx.getImageData(0, 0, w, h);
-  const result = jsQR(image.data, image.width, image.height, { inversionAttempts: "attemptBoth" });
-  return result?.data || "";
+
+  // QR KTA biasanya berada di tengah frame. Beberapa kamera/browser menghasilkan
+  // frame 16:9 yang membuat QR relatif kecil, sehingga decode seluruh frame sering
+  // gagal. Coba beberapa ROI + skala sebelum menyerah.
+  const passes = [
+    { x: 0, y: 0, w: vw, h: vh, scale: 1 },
+    { x: vw * 0.08, y: vh * 0.05, w: vw * 0.84, h: vh * 0.90, scale: 1.25 },
+    { x: vw * 0.15, y: vh * 0.05, w: vw * 0.70, h: vh * 0.90, scale: 1.5 },
+    { x: vw * 0.20, y: vh * 0.10, w: vw * 0.60, h: vh * 0.80, scale: 1.75 }
+  ];
+
+  for (const pass of passes) {
+    const maxW = 1400;
+    const w = Math.max(1, Math.min(maxW, Math.round(pass.w * pass.scale)));
+    const h = Math.max(1, Math.round(pass.h * pass.scale));
+    canvas.width = w; canvas.height = h;
+    ctx.drawImage(video, pass.x, pass.y, pass.w, pass.h, 0, 0, w, h);
+    const image = ctx.getImageData(0, 0, w, h);
+    const result = jsQR(image.data, image.width, image.height, { inversionAttempts: "attemptBoth" });
+    if (result?.data) return result.data;
+  }
+  return "";
 }
 
 function _stopKtaScanner() {
@@ -235,7 +249,7 @@ async function _startKtaScanner() {
       } catch (err) {
         console.warn("[PMR] QR scanner:", err);
       }
-      _ktaScanTimer = setTimeout(loop, 180);
+      _ktaScanTimer = setTimeout(loop, 260);
     };
     loop();
   } catch (err) {

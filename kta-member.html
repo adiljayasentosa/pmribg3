@@ -61,7 +61,16 @@
 </main>
 <script src="js/firebase-config.js"></script>
 <script>
-const targetToken = new URLSearchParams(location.search).get('kta');
+const _ktaParams = new URLSearchParams(location.search);
+let targetToken = _ktaParams.get('kta') || '';
+// Dukungan URL pendek /k/<token>. Vercel rewrite bersifat internal,
+// sehingga location.search tetap kosong di browser. Token harus diambil dari pathname.
+if (!targetToken) {
+  const _ktaPath = location.pathname.match(/^\/k\/([^/]+)\/?$/i);
+  if (_ktaPath) {
+    try { targetToken = decodeURIComponent(_ktaPath[1]); } catch (_) { targetToken = _ktaPath[1]; }
+  }
+}
 const msg = document.getElementById('msg');
 const publicCard = document.getElementById('public-card');
 const loginCard = document.getElementById('login-card');
