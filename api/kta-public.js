@@ -11,7 +11,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({error:'Method tidak diizinkan.'});
   if (!getApps().length) return res.status(500).json({error:'Backend Firebase belum dikonfigurasi.'});
   const token = String(req.query?.token || '').trim();
-  if (!/^[a-f0-9]{24,128}$/i.test(token)) return res.status(400).json({error:'Token KTA tidak valid.'});
+  if (!/^[A-Za-z0-9_-]{24,128}$/.test(token)) return res.status(400).json({error:'Token KTA tidak valid.'});
   try {
     const db = getFirestore();
     const qs = await db.collection('kta').where('ktaToken','==',token).limit(1).get();

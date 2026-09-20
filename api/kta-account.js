@@ -109,7 +109,7 @@ module.exports = async function handler(req, res) {
       updatedAt: FieldValue.serverTimestamp()
     }, { merge: true });
 
-    const ktaToken = a.ktaToken || crypto.randomBytes(18).toString('hex');
+    const ktaToken = a.ktaToken || crypto.randomBytes(18).toString('base64url');
     await ref.update({
       authUid: user.uid,
       statusAkun: 'active',

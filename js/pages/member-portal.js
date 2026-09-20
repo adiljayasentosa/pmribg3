@@ -125,6 +125,6 @@ function _memberProfileModal(a) {
 }
 function _memberKtaModal(a,kta) {
   const token = String(kta?.ktaToken || a?.ktaToken || "");
-  const publicUrl = token ? `kta-member.html?kta=${encodeURIComponent(token)}` : "";
+  const publicUrl = token ? `/k/${encodeURIComponent(token)}` : "";
   Modal.buka({judul:"KTA Digital", ukuran:"modal-sm", konten:`<div class="member-kta-preview"><div class="member-kta-mini"><div class="member-kta-red">✚ PMR WIRA UNIT</div>${_memberFoto(a,"member-kta-photo")}<h3>${_memberEscape(a.nama)}</h3><p>${_memberEscape(a.nomorInduk||"—")}</p><span>${_memberEscape(a.kelas||"—")} · ${_memberEscape(a.divisi||"—")}</span></div>${publicUrl?`<a class="btn btn-primary" href="${_memberEscape(publicUrl)}" target="_blank" rel="noopener">Buka Verifikasi KTA</a>`:`<div class="alert alert-info" style="display:flex">KTA belum terhubung.</div>`}</div>`,aksi:[{label:"Tutup",kelas:"btn-ghost",id:"member-kta-close",onClick:()=>Modal.tutup()}]});
 }

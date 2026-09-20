@@ -36,7 +36,7 @@ Admin, Ketua, Wakil Ketua, dan Sekretaris dapat mengelola data anggota dan perse
 ## KTA v1.1.8
 - Admin/pengurus berwenang dapat membuat akun anggota dari NI.
 - Username login anggota = NI. Password awal dibuat acak oleh backend dan hanya ditampilkan sekali.
-- QR KTA mengarah ke `kta-member.html?kta=<token>` dan dapat diverifikasi publik melalui endpoint server; login hanya diperlukan untuk membuka KTA/profil milik akun sendiri.
+- QR KTA mengarah ke `/k/<token>` (URL lama `kta-member.html?kta=<token>` tetap kompatibel) dan dapat diverifikasi publik melalui endpoint server; login hanya diperlukan untuk membuka KTA/profil milik akun sendiri.
 - Halaman scan QR menampilkan informasi verifikasi publik yang disanitasi. Jika anggota login, token QR tetap diverifikasi agar hanya akun pemilik yang dapat membuka tampilan KTA pribadi.
 - Template depan/belakang berasal dari desain KTA yang disediakan.
 

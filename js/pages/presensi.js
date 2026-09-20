@@ -36,12 +36,48 @@ function renderPresensi(el) {
 
 /* ─────────────────────────────────────────────────────────
    SCAN KTA — presensi berbasis QR KTA
-   QR KTA menggunakan URL kta-member.html?kta=<token>.
-   Scanner mengambil parameter kta sebagai token dan mempertahankan fallback NIN untuk kompatibilitas.
+   QR KTA menggunakan URL pendek /k/<token> (tetap kompatibel dengan URL lama ?kta=<token>).
+   Scanner mengambil token dari path /k/<token> atau parameter kta dan mempertahankan fallback NIN untuk kompatibilitas.
 ───────────────────────────────────────────────────────── */
 let _ktaScanStream = null;
 let _ktaScanTimer = null;
 let _ktaScanBusy = false;
+let _ktaJsQrPromise = null;
+
+async function _loadKtaJsQR() {
+  if (window.jsQR) return window.jsQR;
+  if (_ktaJsQrPromise) return _ktaJsQrPromise;
+  _ktaJsQrPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-pmr-jsqr="1"]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve(window.jsQR));
+      existing.addEventListener('error', () => reject(new Error('Gagal memuat decoder QR fallback.')));
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js";
+    script.async = true;
+    script.dataset.pmrJsqr = "1";
+    script.onload = () => window.jsQR ? resolve(window.jsQR) : reject(new Error('Decoder QR fallback tidak tersedia.'));
+    script.onerror = () => reject(new Error('Gagal memuat decoder QR fallback.'));
+    document.head.appendChild(script);
+  });
+  return _ktaJsQrPromise;
+}
+
+function _decodeKtaWithJsQR(video, canvas, jsQR) {
+  if (!video.videoWidth || !video.videoHeight || !jsQR) return "";
+  const maxW = 960;
+  const scale = Math.min(1, maxW / video.videoWidth);
+  const w = Math.max(1, Math.round(video.videoWidth * scale));
+  const h = Math.max(1, Math.round(video.videoHeight * scale));
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(video, 0, 0, w, h);
+  const image = ctx.getImageData(0, 0, w, h);
+  const result = jsQR(image.data, image.width, image.height, { inversionAttempts: "attemptBoth" });
+  return result?.data || "";
+}
 
 function _stopKtaScanner() {
   if (_ktaScanTimer) { clearTimeout(_ktaScanTimer); _ktaScanTimer = null; }
@@ -60,22 +96,40 @@ function _extractKtaIdentifier(raw) {
   try {
     const url = new URL(text, location.origin);
     const token = url.searchParams.get("kta");
+    const pathMatch = url.pathname.match(/^\/k\/([^/]+)\/?$/i);
+    const pathToken = pathMatch ? decodeURIComponent(pathMatch[1]) : "";
     const nin = url.searchParams.get("nin") || url.searchParams.get("nomorInduk");
     if (token) return { type: "token", value: token, nin: nin || "" };
+    if (pathToken) return { type: "token", value: pathToken, nin: nin || "" };
   } catch (_) {}
   return { type: "nin", value: text };
 }
 
-function _findAnggotaByKtaPayload(raw) {
+async function _findAnggotaByKtaPayload(raw) {
   const parsed = _extractKtaIdentifier(raw);
-  let anggota = null;
-  if (parsed.type === "token") {
-    anggota = AppState.anggota.find(a => String(a.ktaToken || "") === String(parsed.value));
-    if (anggota && parsed.nin && String(anggota.nomorInduk || "") !== String(parsed.nin)) anggota = null;
-  } else {
-    anggota = AppState.anggota.find(a => String(a.nomorInduk || "") === String(parsed.value));
+  if (parsed.type !== "token") {
+    const anggota = AppState.anggota.find(a => String(a.nomorInduk || "") === String(parsed.value));
+    return { anggota, parsed };
   }
-  return { anggota, parsed };
+
+  // Token KTA berada di collection private `kta`, bukan di AppState.anggota.
+  // Validasi token dilakukan melalui endpoint backend yang sudah dipakai
+  // halaman verifikasi KTA, sehingga role PJ tidak perlu diberi akses baca
+  // langsung ke collection `kta`.
+  try {
+    const response = await fetch(`/api/kta-public?token=${encodeURIComponent(parsed.value)}`, {
+      headers: { Accept: "application/json" },
+      cache: "no-store"
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data?.verified) return { anggota: null, parsed };
+    const anggota = AppState.anggota.find(a => String(a.nomorInduk || "") === String(data.nomorInduk || ""));
+    if (!anggota) return { anggota: null, parsed };
+    return { anggota, parsed: { ...parsed, nin: String(data.nomorInduk || "") } };
+  } catch (err) {
+    console.warn("[PMR] Gagal validasi token KTA:", err);
+    return { anggota: null, parsed };
+  }
 }
 
 async function _catatPresensiScan(anggota, tanggal) {
@@ -122,31 +176,35 @@ async function _startKtaScanner() {
     _renderScanResult(null, "Buka website melalui HTTPS untuk menggunakan scanner.", "danger");
     return;
   }
-  if (!("BarcodeDetector" in window)) {
-    status.textContent = "Scanner QR native tidak tersedia di browser ini.";
-    _renderScanResult(null, "Browser ini belum mendukung BarcodeDetector. Coba Chrome Android.", "danger");
-    return;
-  }
   try {
-    const detector = new BarcodeDetector({ formats: ["qr_code"] });
-    _ktaScanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+    const detector = ("BarcodeDetector" in window) ? new BarcodeDetector({ formats: ["qr_code"] }) : null;
+    let jsQR = null;
+    try { jsQR = await _loadKtaJsQR(); } catch (e) { console.warn("[PMR] jsQR fallback tidak tersedia:", e); }
+    const canvas = document.createElement("canvas");
+    _ktaScanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 }, aspectRatio: { ideal: 16/9 } }, audio: false });
     video.srcObject = _ktaScanStream;
     await video.play();
     btn.disabled = true;
     btn.innerHTML = "📷 Kamera Aktif";
     if (stopBtn) stopBtn.hidden = false;
     if (cameraBox) cameraBox.classList.add("is-active");
-    status.textContent = "Arahkan kamera ke QR KTA…";
+    status.textContent = jsQR ? "Arahkan kamera ke QR KTA…" : "Arahkan kamera ke QR KTA… (decoder fallback tidak tersedia)";
     _ktaScanBusy = false;
 
     const loop = async () => {
       if (!_ktaScanStream || !video.srcObject) return;
       try {
-        const codes = await detector.detect(video);
-        if (codes.length && !_ktaScanBusy) {
+        let raw = "";
+        if (detector) {
+          try {
+            const codes = await detector.detect(video);
+            raw = codes?.[0]?.rawValue || "";
+          } catch (e) { console.warn("[PMR] BarcodeDetector:", e); }
+        }
+        if (!raw && jsQR) raw = _decodeKtaWithJsQR(video, canvas, jsQR);
+        if (raw && !_ktaScanBusy) {
           _ktaScanBusy = true;
-          const raw = codes[0].rawValue || "";
-          const { anggota, parsed } = _findAnggotaByKtaPayload(raw);
+          const { anggota, parsed } = await _findAnggotaByKtaPayload(raw);
           const tanggal = document.getElementById("kta-scan-tanggal")?.value || new Date().toISOString().split("T")[0];
           if (!anggota) {
             _renderScanResult(null, parsed.type === "token" ? "QR KTA tidak cocok dengan data anggota." : "NIN tidak ditemukan di data anggota.", "danger");
@@ -200,7 +258,7 @@ function renderTabScan() {
       <div class="kta-scan-head">
         <div>
           <div class="card-title">Scan KTA untuk Presensi</div>
-          <p class="page-sub">Scan QR pada KTA. NIN/identitas QR wajib cocok dengan data anggota yang terdaftar dan berstatus Aktif.</p>
+          <p class="page-sub">Scan QR pada KTA. QR harus terhubung ke anggota yang terdaftar dan berstatus Aktif.</p>
         </div>
         <div class="field" style="margin:0"><label>Tanggal</label><input type="date" id="kta-scan-tanggal" value="${tanggalHari}"></div>
       </div>

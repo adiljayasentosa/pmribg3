@@ -4,6 +4,10 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/k/:token",
+      "destination": "/kta-member.html?kta=:token"
+    },
+    {
       "source": "/artikel/:slug",
       "destination": "/artikel.html?slug=:slug"
     },
