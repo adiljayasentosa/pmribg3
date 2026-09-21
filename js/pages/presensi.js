@@ -355,81 +355,163 @@ function renderTabScan() {
 
 function renderTabInput() {
   const c = document.getElementById("tab-content");
-  const tanggalHari = new Date().toISOString().split("T")[0];
+  const tanggalHari = document.getElementById("presensi-tanggal")?.value || new Date().toISOString().split("T")[0];
   const anggota = anggotaAktifSorted(AppState.anggota);
-
-  /* Muat data presensi yang sudah tersimpan untuk tanggal hari ini (jika ada).
-     Jika belum ada data → semua checkbox unchecked (bukan acak). */
   const presensiHariIni = AppState.presensiHistory.filter(p => p.tanggal === tanggalHari);
   const anggotaList = anggota.map(a => {
     const p = presensiHariIni.find(px => px.anggotaId === a.id);
-    return { ...a, status: p ? getStatusPresensi(p) : "hadir", ket: p ? (p.ket || "") : "" };
+    return {
+      ...a,
+      status: p ? getStatusPresensi(p) : "hadir",
+      ket: p ? (p.ket || "") : "",
+      sudahPresensi: !!p
+    };
   });
+
+  const hadirCount = anggotaList.filter(a => a.sudahPresensi && a.status === "hadir").length;
+  const belumCount = anggotaList.filter(a => !a.sudahPresensi).length;
+  const tercatatCount = anggotaList.length - belumCount;
 
   c.innerHTML = `
   <div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
       <div class="field" style="margin:0">
         <label>Tanggal Pertemuan</label>
         <input type="date" id="presensi-tanggal" value="${tanggalHari}" style="width:auto">
       </div>
       <button class="btn btn-primary btn-sm" id="btn-simpan-presensi">💾 Simpan Presensi</button>
     </div>
+
+    <div class="presensi-toolbar" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+      <input id="presensi-search" type="search"
+        placeholder="🔍 Cari nama, NIN, atau kelas..."
+        autocomplete="off"
+        style="width:100%;border:1px solid var(--gray-300);border-radius:10px;padding:10px 12px;font-size:0.9rem;background:var(--white,#fff)">
+      <div id="presensi-filters" style="display:flex;gap:7px;flex-wrap:wrap">
+        <button type="button" class="btn btn-sm presensi-filter active" data-filter="semua">Semua <span class="filter-count">${anggotaList.length}</span></button>
+        <button type="button" class="btn btn-sm presensi-filter" data-filter="hadir">Hadir <span class="filter-count">${hadirCount}</span></button>
+        <button type="button" class="btn btn-sm presensi-filter" data-filter="izin">Izin</button>
+        <button type="button" class="btn btn-sm presensi-filter" data-filter="sakit">Sakit</button>
+        <button type="button" class="btn btn-sm presensi-filter" data-filter="alpha">Alpha</button>
+        <button type="button" class="btn btn-sm presensi-filter" data-filter="belum">Belum Presensi <span class="filter-count">${belumCount}</span></button>
+      </div>
+      <div id="presensi-summary" style="font-size:0.84rem;color:var(--gray-600,#666)">
+        ${hadirCount} hadir · ${tercatatCount} sudah tercatat · ${belumCount} belum presensi
+      </div>
+    </div>
+
     <div class="table-wrap">
-      <table class="data-table">
+      <table class="data-table" id="presensi-input-table">
         <thead><tr><th>#</th><th>Nama</th><th>Kelas</th><th>Status</th><th>Keterangan</th></tr></thead>
         <tbody>
-          ${anggotaList.map((a,i)=>`<tr>
+          ${anggotaList.map((a,i)=>`<tr data-nama="${escapeHtml(a.nama)}" data-nin="${escapeHtml(a.nomorInduk || "")}" data-kelas="${escapeHtml(a.kelas || "")}" data-recorded="${a.sudahPresensi}" data-current-status="${escapeHtml(a.status)}">
             <td>${i+1}</td>
             <td><div style="display:flex;align-items:center;gap:8px">
-              <div class="avatar" style="width:28px;height:28px;font-size:0.65rem">${getInisial(a.nama)}</div>${a.nama}
+              <div class="avatar" style="width:28px;height:28px;font-size:0.65rem">${getInisial(a.nama)}</div>${escapeHtml(a.nama)}
             </div></td>
-            <td>${a.kelas}</td>
-            <td><div class="status-checks" data-id="${a.id}">
+            <td>${escapeHtml(a.kelas || "-")}</td>
+            <td><div class="status-checks" data-id="${escapeHtml(a.id)}">
               ${Object.keys(PRESENSI_STATUS_META).map(st=>`<label class="status-check"><input type="checkbox" data-status="${st}" ${a.status===st?"checked":""}><span>${PRESENSI_STATUS_META[st].label}</span></label>`).join("")}
             </div></td>
-            <td><input type="text" class="ket-input" data-id="${a.id}" value="${a.ket}"
+            <td><input type="text" class="ket-input" data-id="${escapeHtml(a.id)}" value="${escapeHtml(a.ket)}"
               placeholder="Opsional" style="border:1px solid var(--gray-300);border-radius:6px;padding:5px 10px;font-size:0.82rem;width:160px">
             </td>
           </tr>`).join("")}
         </tbody>
       </table>
+      <div id="presensi-empty-filter" hidden style="padding:28px 12px;text-align:center;color:var(--gray-600,#666)">
+        Tidak ada anggota yang cocok dengan pencarian/filter ini.
+      </div>
     </div>
   </div>`;
+
+  const rows = [...c.querySelectorAll("#presensi-input-table tbody tr")];
+  let activeFilter = "semua";
+
+  function applyPresensiFilter() {
+    const query = String(c.querySelector("#presensi-search")?.value || "").trim().toLowerCase();
+    let visible = 0;
+
+    rows.forEach(row => {
+      const searchable = `${row.dataset.nama || ""} ${row.dataset.nin || ""} ${row.dataset.kelas || ""}`.toLowerCase();
+      const matchesSearch = !query || searchable.includes(query);
+      const recorded = row.dataset.recorded === "true";
+      const currentStatus = row.dataset.currentStatus || "";
+      const matchesFilter = activeFilter === "semua"
+        || (activeFilter === "belum" && !recorded)
+        || (activeFilter !== "belum" && activeFilter !== "semua" && recorded && currentStatus === activeFilter);
+      const show = matchesSearch && matchesFilter;
+      row.hidden = !show;
+      if (show) visible++;
+    });
+
+    const empty = c.querySelector("#presensi-empty-filter");
+    if (empty) empty.hidden = visible !== 0;
+  }
+
+  c.querySelector("#presensi-search")?.addEventListener("input", applyPresensiFilter);
+  c.querySelectorAll(".presensi-filter").forEach(btn => {
+    btn.addEventListener("click", () => {
+      activeFilter = btn.dataset.filter || "semua";
+      c.querySelectorAll(".presensi-filter").forEach(b => b.classList.toggle("active", b === btn));
+      applyPresensiFilter();
+    });
+  });
+
+  c.querySelector("#presensi-tanggal")?.addEventListener("change", () => {
+    renderTabInput();
+  });
 
   c.querySelectorAll(".status-checks").forEach(group => {
     group.querySelectorAll("input[type=checkbox]").forEach(box => {
       box.addEventListener("change", ()=>{
         if (box.checked) {
           group.querySelectorAll("input[type=checkbox]").forEach(other => { if (other !== box) other.checked = false; });
+          const row = group.closest("tr");
+          if (row) row.dataset.currentStatus = box.dataset.status || "";
         } else if (!group.querySelector("input[type=checkbox]:checked")) {
-          const hadir = group.querySelector('input[data-status="hadir"]'); if (hadir) hadir.checked = true;
+          const hadir = group.querySelector('input[data-status="hadir"]');
+          if (hadir) {
+            hadir.checked = true;
+            const row = group.closest("tr");
+            if (row) row.dataset.currentStatus = "hadir";
+          }
         }
       });
     });
   });
 
-  document.getElementById("btn-simpan-presensi")?.addEventListener("click", async ()=>{
-    const tanggal = document.getElementById("presensi-tanggal").value;
+  c.querySelector("#btn-simpan-presensi")?.addEventListener("click", async ()=>{
+    const tanggal = c.querySelector("#presensi-tanggal")?.value;
     if (!tanggal) { tampilToast("Pilih tanggal terlebih dahulu.","danger"); return; }
 
-    const rows = anggotaList.map(a => {
-      const status = c.querySelector(`.status-checks[data-id="${a.id}"] input[type="checkbox"]:checked`)?.dataset.status || "hadir";
+    const rowsData = anggotaList.map(a => {
+      const status = c.querySelector(`.status-checks[data-id="${CSS.escape(String(a.id))}"] input[type="checkbox"]:checked`)?.dataset.status || "hadir";
       return {
         anggotaId: a.id,
         tanggal,
         status,
-        hadir: status === "hadir", /* field lama dipertahankan utk kompatibilitas ringkasan Beranda & Detail Anggota */
-        ket:   c.querySelector(`.ket-input[data-id="${a.id}"]`)?.value || ""
+        hadir: status === "hadir",
+        ket: c.querySelector(`.ket-input[data-id="${CSS.escape(String(a.id))}"]`)?.value || ""
       };
     });
 
-    const btn = document.getElementById("btn-simpan-presensi");
+    const btn = c.querySelector("#btn-simpan-presensi");
     btn.disabled=true; btn.textContent="Menyimpan…";
-    await DB.presensi.simpan(rows, tanggal);
-    btn.disabled=false; btn.textContent="💾 Simpan Presensi";
-    tampilToast("Presensi berhasil disimpan.","success");
+    try {
+      await DB.presensi.simpan(rowsData, tanggal);
+      tampilToast("Presensi berhasil disimpan.","success");
+      renderTabInput();
+    } catch (err) {
+      console.error("[PMR] Gagal menyimpan presensi:", err);
+      tampilToast(err?.message || "Gagal menyimpan presensi.","danger");
+    } finally {
+      btn.disabled=false;
+      btn.textContent="💾 Simpan Presensi";
+    }
   });
+
+  applyPresensiFilter();
 }
 
 /**
