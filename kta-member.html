@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Verifikasi KTA PMR</title>
 <meta name="theme-color" content="#C8102E">
-<link rel="stylesheet" href="css/variables.css">
-<link rel="stylesheet" href="css/base.css">
-<link rel="stylesheet" href="css/components.css">
-<link rel="stylesheet" href="css/kta.css">
+<link rel="stylesheet" href="/css/variables.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/components.css">
+<link rel="stylesheet" href="/css/kta.css">
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -53,13 +53,13 @@
       <button id="btn-logout" class="btn btn-outline btn-sm">Keluar</button>
     </div>
     <div class="kta-member-images">
-      <img id="member-front" src="assets/kta-front-template.png" alt="KTA depan">
-      <img src="assets/kta-back-template.png" alt="KTA belakang">
+      <img id="member-front" src="/assets/kta-front-template.png" alt="KTA depan">
+      <img src="/assets/kta-back-template.png" alt="KTA belakang">
     </div>
     <p id="private-note" class="kta-public-note">KTA ini hanya menampilkan data milik akun yang sedang login.</p>
   </section>
 </main>
-<script src="js/firebase-config.js"></script>
+<script src="/js/firebase-config.js"></script>
 <script>
 const _ktaParams = new URLSearchParams(location.search);
 let targetToken = _ktaParams.get('kta') || '';
@@ -180,15 +180,22 @@ document.getElementById('btn-logout')?.addEventListener('click',()=>firebase.aut
 
 firebase.auth().onAuthStateChanged(u=>{
   if(loginInProgress) return;
+  // URL /k/<token> and ?kta=<token> are always public verification.
+  // Never load the private session or sign out an existing dashboard session here.
+  if(targetToken){
+    loadPublic();
+    return;
+  }
   if(u){
     if(skipNextAuthUid && skipNextAuthUid===u.uid){skipNextAuthUid='';return;}
     loadOwn(u).catch(async e=>{
       m(e.message,'error');
       try { await firebase.auth().signOut(); } catch(_) {}
-      targetToken?loadPublic():showOnly(loginCard);
+      showOnly(loginCard);
     });
-  } else if(targetToken) loadPublic();
-  else showOnly(loginCard);
+  } else {
+    showOnly(loginCard);
+  }
 });</script>
 </body>
 </html>

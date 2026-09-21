@@ -70,24 +70,43 @@ function _decodeKtaWithJsQR(video, canvas, jsQR) {
   const vw = video.videoWidth, vh = video.videoHeight;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-  // QR KTA biasanya berada di tengah frame. Beberapa kamera/browser menghasilkan
-  // frame 16:9 yang membuat QR relatif kecil, sehingga decode seluruh frame sering
-  // gagal. Coba beberapa ROI + skala sebelum menyerah.
+  // Decoder dibuat lebih agresif karena QR KTA lama bisa masih memakai
+  // token 36 karakter. Kamera ponsel juga sering memberi frame yang blur,
+  // miring, atau terlalu lebar dibanding QR di tengah frame.
   const passes = [
-    { x: 0, y: 0, w: vw, h: vh, scale: 1 },
-    { x: vw * 0.08, y: vh * 0.05, w: vw * 0.84, h: vh * 0.90, scale: 1.25 },
-    { x: vw * 0.15, y: vh * 0.05, w: vw * 0.70, h: vh * 0.90, scale: 1.5 },
-    { x: vw * 0.20, y: vh * 0.10, w: vw * 0.60, h: vh * 0.80, scale: 1.75 }
+    { x: 0, y: 0, w: vw, h: vh, scale: 1.0 },
+    { x: vw * 0.05, y: vh * 0.02, w: vw * 0.90, h: vh * 0.96, scale: 1.25 },
+    { x: vw * 0.10, y: vh * 0.04, w: vw * 0.80, h: vh * 0.92, scale: 1.5 },
+    { x: vw * 0.15, y: vh * 0.08, w: vw * 0.70, h: vh * 0.84, scale: 1.8 },
+    { x: vw * 0.20, y: vh * 0.12, w: vw * 0.60, h: vh * 0.76, scale: 2.0 }
   ];
 
   for (const pass of passes) {
-    const maxW = 1400;
-    const w = Math.max(1, Math.min(maxW, Math.round(pass.w * pass.scale)));
-    const h = Math.max(1, Math.round(pass.h * pass.scale));
+    const maxW = 1600;
+    const w = Math.max(320, Math.min(maxW, Math.round(pass.w * pass.scale)));
+    const h = Math.max(320, Math.round(pass.h * pass.scale));
     canvas.width = w; canvas.height = h;
     ctx.drawImage(video, pass.x, pass.y, pass.w, pass.h, 0, 0, w, h);
     const image = ctx.getImageData(0, 0, w, h);
-    const result = jsQR(image.data, image.width, image.height, { inversionAttempts: "attemptBoth" });
+
+    // Coba frame asli terlebih dahulu.
+    let result = jsQR(image.data, image.width, image.height, {
+      inversionAttempts: "attemptBoth"
+    });
+    if (result?.data) return result.data;
+
+    // Lalu coba grayscale + kontras. Ini membantu QR yang tampil agak
+    // pucat/bernoise ketika kamera mengarah ke layar laptop atau kartu.
+    const gray = new Uint8ClampedArray(w * h * 4);
+    for (let i = 0, p = 0; i < image.data.length; i += 4, p += 4) {
+      const g = Math.round(
+        image.data[i] * 0.299 + image.data[i + 1] * 0.587 + image.data[i + 2] * 0.114
+      );
+      const c = Math.max(0, Math.min(255, (g - 128) * 1.35 + 128));
+      gray[p] = gray[p + 1] = gray[p + 2] = c;
+      gray[p + 3] = 255;
+    }
+    result = jsQR(gray, w, h, { inversionAttempts: "attemptBoth" });
     if (result?.data) return result.data;
   }
   return "";
@@ -163,6 +182,12 @@ async function _catatPresensiScan(anggota, tanggal) {
   return { duplicate: false };
 }
 
+function escapeHtml(value) {
+  const div = document.createElement("div");
+  div.textContent = String(value ?? "");
+  return div.innerHTML;
+}
+
 function _renderScanResult(anggota, message, tone="success") {
   const box = document.getElementById("kta-scan-result");
   if (!box) return;
@@ -197,13 +222,23 @@ async function _startKtaScanner() {
     const canvas = document.createElement("canvas");
     _ktaScanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 }, aspectRatio: { ideal: 16/9 } }, audio: false });
     video.srcObject = _ktaScanStream;
+    const track = _ktaScanStream.getVideoTracks?.()[0];
+    try {
+      const caps = track?.getCapabilities?.() || {};
+      const advanced = {};
+      if (Array.isArray(caps.focusMode) && caps.focusMode.includes("continuous")) advanced.focusMode = "continuous";
+      if (Array.isArray(caps.exposureMode) && caps.exposureMode.includes("continuous")) advanced.exposureMode = "continuous";
+      if (Object.keys(advanced).length && track.applyConstraints) await track.applyConstraints({ advanced: [advanced] });
+    } catch (_) {}
     await video.play();
     btn.disabled = true;
     btn.innerHTML = "📷 Kamera Aktif";
     if (stopBtn) stopBtn.hidden = false;
     if (cameraBox) cameraBox.classList.add("is-active");
-    status.textContent = jsQR ? "Arahkan kamera ke QR KTA…" : "Arahkan kamera ke QR KTA… (decoder fallback tidak tersedia)";
+    status.textContent = jsQR ? "Mencari QR KTA… arahkan QR ke kotak putih." : "Decoder QR tidak tersedia. Periksa koneksi internet.";
     _ktaScanBusy = false;
+    let _scanFrames = 0;
+    let _scanLastNotice = 0;
 
     const loop = async () => {
       if (!_ktaScanStream || !video.srcObject) return;
@@ -216,35 +251,48 @@ async function _startKtaScanner() {
           } catch (e) { console.warn("[PMR] BarcodeDetector:", e); }
         }
         if (!raw && jsQR) raw = _decodeKtaWithJsQR(video, canvas, jsQR);
+        _scanFrames++;
+        if (!raw && Date.now() - _scanLastNotice > 5000) {
+          status.textContent = `Mencari QR KTA… (${_scanFrames} frame diperiksa)`;
+          _scanLastNotice = Date.now();
+        }
         if (raw && !_ktaScanBusy) {
           _ktaScanBusy = true;
-          const { anggota, parsed } = await _findAnggotaByKtaPayload(raw);
-          const tanggal = document.getElementById("kta-scan-tanggal")?.value || new Date().toISOString().split("T")[0];
-          if (!anggota) {
-            _renderScanResult(null, parsed.type === "token" ? "QR KTA tidak cocok dengan data anggota." : "NIN tidak ditemukan di data anggota.", "danger");
-            status.textContent = "QR ditolak. Coba KTA yang terdaftar.";
-          } else if (String(anggota.statusKeanggotaan || anggota.status || "Aktif").toLowerCase() !== "aktif") {
-            _renderScanResult(anggota, "Anggota tidak berstatus Aktif. Presensi ditolak.", "danger");
-            status.textContent = "Anggota tidak aktif.";
-          } else if (!String(anggota.nomorInduk || "").trim()) {
-            _renderScanResult(anggota, "Data NIN anggota kosong. Presensi ditolak.", "danger");
-            status.textContent = "NIN anggota belum tersedia.";
-          } else {
-            try {
-              const result = await _catatPresensiScan(anggota, tanggal);
-              if (result.duplicate) {
-                _renderScanResult(anggota, `Sudah tercatat Hadir pada ${tanggal}.`, "warning");
-                status.textContent = "Scan duplikat.";
-              } else {
-                _renderScanResult(anggota, `Hadir tercatat · ${tanggal}`, "success");
-                status.textContent = "Presensi berhasil dicatat.";
+          try {
+            const { anggota, parsed } = await _findAnggotaByKtaPayload(raw);
+            const tanggal = document.getElementById("kta-scan-tanggal")?.value || new Date().toISOString().split("T")[0];
+            try { navigator.vibrate?.(80); } catch (_) {}
+            if (!anggota) {
+              _renderScanResult(null, parsed.type === "token" ? "QR KTA tidak cocok dengan data anggota." : "NIN tidak ditemukan di data anggota.", "danger");
+              status.textContent = "QR ditolak. Coba KTA yang terdaftar.";
+            } else if (String(anggota.statusKeanggotaan || anggota.status || "Aktif").toLowerCase() !== "aktif") {
+              _renderScanResult(anggota, "Anggota tidak berstatus Aktif. Presensi ditolak.", "danger");
+              status.textContent = "Anggota tidak aktif.";
+            } else if (!String(anggota.nomorInduk || "").trim()) {
+              _renderScanResult(anggota, "Data NIN anggota kosong. Presensi ditolak.", "danger");
+              status.textContent = "NIN anggota belum tersedia.";
+            } else {
+              try {
+                const result = await _catatPresensiScan(anggota, tanggal);
+                if (result.duplicate) {
+                  _renderScanResult(anggota, `Sudah tercatat Hadir pada ${tanggal}.`, "warning");
+                  status.textContent = "✓ QR terbaca · presensi sudah ada.";
+                } else {
+                  _renderScanResult(anggota, `Hadir tercatat · ${tanggal}`, "success");
+                  status.textContent = "✓ QR terbaca · Presensi berhasil dicatat.";
+                }
+              } catch (err) {
+                _renderScanResult(anggota, err?.message || "Gagal menyimpan presensi.", "danger");
+                status.textContent = "Gagal menyimpan.";
               }
-            } catch (err) {
-              _renderScanResult(anggota, err?.message || "Gagal menyimpan presensi.", "danger");
-              status.textContent = "Gagal menyimpan.";
             }
+          } catch (err) {
+            console.error("[PMR] Gagal memproses hasil scan:", err);
+            status.textContent = "QR terbaca, tetapi gagal diproses. Coba lagi.";
+            _renderScanResult(null, err?.message || "Gagal memproses QR KTA.", "danger");
+          } finally {
+            setTimeout(() => { _ktaScanBusy = false; }, 1400);
           }
-          setTimeout(() => { _ktaScanBusy = false; }, 1400);
         }
       } catch (err) {
         console.warn("[PMR] QR scanner:", err);
