@@ -297,7 +297,12 @@ function renderBerandaPengurus(el, user) {
       <div class="card-title">🕓 Aktivitas Terbaru</div>
       <div id="wrap-aktivitas-terbaru"></div>
     </div>
-  </div>`;
+  </div>
+  ${user.role === "admin" ? `
+  <div class="card pembina-admin-notes-card">
+    <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span>📝 Catatan Pembina</span><button class="btn btn-outline btn-sm" id="btn-admin-pembina-notes">Lihat Semua</button></div>
+    <div id="admin-pembina-notes-list"></div>
+  </div>` : ""}`;
 
   _renderPanelReminder(reminderList);
 
@@ -311,6 +316,18 @@ function renderBerandaPengurus(el, user) {
       </button>`).join("");
     gridAksi.querySelectorAll(".quick-action-btn").forEach(btn => {
       btn.addEventListener("click", () => aksi[+btn.dataset.idx].onClick());
+    });
+  }
+
+  if (user.role === "admin") {
+    const notes = Array.isArray(AppState.catatanPembina) ? AppState.catatanPembina : [];
+    const notesEl = document.getElementById("admin-pembina-notes-list");
+    const esc = v => String(v ?? "—").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+    const fmt = v => { try { const d=v?.toDate?v.toDate():new Date(v); return isNaN(d)?"—":d.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"}); } catch { return "—"; } };
+    notesEl.innerHTML = notes.length ? `<div class="pembina-admin-notes-list">${notes.slice(0,3).map(n=>`<article class="pembina-admin-note"><div><strong>${esc(n.title)}</strong>${n.status==="penting"?'<span class="badge badge-warning">Penting</span>':''}</div><p>${esc(n.body)}</p><small>${fmt(n.createdAt)} · ${esc(n.authorName||"Pembina")}</small></article>`).join("")}</div>` : `<div class="empty-state" style="padding:24px 10px"><p class="empty-title">Belum ada catatan Pembina</p><p class="empty-desc">Catatan yang dibuat Pembina akan muncul di sini.</p></div>`;
+    document.getElementById("btn-admin-pembina-notes")?.addEventListener("click",()=>{
+      const all = notes.map(n=>`<article class="pembina-note-item"><div class="pembina-note-item-head"><div><strong>${esc(n.title)}</strong>${n.status==="penting"?'<span class="badge badge-warning">Penting</span>':''}</div><small>${fmt(n.createdAt)} · ${esc(n.authorName||"Pembina")}</small></div><p>${esc(n.body)}</p></article>`).join("");
+      Modal.buka({judul:"Catatan Pembina",ukuran:"modal-lg",konten:all?`<div class="pembina-notes-modal">${all}</div>`:`<div class="pembina-empty">Belum ada catatan Pembina.</div>`,aksi:[{label:"Tutup",kelas:"btn-primary",id:"btn-close-admin-notes",onClick:()=>Modal.tutup()}]});
     });
   }
 

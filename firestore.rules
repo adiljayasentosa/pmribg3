@@ -122,6 +122,37 @@ service cloud.firestore {
 
 
     // ═══════════════════════════════════════════════════
+    // COLLECTION: catatanPembina
+    // Pembina dapat membuat/mengelola catatan sendiri. Admin hanya baca.
+    // ═══════════════════════════════════════════════════
+    match /catatanPembina/{catatanId} {
+      allow read: if hasAnyRole(['admin', 'pembina']);
+      allow create: if hasAnyRole(['pembina']) &&
+        request.resource.data.authorUid == request.auth.uid &&
+        request.resource.data.createdAt == request.time;
+      allow update: if hasAnyRole(['pembina']) &&
+        resource.data.authorUid == request.auth.uid &&
+        request.resource.data.authorUid == resource.data.authorUid;
+      allow delete: if hasAnyRole(['pembina']) &&
+        resource.data.authorUid == request.auth.uid;
+    }
+
+    // ═══════════════════════════════════════════════════
+    // COLLECTION: aktivitasSistem
+    // Audit trail: semua user login boleh membuat event miliknya sendiri.
+    // Hanya Admin yang dapat membaca. Event tidak dapat diubah/dihapus.
+    // ═══════════════════════════════════════════════════
+    match /aktivitasSistem/{aktivitasId} {
+      allow read: if isAdmin();
+      allow create: if isLoggedIn() && userDocExists() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.role == getRole() &&
+        request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+
+    // ═══════════════════════════════════════════════════
     // COLLECTION: pendaftaran
     //
     // Data pendaftar bersifat sensitif. Public submit dilakukan

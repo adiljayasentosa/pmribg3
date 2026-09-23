@@ -483,3 +483,25 @@
   .pembina-appreciation{padding:16px}
   .pembina-appreciation-mark{display:none}
 }
+
+/* v1.1.42 — Catatan Pembina & Audit Aktivitas */
+.pembina-notes-card{margin-top:16px}
+.pembina-note-actions{display:flex;gap:8px;flex-wrap:wrap}
+.pembina-notes-list{display:flex;flex-direction:column;gap:10px}
+.pembina-note-item{padding:14px;border:1px solid var(--gray-200);border-radius:12px;background:var(--white)}
+.pembina-note-item-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.pembina-note-item-head>div{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.pembina-note-item strong{font-size:.82rem}
+.pembina-note-item p{margin:7px 0 0;white-space:pre-wrap;font-size:.76rem;line-height:1.55;color:var(--ink)}
+.pembina-note-item small{color:var(--ink-soft);font-size:.67rem;white-space:nowrap}
+.pembina-notes-modal{display:flex;flex-direction:column;gap:10px}
+.pembina-admin-notes-card{margin-top:16px}
+.pembina-admin-notes-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pembina-admin-note{padding:12px;border:1px solid var(--gray-200);border-radius:12px;background:var(--gray-50)}
+.pembina-admin-note>div{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.pembina-admin-note p{font-size:.74rem;line-height:1.45;margin:7px 0;color:var(--ink-soft);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.pembina-admin-note small{font-size:.64rem;color:var(--gray-400)}
+.audit-toolbar{display:grid;grid-template-columns:minmax(240px,1fr) 150px 190px 150px;gap:8px;margin-bottom:14px}
+.audit-toolbar select,.audit-toolbar input[type=date]{height:40px;border:1px solid var(--gray-300);border-radius:10px;padding:0 10px;background:var(--white);color:var(--ink);font:inherit;font-size:.8rem}
+@media(max-width:900px){.pembina-admin-notes-list{grid-template-columns:1fr 1fr}.audit-toolbar{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.pembina-admin-notes-list{grid-template-columns:1fr}.audit-toolbar{grid-template-columns:1fr}.pembina-note-item-head{flex-direction:column;gap:5px}}
