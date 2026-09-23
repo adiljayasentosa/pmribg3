@@ -32,7 +32,7 @@ const Modal = (() => {
    *   ukuran  {string}  — "" | "modal-lg" | "modal-sm"
    *   aksi    {Array}   — [{ label, kelas, id, onClick }]
    */
-  function buka({ judul = "", konten = "", ukuran = "", aksi = [] } = {}) {
+  function buka({ judul = "", subjudul = "", ikon = "", kelas = "", konten = "", ukuran = "", aksi = [] } = {}) {
     _ensureRoot();
 
     const aksiBtns = aksi.map((a) =>
@@ -40,9 +40,15 @@ const Modal = (() => {
     ).join("");
 
     overlayEl.innerHTML = `
-      <div class="modal ${ukuran}" role="document">
+      <div class="modal ${[ukuran, kelas].filter(Boolean).join(" ")}" role="document">
         <div class="modal-head">
-          <h2>${judul}</h2>
+          <div class="modal-head-main">
+            ${ikon ? `<div class="modal-head-icon" aria-hidden="true">${ikon}</div>` : ""}
+            <div class="modal-head-copy">
+              <h2>${judul}</h2>
+              ${subjudul ? `<p>${subjudul}</p>` : ""}
+            </div>
+          </div>
           <button class="modal-close" id="modal-close-btn" aria-label="Tutup">✕</button>
         </div>
         <div class="modal-body">${konten}</div>

@@ -206,7 +206,7 @@ function renderPembina(el, user) {
     const bodyInput = document.getElementById("pembina-note-body");
     const titleCount = document.getElementById("pembina-title-count");
     const bodyCount = document.getElementById("pembina-body-count");
-    const updateCount = (input, counter) => { if (input && counter) counter.textContent = `${input.value.length}/${input.maxLength}`; };
+    const updateCount = (input, counter) => { if (input && counter) counter.textContent = String(input.value.length); };
     titleInput?.addEventListener("input", () => updateCount(titleInput, titleCount));
     bodyInput?.addEventListener("input", () => updateCount(bodyInput, bodyCount));
     updateCount(titleInput, titleCount);
