@@ -47,7 +47,7 @@
 <!-- ══════════════ BOTTOM NAVIGATION (mobile) ══════════════
      5 shortcut utama. Sengaja pakai class "sidebar-link" + data-page
      supaya otomatis ikut alur klik/active-state yang sudah ada di
-     js/dashboard.js (navLinks), tanpa perlu logic baru. -->
+     js/system/dashboard.js (navLinks), tanpa perlu logic baru. -->
 <nav class="bottom-nav" role="navigation" aria-label="Navigasi utama mobile">
   <a href="#anggota" class="sidebar-link bottom-nav-link" data-page="anggota">
     <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -348,32 +348,32 @@
      berjalan di Mode Demo; tidak berpengaruh sama sekali ke Mode
      Firebase (FIREBASE_ENABLED=true) yang sudah berjalan sebelumnya. -->
 <script src="js/data-dummy.js"></script>
-<script src="js/core/auth.js?v=1.1.39"></script>
+<script src="js/core/auth.js?v=1.1.41"></script>
 <script src="js/core/utils.js"></script>
-<script src="js/core/firebase-db.js?v=1.1.39"></script>
+<script src="js/core/firebase-db.js?v=1.1.41"></script>
 <script src="js/core/content-db.js"></script>
 <script src="js/core/storage.js"></script>
 <script src="js/core/modal.js"></script>
 <script src="js/core/state.js"></script>
 <script src="js/core/report-engine.js"></script>
 <script src="js/core/rotation-engine.js"></script>
-<script src="js/pages/beranda.js"></script>
-<script src="js/pages/member-portal.js"></script>
-<script src="js/pages/anggota.js"></script>
-<script src="js/pages/kegiatan.js"></script>
-<script src="js/pages/keuangan.js"></script>
-<script src="js/pages/inventaris.js"></script>
-<script src="js/pages/presensi.js?v=1.1.38"></script>
-<script src="js/pages/pembina.js?v=1.1.39"></script>
-<script src="js/pages/piket.js"></script>
-<script src="js/pages/upacara.js"></script>
-<script src="js/pages/pengurus.js"></script>
-<script src="js/pages/pengaturan.js"></script>
-<script src="js/pages/profil-saya.js"></script>
-<script src="js/pages/laporan.js"></script>
-<script src="js/pages/konten-admin.js"></script>
-<script src="js/dashboard.js?v=1.1.39"></script>
-<script src="js/pwa-register.js"></script>
-<script src="js/cs-bot.js"></script>
+<script src="js/system/beranda.js"></script>
+<script src="js/member/member-portal.js"></script>
+<script src="js/admin/anggota.js"></script>
+<script src="js/admin/kegiatan.js"></script>
+<script src="js/admin/keuangan.js"></script>
+<script src="js/admin/inventaris.js"></script>
+<script src="js/admin/presensi.js?v=1.1.41"></script>
+<script src="js/pembina/pembina.js?v=1.1.41"></script>
+<script src="js/admin/piket.js"></script>
+<script src="js/admin/upacara.js"></script>
+<script src="js/admin/pengurus.js"></script>
+<script src="js/admin/pengaturan.js"></script>
+<script src="js/member/profil-saya.js"></script>
+<script src="js/admin/laporan.js"></script>
+<script src="js/admin/konten-admin.js"></script>
+<script src="js/system/dashboard.js?v=1.1.41"></script>
+<script src="js/system/pwa-register.js"></script>
+<script src="js/system/cs-bot.js"></script>
 </body>
 </html>

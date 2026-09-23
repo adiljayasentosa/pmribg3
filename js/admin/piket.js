@@ -21,7 +21,7 @@
 
    [F4.4] Algoritma rotasi (PRNG seed, hitung riwayat, fair
    scheduler) DIPINDAHKAN ke js/core/rotation-engine.js supaya
-   bisa dipakai bersama oleh Petugas Upacara — lihat js/pages/
+   bisa dipakai bersama oleh Petugas Upacara — lihat js/admin/
    upacara.js. Fungsi-fungsi di bawah ini SEKARANG hanya wrapper
    tipis ke RotationEngine, dengan nama & bentuk hasil PERSIS
    sama seperti sebelumnya (backward compatible) — tidak ada

@@ -33,7 +33,7 @@ const ROLE_AKSES_IURAN     = ['admin', 'ketua', 'wakil', 'bendahara', 'demo'];
    Firestore yang baru diterima berasal dari cache lokal (offline/
    belum sinkron) atau dari server. TIDAK mengubah data/query apa pun
    — hanya membaca snap.metadata.fromCache lalu dispatch custom event
-   yang didengarkan js/pwa-register.js untuk indikator UI. */
+   yang didengarkan js/system/pwa-register.js untuk indikator UI. */
 function _laporkanStatusCache(snap) {
   try {
     window.dispatchEvent(new CustomEvent("pmr:firestore-cache-status", {
@@ -239,13 +239,18 @@ const DB = {
     /* Group 1: anggota, kegiatan, pengurus, inventaris, piket, upacara —
        boleh dibaca SEMUA role yang sudah login. Upacara (F4.4) masuk
        grup ini dengan alasan sama seperti Piket (transparansi jadwal). */
+    /* Pembina hanya membutuhkan data overview yang memang diizinkan Rules.
+       Piket dan Upacara tidak termasuk kewenangan baca Pembina, sehingga
+       jangan pernah di-fetch di sini. Promise.all() sebelumnya membuat
+       permission-denied dari salah satu collection menggagalkan seluruh
+       DB.init() dan dashboard berhenti di skeleton loading. */
     const [snapAnggota, snapKegiatan, snapPengurus, snapInventaris, snapPiket, snapUpacara] = await Promise.all([
       fdb.collection("anggota").orderBy("nama").get(),
       fdb.collection("kegiatan").orderBy("tanggal", "desc").get(),
       fdb.collection("pengurus").doc("struktur").get(),
       fdb.collection("inventaris").orderBy("nama").get(),
-      fdb.collection("piket").orderBy("tanggal", "desc").get(),
-      fdb.collection("upacara").orderBy("tanggal", "desc").get()
+      role === 'pembina' ? Promise.resolve({ docs: [] }) : fdb.collection("piket").orderBy("tanggal", "desc").get(),
+      role === 'pembina' ? Promise.resolve({ docs: [] }) : fdb.collection("upacara").orderBy("tanggal", "desc").get()
     ]);
 
     AppState.anggota    = snapAnggota.docs.map(d => _normalisasiAnggota({ id: d.id, ...d.data() })).sort(compareAnggotaKelasNama);
@@ -351,18 +356,25 @@ const DB = {
         _laporkanStatusCache(snap);
         AppState.inventaris = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         _reRenderPage();
-      }),
-      fdb.collection("piket").orderBy("tanggal", "desc").onSnapshot(snap => {
-        _laporkanStatusCache(snap);
-        AppState.piket = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        _reRenderPage();
-      }),
-      fdb.collection("upacara").orderBy("tanggal", "desc").onSnapshot(snap => {
-        _laporkanStatusCache(snap);
-        AppState.upacara = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        _reRenderPage();
       })
     );
+
+    /* Piket dan Upacara tidak boleh dipasang listener untuk Pembina karena
+       Rules saat ini memang tidak memberi akses baca pada role tersebut. */
+    if (role !== 'pembina') {
+      this._listeners.push(
+        fdb.collection("piket").orderBy("tanggal", "desc").onSnapshot(snap => {
+          _laporkanStatusCache(snap);
+          AppState.piket = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          _reRenderPage();
+        }),
+        fdb.collection("upacara").orderBy("tanggal", "desc").onSnapshot(snap => {
+          _laporkanStatusCache(snap);
+          AppState.upacara = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          _reRenderPage();
+        })
+      );
+    }
 
     /* keuangan, iuran — listener HANYA dipasang jika role diizinkan Rules.
        Tidak memasang listener yang akan ditolak lebih baik daripada

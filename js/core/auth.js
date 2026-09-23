@@ -170,34 +170,36 @@ function initAuth(onUser, onNoUser) {
       return;
     }
 
-    /* Coba ambil dari cache dulu */
-    let user = getCurrentUser();
-    if (!user) {
-      try {
-        const snap = await firebase.firestore()
-          .collection("users").doc(firebaseUser.uid).get();
-        if (snap.exists) {
-          user = snap.data();
+    /* Profil selalu disegarkan dari Firestore terlebih dahulu. Ini penting
+       untuk perubahan role (mis. Admin -> Pembina): sesi localStorage lama
+       tidak boleh mengunci role lama. Jika jaringan/Firestore gagal, baru
+       fallback ke cache sesi yang sudah ada. */
+    let user = null;
+    try {
+      const snap = await firebase.firestore()
+        .collection("users").doc(firebaseUser.uid).get();
+      if (snap.exists) {
+        user = { ...snap.data(), authUid: firebaseUser.uid };
+        localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+        _currentUser = user;
+      } else {
+        const idToken = await firebaseUser.getIdToken(true);
+        const response = await fetch("/api/auth-profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken })
+        });
+        let data = {};
+        try { data = await response.json(); } catch (_) {}
+        if (response.ok && data.ok && data.profile) {
+          user = { ...data.profile, authUid: firebaseUser.uid };
           localStorage.setItem(SESSION_KEY, JSON.stringify(user));
           _currentUser = user;
-        } else {
-          const idToken = await firebaseUser.getIdToken(true);
-          const response = await fetch("/api/auth-profile", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ idToken })
-          });
-          let data = {};
-          try { data = await response.json(); } catch (_) {}
-          if (response.ok && data.ok && data.profile) {
-            user = { ...data.profile, authUid: firebaseUser.uid };
-            localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-            _currentUser = user;
-          }
         }
-      } catch(e) {
-        console.error("[PMR] Gagal ambil profil:", e);
       }
+    } catch(e) {
+      console.error("[PMR] Gagal ambil profil terbaru:", e);
+      user = getCurrentUser();
     }
 
     if (user) onUser(user);

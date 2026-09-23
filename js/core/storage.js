@@ -10,7 +10,7 @@
    masih Spark/free plan) ke ImageKit. KONTRAK FUNGSI PUBLIK
    (uploadImage, uploadMultipleImages, deleteImage, replaceImage,
    compressImage, initUploadWidget) TIDAK BERUBAH SAMA SEKALI —
-   supaya js/pages/konten-admin.js dan keempat form (Poster/
+   supaya js/admin/konten-admin.js dan keempat form (Poster/
    Video/Artikel/Dokumentasi) nol perubahan.
 
    Alur upload (browser → ImageKit langsung, sesuai arsitektur

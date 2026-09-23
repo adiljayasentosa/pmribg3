@@ -6,7 +6,7 @@
    Cetak/PDF/CSV) dipakai oleh SEMUA jenis laporan — tidak ada
    implementasi terpisah per laporan.
 
-   Menambah HALAMAN baru ("Laporan") lewat js/pages/laporan.js.
+   Menambah HALAMAN baru ("Laporan") lewat js/admin/laporan.js.
    TIDAK mengubah Firestore Schema/Rules/Auth, TIDAK menambah
    role baru. RBAC memakai ulang konstanta yang sudah ada
    (ROLE_AKSES_KEUANGAN, ROLE_AKSES_PRESENSI dari firebase-db.js)
@@ -384,7 +384,7 @@ function _waktuGenerateSekarang() {
 }
 
 /* ─────────────────────────────────────────────────────────
-   ReportEngine — API yang dipakai js/pages/laporan.js
+   ReportEngine — API yang dipakai js/admin/laporan.js
 ───────────────────────────────────────────────────────── */
 const ReportEngine = (() => {
 

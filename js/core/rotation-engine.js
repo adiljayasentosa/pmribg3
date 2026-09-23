@@ -2,7 +2,7 @@
    ROTATION-ENGINE.JS (F4.4 — Refactor Rotation Engine)
    =========================================================
    Diekstrak PERSIS dari algoritma "Smart Fair Scheduler" yang
-   sebelumnya cuma ada di js/pages/piket.js (F4.1). Tidak ada
+   sebelumnya cuma ada di js/admin/piket.js (F4.1). Tidak ada
    perubahan pada aturan/skor/tie-break apa pun — murni
    pemindahan agar bisa dipakai bersama oleh Piket DAN Petugas
    Upacara (F4.4), tanpa duplikasi algoritma.
@@ -17,11 +17,11 @@
    ini — itu urusan masing-masing halaman (piket.js / upacara.js).
 
    Dipakai oleh:
-     - js/pages/piket.js   (lewat wrapper backward-compatible
+     - js/admin/piket.js   (lewat wrapper backward-compatible
        _hitungRiwayatPiket()/generateJadwalPiket() — lihat file
        tsb, TIDAK ada perubahan perilaku/nama fungsi yang sudah
        dipakai kode lain)
-     - js/pages/upacara.js (F4.4, langsung memakai
+     - js/admin/upacara.js (F4.4, langsung memakai
        RotationEngine.hitungRiwayat()/generateJadwal())
    ========================================================= */
 

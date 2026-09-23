@@ -13,7 +13,7 @@
    - TIDAK memanggil self.skipWaiting() otomatis di install. SW baru
      masuk state "waiting" dulu; baru aktif kalau halaman mengirim
      postMessage({type:'SKIP_WAITING'}) — itu dipicu tombol "Refresh"
-     di snackbar update (lihat js/pwa-register.js, Phase 2).
+     di snackbar update (lihat js/system/pwa-register.js, Phase 2).
    ========================================================= */
 
 /* APP_VERSION harus SELALU sama dengan "version" di /version.json — itu
@@ -25,7 +25,7 @@
    deploy yang mengubah isi file apa pun, karena inilah yang membuat
    browser mendeteksi ada versi sw.js baru (lihat penjelasan mekanisme
    update di README-PWA.md). */
-const APP_VERSION = "1.1.39";
+const APP_VERSION = "1.1.41";
 
 const CACHE_STATIC  = `pmr-static-${APP_VERSION}`;   // app shell: html/css/js/icon/logo
 const CACHE_RUNTIME = `pmr-runtime-${APP_VERSION}`;  // font & aset eksternal lain
@@ -45,11 +45,11 @@ const IMAGE_CACHE_MAX_ENTRIES = 80;
    pengunjung: landing, artikel, poster, video, dokumentasi).
    ------------------------------------------------------------------
    Aset admin-only (dashboard.html, login.html, setup.html, dan seluruh
-   js/pages/*.js + firebase-db.js/storage.js/modal.js/state.js/
-   report-engine.js/rotation-engine.js/dashboard.js) SENGAJA TIDAK
+   js/admin/*.js + js/member/*.js + js/pembina/*.js + firebase-db.js/storage.js/modal.js/state.js/
+   report-engine.js/rotation-engine.js/system/dashboard.js) SENGAJA TIDAK
    diprecache di sini. Alasan (hasil analisis yang disetujui):
-     - 23 file itu = 336 KB dari total 533 KB precache (63%!), padahal
-       cuma dipakai admin, bukan pengunjung publik.
+     - File dashboard/admin tidak dipakai pengunjung publik, jadi tidak perlu
+       ikut app-shell precache publik.
      - cache.addAll() bersifat atomik: 1 file gagal fetch = install
        SW gagal total, termasuk bagian publik yang justru paling
        penting untuk mayoritas pengguna.
@@ -83,11 +83,11 @@ const PRECACHE_URLS = [
   "/js/core/auth.js",
   "/js/core/utils.js",
   "/js/core/content-db.js",
-  "/js/content-public.js",
-  "/js/landing.js",
+  "/js/public/content-public.js",
+  "/js/public/landing.js",
   "/js/core/modal.js",
-  "/js/app-download.js",
-  "/js/pwa-register.js",
+  "/js/public/app-download.js",
+  "/js/system/pwa-register.js",
 
   // Aset & manifest
   "/assets/logo.svg",

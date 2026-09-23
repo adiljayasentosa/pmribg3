@@ -9,7 +9,7 @@
    - router menu (sidebar)    → navigateTo()
 
    Seluruh render function dan event handler per halaman sudah
-   dipindahkan ke js/pages/*.js. Helper lintas halaman (pasangSearch,
+   dipindahkan ke js/admin/*.js + js/member/*.js + js/pembina/*.js. Helper lintas halaman (pasangSearch,
    statCard, _jalankanSimpan) dipindahkan ke js/core/state.js.
 
    TIDAK ADA perubahan logika dari versi sebelumnya — murni
@@ -71,7 +71,7 @@ function _setLoadingState(loading) {
 
 /* ─────────────────────────────────────────────────────────
    PAGES — Registry router. render() masing-masing entry
-   didefinisikan di js/pages/*.js (dimuat sebelum file ini).
+   didefinisikan di js/admin/*.js + js/member/*.js + js/pembina/*.js (dimuat sebelum file ini).
 ───────────────────────────────────────────────────────── */
 async function renderPersetujuanAnggota(el, user) {
   const allowed = ["admin","ketua","wakil","sekretaris","demo"].includes(user.role);
