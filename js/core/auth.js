@@ -108,7 +108,6 @@ async function login(username, password, role) {
 
     _currentUser = { nama:profile.nama, username:profile.username, role:profile.role, anggotaId:profile.anggotaId || null, authUid:uid };
     localStorage.setItem(SESSION_KEY, JSON.stringify(_currentUser));
-    try { await firebase.firestore().collection("aktivitasSistem").add({ userId:uid, userName:profile.nama || profile.username || "Pengguna", role:profile.role || "none", activity:"Login", detail:"Login berhasil", createdAt:firebase.firestore.FieldValue.serverTimestamp() }); } catch (_) {}
     return { ok:true };
 
   } catch(e) {
@@ -127,13 +126,6 @@ async function login(username, password, role) {
    LOGOUT
 ──────────────────────────────────── */
 function logout() {
-  const user = getCurrentUser();
-  try {
-    const current = firebase?.auth?.().currentUser;
-    if (FIREBASE_ENABLED && current && user && user.role !== "demo") {
-      firebase.firestore().collection("aktivitasSistem").add({ userId:current.uid, userName:user.nama || user.username || "Pengguna", role:user.role || "none", activity:"Logout", detail:"Logout", createdAt:firebase.firestore.FieldValue.serverTimestamp() }).catch(()=>{});
-    }
-  } catch (_) {}
   localStorage.removeItem(SESSION_KEY);
   _currentUser = null;
   if (FIREBASE_ENABLED) {

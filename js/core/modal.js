@@ -33,7 +33,7 @@ const Modal = (() => {
    *   ukuran  {string}  — "" | "modal-lg" | "modal-sm"
    *   aksi    {Array}   — [{ label, kelas, id, onClick }]
    */
-  function buka({ judul = "", konten = "", ukuran = "", aksi = [] } = {}) {
+  function buka({ judul = "", subjudul = "", ikon = "", konten = "", ukuran = "", kelas = "", aksi = [] } = {}) {
     _ensureRoot();
 
     /* Jika modal baru dibuka saat modal sebelumnya masih dalam masa
@@ -49,10 +49,13 @@ const Modal = (() => {
       `<button class="btn ${a.kelas || "btn-ghost"}" id="${a.id || ""}">${a.label}</button>`
     ).join("");
 
+    const headIcon = ikon ? `<div class="modal-head-icon" aria-hidden="true">${ikon}</div>` : "";
+    const headCopy = `<div class="modal-head-copy"><h2>${judul}</h2>${subjudul ? `<p>${subjudul}</p>` : ""}</div>`;
+
     overlayEl.innerHTML = `
-      <div class="modal ${ukuran}" role="document">
+      <div class="modal ${ukuran} ${kelas}" role="document">
         <div class="modal-head">
-          <h2>${judul}</h2>
+          <div class="modal-head-main">${headIcon}${headCopy}</div>
           <button class="modal-close" id="modal-close-btn" aria-label="Tutup">✕</button>
         </div>
         <div class="modal-body">${konten}</div>

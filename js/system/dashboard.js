@@ -186,6 +186,7 @@ async function renderPersetujuanAnggota(el, user) {
       const resp = await fetch("/api/pendaftaran-action", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({idToken:token,pendaftaranId:a.id,action})});
       const raw = await resp.text(); let data={}; try{data=raw?JSON.parse(raw):{}}catch{throw new Error("Server mengembalikan respons tidak valid.");}
       if(!resp.ok) throw new Error(data.error||`Aksi gagal (${resp.status}).`);
+      logActivity("Persetujuan Anggota", `${action === "approve" ? "Setujui" : "Tolak"}: ${a.nama || a.id}`);
       if (action === "approve") {
         const nin = String(data.nomorInduk || "").trim();
         if (nin) {
@@ -513,9 +514,6 @@ function _initDashboard(user) {
   const contentArea = document.getElementById("content-area");
   const navLinks    = document.querySelectorAll(".sidebar-link[data-page]");
   const topbarTitle = document.getElementById("topbar-title");
-  if (user.role !== "admin") {
-    document.querySelector('.sidebar-link[data-page="aktivitas-sistem"]')?.style.setProperty("display", "none");
-  }
 
   PAGES = {
     beranda:    { title:"Beranda",      render:renderBeranda    },
@@ -530,7 +528,7 @@ function _initDashboard(user) {
     keuangan:   { title:"Keuangan",     render:renderKeuangan   },
     inventaris: { title:"Inventaris",   render:renderInventaris },
     laporan:    { title:"Laporan",      render:renderLaporan    },
-    "aktivitas-sistem": { title:"Aktivitas Sistem", render:renderAktivitasSistem },
+    "aktivitas-sistem": { title:"Aktivitas Sistem", render:renderActivityLog },
     pengurus:   { title:"Pengurus",     render:renderPengurus   },
     /* [F6.0] Manajemen Konten Publik — BARU, murni ditambahkan,
        tidak menyentuh entri di atas maupun di bawah. */
@@ -576,6 +574,11 @@ function _initDashboard(user) {
     closeSidebar();
     history.replaceState(null, "", "#" + pageId);
   }
+
+  /* Aktivitas Sistem hanya untuk Admin. Sembunyikan di UI, Rules tetap menjadi lapisan keamanan. */
+  document.querySelectorAll(".nav-activity-admin").forEach(link => {
+    link.style.display = user.role === "admin" ? "flex" : "none";
+  });
 
   navLinks.forEach(a => a.addEventListener("click", e => { e.preventDefault(); navigateTo(a.dataset.page); }));
 

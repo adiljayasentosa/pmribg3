@@ -114,7 +114,6 @@ const AppState = {
   inventaris:       [],
   piket:            [],
   upacara:          [],   /* F4.4 Fitur 2 */
-  catatanPembina:   [],
   iuran:            [],   /* F4.4/F4.5 — record berisi target, totalDibayar (akumulasi
                               cicilan), status ("Lunas"/"Belum Lunas"), riwayatPembayaran;
                               absennya record untuk (anggotaId,bulan,tahun) berarti
@@ -310,10 +309,6 @@ const DB = {
         )
       : [];
 
-    AppState.catatanPembina = (role === "admin" || role === "pembina")
-      ? await _fetchAman(() => fdb.collection("catatanPembina").orderBy("createdAt", "desc").limit(20).get(), "catatanPembina")
-      : [];
-
     _hitungRingkasan();
   },
 
@@ -418,79 +413,11 @@ const DB = {
         })
       );
     }
-
-    if (role === "admin" || role === "pembina") {
-      this._listeners.push(
-        fdb.collection("catatanPembina").orderBy("createdAt", "desc").limit(20).onSnapshot(snap => {
-          _laporkanStatusCache(snap);
-          AppState.catatanPembina = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          _reRenderPage();
-        })
-      );
-    }
   },
 
   stopListeners() {
     this._listeners.forEach(unsub => unsub());
     this._listeners = [];
-  },
-
-  async auditLog(activity, detail = "", extra = {}) {
-    try {
-      if (!FIREBASE_ENABLED) return;
-      const current = firebase.auth().currentUser;
-      const user = getCurrentUser() || {};
-      if (!current || user.role === "demo") return;
-      await firebase.firestore().collection("aktivitasSistem").add({
-        userId: current.uid,
-        userName: user.nama || user.username || "Pengguna",
-        role: user.role || "none",
-        activity: String(activity || "Aktivitas"),
-        detail: String(detail || ""),
-        ...extra,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    } catch (e) {
-      console.warn("[PMR] Gagal mencatat aktivitas sistem:", e);
-    }
-  },
-
-  catatanPembina: {
-    async tambah(data) {
-      if (getCurrentUser()?.role !== "pembina") throw new Error("Hanya Pembina yang dapat menambah catatan.");
-      const payload = {
-        title: String(data.title || "Catatan Pembina").trim().slice(0, 120),
-        body: String(data.body || "").trim().slice(0, 3000),
-        status: data.status === "penting" ? "penting" : "catatan",
-        authorUid: firebase.auth().currentUser?.uid || null,
-        authorName: getCurrentUser()?.nama || "Pembina",
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      };
-      if (!payload.body) throw new Error("Isi catatan wajib diisi.");
-      if (!FIREBASE_ENABLED) {
-        const id = String(Date.now());
-        AppState.catatanPembina.unshift({ id, ...payload, createdAt: new Date().toISOString() });
-        return id;
-      }
-      const ref = await firebase.firestore().collection("catatanPembina").add(payload);
-      await DB.auditLog("Tambah Catatan Pembina", payload.title);
-      return ref.id;
-    },
-    async update(id, data) {
-      if (getCurrentUser()?.role !== "pembina") throw new Error("Hanya Pembina yang dapat mengubah catatan.");
-      const payload = { title: String(data.title || "Catatan Pembina").trim().slice(0,120), body: String(data.body || "").trim().slice(0,3000), status: data.status === "penting" ? "penting" : "catatan", updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
-      if (!payload.body) throw new Error("Isi catatan wajib diisi.");
-      if (!FIREBASE_ENABLED) { const idx=AppState.catatanPembina.findIndex(x=>x.id===id); if(idx>=0) AppState.catatanPembina[idx]={...AppState.catatanPembina[idx],...payload,updatedAt:new Date().toISOString()}; return; }
-      await firebase.firestore().collection("catatanPembina").doc(id).update(payload);
-      await DB.auditLog("Ubah Catatan Pembina", payload.title);
-    },
-    async hapus(id) {
-      if (getCurrentUser()?.role !== "pembina") throw new Error("Hanya Pembina yang dapat menghapus catatan.");
-      if (!FIREBASE_ENABLED) { AppState.catatanPembina=AppState.catatanPembina.filter(x=>x.id!==id); return; }
-      await firebase.firestore().collection("catatanPembina").doc(id).delete();
-      await DB.auditLog("Hapus Catatan Pembina", id);
-    }
   },
 
   /* ──────────────────── ANGGOTA ──────────────────── */
@@ -516,7 +443,7 @@ const DB = {
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
       const ref = await firebase.firestore().collection("anggota").add(serverPayload);
-      await DB.auditLog("Tambah Anggota", `${data.nama || "Anggota"} · ${data.nomorInduk || "tanpa NI"}`);
+      logActivity("Data Anggota", `Tambah anggota: ${data.nama || ref.id}`);
       return ref.id;
     },
     /* Mengembalikan { imported, total }. Firestore membatasi 1 batch = maks
@@ -594,7 +521,7 @@ const DB = {
         payload.status = firebase.firestore.FieldValue.delete();
       }
       await firebase.firestore().collection("anggota").doc(id).update(payload);
-      await DB.auditLog("Ubah Anggota", `${data.nama || id}`);
+      logActivity("Data Anggota", `Ubah anggota: ${id}`);
     },
     async hapus(id) {
       DB._assertWritable();
@@ -604,7 +531,7 @@ const DB = {
         return;
       }
       await firebase.firestore().collection("anggota").doc(id).delete();
-      await DB.auditLog("Hapus Anggota", id);
+      logActivity("Data Anggota", `Hapus anggota: ${id}`);
     }
   },
 
@@ -619,7 +546,7 @@ const DB = {
         return id;
       }
       const ref = await firebase.firestore().collection("kegiatan").add(data);
-      await DB.auditLog("Tambah Kegiatan", data.nama || "Kegiatan");
+      logActivity("Kegiatan", `Tambah kegiatan: ${data.nama || ref.id}`);
       return ref.id;
     },
     async update(id, data) {
@@ -631,7 +558,7 @@ const DB = {
         return;
       }
       await firebase.firestore().collection("kegiatan").doc(id).update(data);
-      await DB.auditLog("Ubah Kegiatan", data.nama || id);
+      logActivity("Kegiatan", `Ubah kegiatan: ${id}`);
     },
     async hapus(id) {
       DB._assertWritable();
@@ -641,7 +568,7 @@ const DB = {
         return;
       }
       await firebase.firestore().collection("kegiatan").doc(id).delete();
-      await DB.auditLog("Hapus Kegiatan", id);
+      logActivity("Kegiatan", `Hapus kegiatan: ${id}`);
     }
   },
 
@@ -656,7 +583,7 @@ const DB = {
         return id;
       }
       const ref = await firebase.firestore().collection("keuangan").add(data);
-      await DB.auditLog("Tambah Transaksi Keuangan", `${data.jenis || "Transaksi"} · ${data.jumlah || 0}`);
+      logActivity("Keuangan", `${data.jenis || "Transaksi"}: ${data.uraian || ref.id}`);
       return ref.id;
     },
     async update(id, data) {
@@ -668,7 +595,7 @@ const DB = {
         return;
       }
       await firebase.firestore().collection("keuangan").doc(id).update(data);
-      await DB.auditLog("Ubah Transaksi Keuangan", id);
+      logActivity("Keuangan", `Ubah transaksi: ${id}`);
     },
     async hapus(id) {
       DB._assertWritable();
@@ -678,7 +605,7 @@ const DB = {
         return;
       }
       await firebase.firestore().collection("keuangan").doc(id).delete();
-      await DB.auditLog("Hapus Transaksi Keuangan", id);
+      logActivity("Keuangan", `Hapus transaksi: ${id}`);
     }
   },
 
@@ -730,7 +657,7 @@ const DB = {
         batch.set(ref, r);
       });
       await batch.commit();
-      await DB.auditLog("Input Presensi", `Tanggal ${tanggal} · ${rows.length} record`);
+      logActivity("Presensi", `Simpan presensi: ${tanggal} (${rows.length} record)`);
     }
   },
 
@@ -745,7 +672,7 @@ const DB = {
         return id;
       }
       const ref = await firebase.firestore().collection("inventaris").add(data);
-      await DB.auditLog("Tambah Inventaris", data.nama || data.barang || "Barang");
+      logActivity("Inventaris", `Tambah barang: ${data.nama || ref.id}`);
       return ref.id;
     },
     async update(id, data) {
@@ -756,7 +683,7 @@ const DB = {
         return;
       }
       await firebase.firestore().collection("inventaris").doc(id).update(data);
-      await DB.auditLog("Ubah Inventaris", data.nama || data.barang || id);
+      logActivity("Inventaris", `Ubah barang: ${id}`);
     },
     async hapus(id) {
       DB._assertWritable();
@@ -765,7 +692,7 @@ const DB = {
         return;
       }
       await firebase.firestore().collection("inventaris").doc(id).delete();
-      await DB.auditLog("Hapus Inventaris", id);
+      logActivity("Inventaris", `Hapus barang: ${id}`);
     }
   },
 

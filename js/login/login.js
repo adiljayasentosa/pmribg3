@@ -55,6 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const result = await login(username, password, selectedRole);
 
     if (result.ok) {
+      await logActivity("Login", `Login sebagai ${selectedRole}`);
       btnSubmit.textContent = "✓ Berhasil!";
       setTimeout(() => (window.location.href = "dashboard.html"), 400);
     } else {
