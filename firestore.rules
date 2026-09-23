@@ -201,7 +201,7 @@ service cloud.firestore {
 
       // READ: Admin, ketua, wakil (pengawasan), bendahara.
       allow read: if hasAnyRole([
-        'admin', 'ketua', 'wakil', 'bendahara'
+        'admin', 'ketua', 'wakil', 'bendahara', 'pembina'
       ]) || (isActiveMember() && (resource.data.get('anggotaId','') == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.anggotaId || resource.id == '_pengaturan'));
 
       // CREATE & UPDATE: Admin dan bendahara.
@@ -224,7 +224,7 @@ service cloud.firestore {
 
       // READ: Admin, ketua, wakil, sekretaris, pj.
       allow read: if hasAnyRole([
-        'admin', 'ketua', 'wakil', 'sekretaris', 'pj'
+        'admin', 'ketua', 'wakil', 'sekretaris', 'pj', 'pembina'
       ]) || (isActiveMember() && isMyMemberId(resource.data.anggotaId));
 
       // CREATE & UPDATE: Admin, ketua, wakil, sekretaris, pj.

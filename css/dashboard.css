@@ -386,3 +386,100 @@
   .kta-scan-frame{width:60%;max-width:210px}
   .kta-scan-status{left:9px;right:9px;bottom:9px;padding:8px 10px}
 }
+
+/* =========================================================
+   PEMBINA — single-page limited edition dashboard
+   Mengikuti design system PMR yang sudah ada, bukan dashboard baru.
+   ========================================================= */
+.pembina-mode .sidebar,
+.pembina-mode .bottom-nav{display:none !important}
+.pembina-mode .app-main{margin-left:0 !important}
+.pembina-mode .sidebar-toggle{display:none !important}
+.pembina-mode .content{max-width:1180px;margin:0 auto;width:100%}
+
+.pembina-page{max-width:1120px;margin:0 auto;padding-bottom:28px}
+.pembina-hero{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:22px;padding:4px 0}
+.pembina-eyebrow{font-size:.68rem;font-weight:800;letter-spacing:.12em;color:var(--pmr-red);text-transform:uppercase}
+.pembina-hero h1{margin:5px 0 4px;font-family:var(--font-display);font-size:1.65rem;line-height:1.2}
+.pembina-hero p{margin:0;color:var(--ink-soft);font-size:.86rem}
+.pembina-logout{flex-shrink:0}
+.pembina-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
+.pembina-stat-card{padding:18px 18px 16px;position:relative;overflow:hidden}
+.pembina-stat-card strong{display:block;font-family:var(--font-display);font-size:1.65rem;line-height:1.15;margin-top:10px}
+.pembina-stat-card>span:not(.pembina-stat-icon){display:block;font-weight:700;font-size:.82rem;margin-top:5px}
+.pembina-stat-card small{display:block;color:var(--ink-soft);font-size:.72rem;margin-top:4px;line-height:1.4}
+.pembina-stat-icon{display:flex;width:38px;height:38px;align-items:center;justify-content:center;border-radius:11px;background:var(--pmr-red-light);color:var(--pmr-red);font-size:1rem}
+.pembina-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:16px}
+.pembina-grid-main{grid-template-columns:1.15fr .85fr}
+.pembina-section-card{padding:20px}
+.pembina-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+.pembina-section-head h2{font-family:var(--font-display);font-size:1rem;margin:0 0 3px}
+.pembina-section-head p{font-size:.75rem;color:var(--ink-soft);margin:0;line-height:1.45}
+.pembina-count{min-width:30px;height:30px;border-radius:999px;background:var(--pmr-red-light);color:var(--pmr-red);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800}
+.pembina-list{display:flex;flex-direction:column;gap:8px}
+.pembina-list-item{display:flex;gap:12px;align-items:center;padding:10px;border:1px solid var(--gray-200);border-radius:12px}
+.pembina-list-item strong{font-size:.82rem}
+.pembina-list-item p{margin:3px 0 0;color:var(--ink-soft);font-size:.7rem;line-height:1.35}
+.pembina-date{width:44px;height:48px;border-radius:10px;background:var(--pmr-red-light);color:var(--pmr-red);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}
+.pembina-date strong{font-family:var(--font-display);font-size:1rem;line-height:1}
+.pembina-date span{font-size:.6rem;text-transform:uppercase;margin-top:3px;font-weight:700}
+.pembina-mini-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.pembina-mini-grid>div{padding:13px;border-radius:12px;background:var(--gray-100);border:1px solid var(--gray-200)}
+.pembina-mini-grid strong{display:block;font-family:var(--font-display);font-size:1rem;line-height:1.25}
+.pembina-mini-grid span{display:block;margin-top:3px;color:var(--ink-soft);font-size:.68rem}
+.pembina-note{display:flex;justify-content:space-between;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-200);font-size:.74rem}
+.pembina-note span{color:var(--ink-soft);text-align:right}
+.pembina-attendance{display:flex;align-items:center;gap:18px}
+.pembina-attendance-ring{width:92px;height:92px;border-radius:50%;border:8px solid var(--pmr-red-light);outline:3px solid var(--pmr-red-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}
+.pembina-attendance-ring strong{font-family:var(--font-display);font-size:1.1rem;color:var(--pmr-red)}
+.pembina-attendance-ring span{font-size:.62rem;color:var(--ink-soft)}
+.pembina-attendance-copy strong,.pembina-attendance-copy span,.pembina-attendance-copy small{display:block}
+.pembina-attendance-copy strong{font-size:.9rem}
+.pembina-attendance-copy span{font-size:.73rem;margin-top:3px;color:var(--ink-soft)}
+.pembina-attendance-copy small{font-size:.64rem;line-height:1.4;margin-top:9px;color:var(--gray-400)}
+.pembina-finance-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pembina-finance-row>div{padding:12px;border-radius:11px;background:var(--gray-100);border:1px solid var(--gray-200)}
+.pembina-finance-row span{display:block;color:var(--ink-soft);font-size:.67rem}
+.pembina-finance-row strong{display:block;margin-top:5px;font-family:var(--font-display);font-size:.9rem}
+.pembina-finance-total{background:var(--pmr-red-light)!important;border-color:var(--pmr-red-soft)!important}
+.pembina-finance-total span,.pembina-finance-total strong{color:var(--pmr-red-dark)}
+.pembina-timeline{display:flex;flex-direction:column;gap:0}
+.pembina-timeline-item{display:flex;gap:12px;position:relative;padding:0 0 14px 4px}
+.pembina-timeline-item:last-child{padding-bottom:0}
+.pembina-timeline-item>span{width:9px;height:9px;background:var(--pmr-red);border-radius:50%;margin-top:5px;flex-shrink:0;box-shadow:0 0 0 4px var(--pmr-red-light)}
+.pembina-timeline-item:not(:last-child)>span::after{content:"";position:absolute;left:8px;top:14px;bottom:0;width:1px;background:var(--gray-200)}
+.pembina-timeline-item strong{font-size:.8rem}
+.pembina-timeline-item p{margin:3px 0 0;color:var(--ink-soft);font-size:.69rem}
+.pembina-list.compact{gap:7px}
+.pembina-list-item.compact{padding:9px}
+.pembina-list-dot{width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--warning-bg);color:var(--warning);font-weight:800;font-size:.75rem;flex-shrink:0}
+.pembina-ok{display:flex;gap:10px;align-items:flex-start;padding:13px;border-radius:12px;background:var(--success-bg);color:var(--success)}
+.pembina-ok>span{font-weight:900}
+.pembina-ok strong{display:block;font-size:.8rem}
+.pembina-ok p{margin:3px 0 0;font-size:.69rem;color:var(--ink-soft);line-height:1.4}
+.pembina-empty{padding:24px 12px;text-align:center;color:var(--ink-soft);font-size:.75rem;border:1px dashed var(--gray-300);border-radius:12px}
+.pembina-appreciation{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:2px;padding:20px 22px;border:1px solid var(--pmr-red-soft);border-radius:var(--radius-md);background:linear-gradient(135deg,var(--pmr-red-light),var(--white));box-shadow:var(--shadow-sm)}
+.pembina-appreciation h2{font-family:var(--font-display);font-size:1rem;margin:5px 0 4px}
+.pembina-appreciation p{font-size:.74rem;color:var(--ink-soft);line-height:1.5;margin:0;max-width:720px}
+.pembina-appreciation-mark{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:var(--pmr-red);color:#fff;font-size:1.25rem;flex-shrink:0;box-shadow:var(--shadow-md)}
+
+@media(max-width:900px){
+  .pembina-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pembina-grid,.pembina-grid-main{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .pembina-page{padding-bottom:12px}
+  .pembina-hero{align-items:flex-start}
+  .pembina-hero h1{font-size:1.3rem}
+  .pembina-hero p{font-size:.76rem}
+  .pembina-stat-grid{gap:9px}
+  .pembina-stat-card{padding:14px}
+  .pembina-stat-card strong{font-size:1.35rem}
+  .pembina-stat-card small{font-size:.64rem}
+  .pembina-section-card{padding:15px}
+  .pembina-finance-row{grid-template-columns:1fr}
+  .pembina-attendance{gap:12px}
+  .pembina-attendance-ring{width:82px;height:82px}
+  .pembina-appreciation{padding:16px}
+  .pembina-appreciation-mark{display:none}
+}

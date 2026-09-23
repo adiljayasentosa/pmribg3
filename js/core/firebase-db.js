@@ -25,8 +25,9 @@
    pj           : anggota, kegiatan, pengurus, presensi
    admin/ketua/wakil : semua collection
 ───────────────────────────────────────────────────────── */
-const ROLE_AKSES_KEUANGAN = ['admin', 'ketua', 'wakil', 'bendahara', 'demo'];
-const ROLE_AKSES_PRESENSI = ['admin', 'ketua', 'wakil', 'sekretaris', 'pj', 'demo'];
+const ROLE_AKSES_KEUANGAN = ['admin', 'ketua', 'wakil', 'bendahara', 'pembina', 'demo'];
+const ROLE_AKSES_PRESENSI = ['admin', 'ketua', 'wakil', 'sekretaris', 'pj', 'pembina', 'demo'];
+const ROLE_AKSES_IURAN     = ['admin', 'ketua', 'wakil', 'bendahara', 'demo'];
 
 /* [Phase 2 — PWA] Helper read-only: laporkan ke UI apakah snapshot
    Firestore yang baru diterima berasal dari cache lokal (offline/
@@ -286,7 +287,7 @@ const DB = {
       ROLE_AKSES_KEUANGAN.includes(role)
         ? _fetchAman(() => fdb.collection("keuangan").orderBy("tanggal", "desc").get(), "keuangan")
         : [],
-      ROLE_AKSES_KEUANGAN.includes(role)
+      ROLE_AKSES_IURAN.includes(role)
         ? _fetchAman(() => fdb.collection("iuran").get(), "iuran")
         : []
     ]);
@@ -373,7 +374,12 @@ const DB = {
           _laporkanStatusCache(snap);
           AppState.keuangan = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           _hitungRingkasan(); _reRenderPage();
-        }),
+        })
+      );
+    }
+
+    if (ROLE_AKSES_IURAN.includes(role)) {
+      this._listeners.push(
         fdb.collection("iuran").onSnapshot(snap => {
           _laporkanStatusCache(snap);
           const semua = snap.docs.map(d => ({ id: d.id, ...d.data() }));

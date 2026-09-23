@@ -17,6 +17,7 @@ const ROLES = {
   sekretaris: { label: "Sekretaris",  badge: "badge-info"    },
   bendahara:  { label: "Bendahara",   badge: "badge-success" },
   pj:         { label: "PJ Divisi",   badge: "badge-warning" },
+  pembina:    { label: "Pembina",     badge: "badge-red"     },
   anggota:    { label: "Anggota PMR", badge: "badge-gray"    },
   demo:       { label: "Demo",        badge: "badge-info"     }
 };
@@ -33,6 +34,7 @@ const DUMMY_USERS = [
   { username:"sekretaris", password:"sekre123",    role:"sekretaris", nama:"Dewi Lestari"    },
   { username:"bendahara",  password:"bendahara123",role:"bendahara",  nama:"Putri Ramadhani" },
   { username:"pj",         password:"pj123",       role:"pj",         nama:"Raka Pratama",    divisi:"Dokumentasi" },
+  { username:"pembina",    password:"pembina123",  role:"pembina",    nama:"Pembina PMR" },
   { username:"anggota",    password:"anggota123",  role:"anggota",    nama:"Raka Pratama", anggotaId:"1" },
   { username:"demo",       password:"demo123",     role:"demo",       nama:"Demo Client" }
 ];

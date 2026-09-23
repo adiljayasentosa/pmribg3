@@ -31,7 +31,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       /* Pasang handler re-render ke AppState listener */
       setReRenderHandler(() => {
-        const halaman = location.hash.replace("#","") || "beranda";
+        let halaman = location.hash.replace("#","") || "beranda";
+        if (user.role === "anggota" && halaman !== "anggota") halaman = "anggota";
+        if (user.role === "pembina" && halaman !== "pembina") halaman = "pembina";
         if (PAGES[halaman]) {
           document.getElementById("content-area").innerHTML = "";
           PAGES[halaman].render(document.getElementById("content-area"), user);
@@ -514,6 +516,7 @@ function _initDashboard(user) {
 
   PAGES = {
     beranda:    { title:"Beranda",      render:renderBeranda    },
+    pembina:    { title:"Dashboard Pembina", render:renderPembina },
     anggota:    { title:"Data Anggota", render:(el,u)=>u.role === "anggota" ? renderMemberPortal(el,u) : renderAnggota(el,u) },
     "persetujuan-anggota": { title:"Persetujuan Anggota PMR", render:renderPersetujuanAnggota },
     kta:        { title:"KTA PMR", render:renderKta },
@@ -545,11 +548,20 @@ function _initDashboard(user) {
     document.querySelectorAll(".sidebar,.bottom-nav,.topbar").forEach(node => { node.style.display = "none"; });
   }
 
+  /* Portal khusus Pembina: satu halaman overview read-only.
+     Sidebar/bottom-nav disembunyikan agar dashboard terasa seperti ruang
+     pemantauan khusus, bukan dashboard pengurus dengan menu yang dikurangi. */
+  if (user.role === "pembina") {
+    document.body.classList.add("pembina-mode");
+    document.querySelectorAll(".sidebar,.bottom-nav").forEach(node => { node.style.display = "none"; });
+  }
+
   function navigateTo(pageId) {
-    /* Route guard lapis UI: akun anggota tidak boleh membuka halaman
-       administrasi hanya dengan mengetik hash secara manual. Firestore
-       Rules tetap menjadi lapisan keamanan utama. */
+    /* Route guard lapis UI: portal khusus tidak boleh keluar dari
+       satu halaman hanya dengan mengubah hash. Firestore Rules tetap
+       menjadi lapisan keamanan utama untuk data. */
     if (user.role === "anggota" && pageId !== "anggota") pageId = "anggota";
+    if (user.role === "pembina" && pageId !== "pembina") pageId = "pembina";
 
     const page = PAGES[pageId];
     if (!page) return;

@@ -154,3 +154,14 @@
 .auth-register-btn:hover{background:var(--pmr-red-light)}
 .auth-register-note{text-align:center;color:var(--gray-400);font-size:.7rem;margin:8px 0 0}
 @media(max-width:860px){.auth-form-wrap{padding:26px 20px;align-items:flex-start}.auth-form{padding-top:6px}.auth-brand-center{margin-bottom:22px}}
+
+/* Role hierarchy — Pembina → Pengurus → PJ Divisi → Anggota */
+.role-groups{display:flex;flex-direction:column;gap:11px;margin-bottom:20px}
+.role-group{padding:10px 11px 11px;border:1px solid var(--gray-200);border-radius:14px;background:var(--gray-100)}
+.role-group-pembina{border-color:var(--pmr-red-soft);background:var(--pmr-red-light)}
+.role-group-label{font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 7px 2px}
+.role-group-pembina .role-group-label{color:var(--pmr-red-dark)}
+.role-group-chips{display:flex;flex-wrap:wrap;gap:7px}
+.role-group-chips-pengurus{flex-wrap:nowrap}
+.role-group .role-pill{background:var(--white);margin:0}
+@media(max-width:520px){.role-group-chips-pengurus{flex-wrap:wrap}}
