@@ -7,9 +7,10 @@
 /* ---------- Navbar ---------- */
 .nav{
   position:sticky; top:0; z-index:50;
-  background:rgba(255,255,255,0.92);
-  backdrop-filter:blur(8px);
-  border-bottom:1px solid var(--gray-200);
+  background:var(--pmr-red);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(255,255,255,.10);
+  box-shadow:0 4px 18px rgba(91,0,18,.14);
 }
 .nav-inner{
   display:flex; align-items:center; justify-content:space-between;
@@ -17,12 +18,22 @@
 }
 .nav-brand{ display:flex; align-items:center; gap:10px; }
 .nav-brand .brand-name{ font-family:var(--font-display); font-weight:700; font-size:1rem; line-height:1.2; }
-.nav-brand .brand-sub{ font-size:0.72rem; color:var(--ink-soft); }
+.nav-brand .brand-sub{ font-size:0.72rem; color:rgba(255,255,255,.78); }
 .nav-links{ display:flex; gap:28px; }
-.nav-links a{ font-size:0.9rem; font-weight:600; color:var(--ink-soft); transition:color var(--transition); }
-.nav-links a:hover{ color:var(--pmr-red); }
+.nav-links a{ font-size:0.9rem; font-weight:600; color:rgba(255,255,255,.90); transition:color var(--transition); }
+.nav-links a:hover{ color:var(--white); }
 .nav-actions{ display:flex; align-items:center; gap:10px; }
 .nav-actions .pmr-cs-nav-btn{ flex:0 0 auto; }
+.nav-actions .btn-outline{
+  border-color:rgba(255,255,255,.72);
+  color:var(--white);
+  background:transparent;
+}
+.nav-actions .btn-outline:hover{
+  background:rgba(255,255,255,.12);
+  border-color:var(--white);
+}
+
 .nav-toggle{
   display:none;
   width:40px; height:40px;
@@ -30,11 +41,11 @@
   align-items:center; justify-content:center;
 }
 .nav-toggle span{
-  display:block; width:22px; height:2px; background:var(--ink);
+  display:block; width:22px; height:2px; background:var(--white);
   position:relative;
 }
 .nav-toggle span::before,.nav-toggle span::after{
-  content:''; position:absolute; left:0; width:22px; height:2px; background:var(--ink);
+  content:''; position:absolute; left:0; width:22px; height:2px; background:var(--white);
 }
 .nav-toggle span::before{ top:-7px; }
 .nav-toggle span::after{ top:7px; }
@@ -66,7 +77,7 @@
       rgba(200,16,46,.30) 100%),
     url('../assets/hero-kegiatan-pmr.jpg');
   background-size:cover;
-  background-position:center center;
+  background-position:center 44%;
   background-repeat:no-repeat;
 }
 .hero::before{
@@ -166,27 +177,109 @@
 
 @media (max-width: 560px){
   .hero{
-    min-height:720px;
-    padding:48px 20px 96px;
+    min-height:760px;
+    padding:34px 20px 62px;
     align-items:flex-start;
   }
   .hero::after{
     background-image:
       linear-gradient(180deg,
         rgba(200,16,46,.985) 0%,
-        rgba(200,16,46,.95) 28%,
-        rgba(200,16,46,.70) 55%,
-        rgba(200,16,46,.44) 100%),
+        rgba(200,16,46,.94) 30%,
+        rgba(200,16,46,.72) 55%,
+        rgba(200,16,46,.32) 100%),
       url('../assets/hero-kegiatan-pmr.jpg');
-    background-position:center bottom;
+    background-position:center 54%;
+  }
+  .hero::before{
+    background-size:44px 44px;
+    opacity:.12;
+    mask-image:linear-gradient(180deg, black 0%, transparent 72%);
   }
   .hero-copy{ max-width:none; }
-  .hero-eyebrow{ font-size:.70rem; margin-bottom:16px; }
-  .hero h1{ font-size:clamp(1.9rem, 9vw, 2.45rem); line-height:1.10; margin-bottom:16px; }
-  .hero p.lead{ font-size:.91rem; line-height:1.65; margin-bottom:24px; }
-  .hero-actions{ gap:10px; }
-  .hero-actions .btn{ min-height:48px; }
+  .hero-eyebrow{
+    font-size:.68rem;
+    padding:6px 12px;
+    margin-bottom:14px;
+  }
+  .hero h1{
+    font-size:clamp(2rem, 9vw, 2.35rem);
+    line-height:1.08;
+    margin-bottom:14px;
+    letter-spacing:-.02em;
+  }
+  .hero p.lead{
+    font-size:.91rem;
+    line-height:1.55;
+    max-width:100%;
+    margin-bottom:20px;
+  }
+  .hero-actions{
+    flex-direction:column;
+    align-items:stretch;
+    gap:10px;
+    width:min(100%, 330px);
+  }
+  .hero-actions .btn{
+    width:100%;
+    min-height:50px;
+    justify-content:center;
+  }
+
+  /* Login sengaja berada tepat di bawah Dashboard, bukan berdampingan. */
+  .hero-actions .btn-outline{
+    background:rgba(200,16,46,.16);
+    border-color:rgba(255,255,255,.78);
+    backdrop-filter:blur(6px);
+  }
+
+  /* Mobile nav menyatu dengan hero agar tidak terlihat seperti blok putih terpisah. */
+  .nav{
+    background:var(--pmr-red);
+    border-bottom:1px solid rgba(255,255,255,.10);
+    backdrop-filter:blur(10px);
+  }
+  .nav-inner{ padding:10px 16px; }
+  .nav-brand .brand-name{ color:var(--white); font-size:.98rem; }
+  .nav-brand .brand-sub{ color:rgba(255,255,255,.78); }
+  .nav-toggle{ width:38px; height:38px; }
+  .nav-toggle span,
+  .nav-toggle span::before,
+  .nav-toggle span::after{ background:var(--white); }
+  .nav-links{
+    background:var(--pmr-red);
+    border-bottom:1px solid rgba(255,255,255,.12);
+  }
+
+  /* Statistik tetap dekat dengan hero dan dibuat 2 kolom agar tidak menjulur jauh. */
+  .hero-stats-strip{
+    margin-top:-22px;
+    padding:0 14px;
+  }
+  .hero-stats-strip .grid.grid-4{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:0;
+    padding:14px 10px;
+    border-radius:22px;
+    background:rgba(126,0,22,.42);
+    border:1px solid rgba(255,255,255,.22);
+    box-shadow:0 16px 34px rgba(70,0,12,.24);
+    backdrop-filter:blur(10px);
+  }
+  .hero-stats-strip .hero-stat:nth-child(n+3){ display:none; }
+  .hero-stats-strip .hero-stat{ color:var(--white); }
+  .hero-stats-strip .num{ color:var(--white); }
+  .hero-stats-strip .lbl{ color:rgba(255,255,255,.78); }
+  .hero-stat{
+    justify-content:flex-start;
+    padding:10px 8px;
+    gap:9px;
+  }
+  .hero-stat .feature-icon{ display:none; }
+  .hero-stat .num{ font-size:1.22rem; }
+  .hero-stat .lbl{ font-size:.70rem; line-height:1.3; }
 }
+
 
 /* [F5.1] Ilustrasi hero — pengganti .hero-emblem lama (kartu polos
    dengan bentuk palang). Kontainer visual tetap gaya "kaca" yang

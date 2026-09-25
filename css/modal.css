@@ -193,7 +193,7 @@
 .modal-lg .modal-body{padding:26px 30px}
 @media (max-width:640px){.modal-lg{max-width:calc(100vw - 24px)}.modal-lg .modal-body{padding:20px 16px}}
 
-/* v1.1.44 — Premium Catatan Pembina, mengikuti tema merah PMR */
+/* v1.1.45 — Premium Catatan Pembina, mengikuti tema merah PMR */
 .modal-lg.pembina-note-modal{
   max-width:920px;
   border:1px solid rgba(200,16,46,.12);
