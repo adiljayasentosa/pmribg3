@@ -12,17 +12,27 @@ document.addEventListener("DOMContentLoaded", () => {
     btnDashboard.href = "dashboard.html";
   }
 
-  /* Mobile nav toggle */
-  document.getElementById("nav-toggle")?.addEventListener("click", () => {
-    document.getElementById("nav-links").classList.toggle("open");
+  /* Mobile nav: toggle + aksesibilitas + auto-close saat navigasi. */
+  const navToggle = document.getElementById("nav-toggle");
+  const navLinks = document.getElementById("nav-links");
+  const closeMobileNav = () => {
+    navLinks?.classList.remove("open");
+    navToggle?.setAttribute("aria-expanded", "false");
+    navToggle?.setAttribute("aria-label", "Buka menu");
+  };
+  navToggle?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const open = !navLinks?.classList.contains("open");
+    navLinks?.classList.toggle("open", open);
+    navToggle.setAttribute("aria-expanded", String(open));
+    navToggle.setAttribute("aria-label", open ? "Tutup menu" : "Buka menu");
   });
-
-  /* Tutup nav mobile jika klik link */
-  document.querySelectorAll(".nav-links a").forEach((a) =>
-    a.addEventListener("click", () =>
-      document.getElementById("nav-links")?.classList.remove("open")
-    )
-  );
+  document.querySelectorAll(".nav-links a").forEach((a) => a.addEventListener("click", closeMobileNav));
+  document.addEventListener("click", (event) => {
+    if (!navLinks?.classList.contains("open")) return;
+    if (!navLinks.contains(event.target) && !navToggle?.contains(event.target)) closeMobileNav();
+  });
+  window.addEventListener("resize", () => { if (window.innerWidth > 760) closeMobileNav(); });
 
   /* Scroll smooth ke anchor */
   document.querySelectorAll('a[href^="#"]').forEach((anchor) => {

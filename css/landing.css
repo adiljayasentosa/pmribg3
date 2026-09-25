@@ -1,54 +1,62 @@
-/* =========================================================
-   LANDING PAGE
-   Signature: motif "palang" (plus) berulang sebagai tekstur,
-   merujuk langsung pada lambang Palang Merah.
-   ========================================================= */
-
 /* ---------- Navbar ---------- */
 .nav{
   position:sticky; top:0; z-index:50;
   background:var(--pmr-red);
-  backdrop-filter:blur(10px);
   border-bottom:1px solid rgba(255,255,255,.10);
   box-shadow:0 4px 18px rgba(91,0,18,.14);
 }
+.nav.nav-hero{
+  position:absolute;
+  top:0; left:0; right:0;
+  background:linear-gradient(180deg, rgba(80,0,12,.58), rgba(200,16,46,.08));
+  border-bottom:1px solid rgba(255,255,255,.10);
+  box-shadow:none;
+  backdrop-filter:blur(8px);
+}
 .nav-inner{
   display:flex; align-items:center; justify-content:space-between;
+  width:min(var(--container-max), 100%);
+  margin:0 auto;
   padding:14px 24px;
 }
-.nav-brand{ display:flex; align-items:center; gap:10px; }
-.nav-brand .brand-name{ font-family:var(--font-display); font-weight:700; font-size:1rem; line-height:1.2; }
+.nav-brand{ display:flex; align-items:center; gap:10px; min-width:0; }
+.nav-brand .brand-name{ font-family:var(--font-display); font-weight:700; font-size:1rem; line-height:1.2; color:var(--white); }
 .nav-brand .brand-sub{ font-size:0.72rem; color:rgba(255,255,255,.78); }
-.nav-links{ display:flex; gap:28px; }
-.nav-links a{ font-size:0.9rem; font-weight:600; color:rgba(255,255,255,.90); transition:color var(--transition); }
-.nav-links a:hover{ color:var(--white); }
+.nav-links{ display:flex; gap:26px; align-items:center; }
+.nav-links a{ font-size:0.88rem; font-weight:650; color:rgba(255,255,255,.90); transition:color var(--transition),opacity .2s ease; }
+.nav-links a:hover{ color:var(--white); opacity:1; }
 .nav-actions{ display:flex; align-items:center; gap:10px; }
 .nav-actions .pmr-cs-nav-btn{ flex:0 0 auto; }
 .nav-actions .btn-outline{
   border-color:rgba(255,255,255,.72);
   color:var(--white);
-  background:transparent;
+  background:rgba(255,255,255,.06);
+  backdrop-filter:blur(8px);
 }
 .nav-actions .btn-outline:hover{
-  background:rgba(255,255,255,.12);
+  background:rgba(255,255,255,.14);
   border-color:var(--white);
 }
-
+.nav-actions .pmr-cs-nav-btn{
+  border-color:rgba(255,255,255,.48) !important;
+  background:rgba(255,255,255,.12) !important;
+  color:var(--white) !important;
+  box-shadow:0 8px 20px rgba(70,0,12,.12);
+  backdrop-filter:blur(8px);
+}
+.nav-actions .pmr-cs-nav-label{ color:var(--white) !important; }
 .nav-toggle{
-  display:none;
-  width:40px; height:40px;
-  border:none; background:none;
-  align-items:center; justify-content:center;
+  display:none; width:42px; height:42px; border:1px solid rgba(255,255,255,.35);
+  border-radius:12px; background:rgba(255,255,255,.08);
+  align-items:center; justify-content:center; backdrop-filter:blur(8px);
 }
-.nav-toggle span{
-  display:block; width:22px; height:2px; background:var(--white);
-  position:relative;
-}
-.nav-toggle span::before,.nav-toggle span::after{
-  content:''; position:absolute; left:0; width:22px; height:2px; background:var(--white);
-}
+.nav-toggle span{ display:block; width:22px; height:2px; background:var(--white); position:relative; border-radius:2px; }
+.nav-toggle span::before,.nav-toggle span::after{ content:''; position:absolute; left:0; width:22px; height:2px; background:var(--white); border-radius:2px; transition:transform .2s ease, top .2s ease; }
 .nav-toggle span::before{ top:-7px; }
 .nav-toggle span::after{ top:7px; }
+.nav-toggle[aria-expanded="true"] span{ background:transparent; }
+.nav-toggle[aria-expanded="true"] span::before{ top:0; transform:rotate(45deg); }
+.nav-toggle[aria-expanded="true"] span::after{ top:0; transform:rotate(-45deg); }
 
 /* ---------- Hero ---------- */
 .hero{
@@ -56,77 +64,71 @@
   overflow:hidden;
   background:var(--pmr-red);
   color:var(--white);
-  padding:96px 24px 110px;
-  min-height:510px;
+  min-height:100svh;
+  height:100svh;
+  padding:118px 24px 128px;
   display:flex;
   align-items:center;
   isolation:isolate;
 }
 .hero::after{
-  /* Foto kegiatan PMR asli sebagai latar hero.
-     Overlay merah menjaga teks tetap terbaca tanpa menghilangkan suasana kegiatan. */
-  content:'';
-  position:absolute;
-  inset:0;
-  z-index:-2;
+  content:''; position:absolute; inset:0; z-index:-2;
   background-image:
     linear-gradient(90deg,
-      rgba(200,16,46,.98) 0%,
-      rgba(200,16,46,.94) 30%,
-      rgba(200,16,46,.72) 54%,
-      rgba(200,16,46,.30) 100%),
+      rgba(92,0,14,.88) 0%,
+      rgba(200,16,46,.70) 42%,
+      rgba(200,16,46,.34) 72%,
+      rgba(80,0,12,.48) 100%),
     url('../assets/hero-kegiatan-pmr.jpg');
   background-size:cover;
-  background-position:center 44%;
+  background-position:center 36%;
   background-repeat:no-repeat;
 }
 .hero::before{
-  /* Motif grid tipis tetap dipertahankan sebagai identitas visual. */
-  content:'';
-  position:absolute; inset:0;
-  z-index:-1;
+  content:''; position:absolute; inset:0; z-index:-1;
   background-image:
-    linear-gradient(rgba(112,0,20,.30) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(112,0,20,.30) 1px, transparent 1px);
-  background-size:48px 48px;
-  opacity:.28;
-  mask-image:linear-gradient(90deg, black 0%, black 55%, transparent 100%);
+    linear-gradient(rgba(112,0,20,.28) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(112,0,20,.28) 1px, transparent 1px);
+  background-size:48px 48px; opacity:.22;
+  mask-image:linear-gradient(90deg, black 0%, black 58%, transparent 100%);
 }
-.hero-inner{
-  position:relative;
-  z-index:2;
-  width:100%;
-  max-width:var(--container-max);
-  margin:0 auto;
-}
-.hero-copy{ max-width:650px; }
+.hero-inner{ position:relative; z-index:2; width:100%; max-width:var(--container-max); margin:0 auto; }
+.hero-copy{ max-width:700px; padding-bottom:72px; }
 .hero-eyebrow{
-  display:inline-flex; align-items:center; gap:8px;
-  background:rgba(255,255,255,0.14);
-  padding:6px 14px;
-  border-radius:var(--radius-pill);
-  font-size:0.78rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
-  margin-bottom:18px;
-  backdrop-filter:blur(4px);
+  display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.14);
+  padding:7px 14px; border-radius:var(--radius-pill); font-size:.76rem; font-weight:700;
+  letter-spacing:.04em; text-transform:uppercase; margin-bottom:18px; backdrop-filter:blur(7px);
+  border:1px solid rgba(255,255,255,.10);
 }
-.hero h1{
-  color:var(--white);
-  font-size:clamp(2rem, 4vw, 3.1rem);
-  margin-bottom:18px;
-  text-shadow:0 2px 18px rgba(80,0,12,.18);
-}
-.hero p.lead{
-  color:rgba(255,255,255,0.90);
-  font-size:1.05rem;
-  max-width:560px;
-  margin-bottom:28px;
-  text-shadow:0 1px 10px rgba(80,0,12,.16);
-}
-.hero-actions{ display:flex; gap:14px; flex-wrap:wrap; }
-.hero .btn-primary{ background:var(--white); color:var(--pmr-red); }
+.hero h1{ color:var(--white); font-size:clamp(2.7rem,5.1vw,4.4rem); line-height:1.02; margin-bottom:20px; letter-spacing:-.035em; text-shadow:0 3px 24px rgba(55,0,10,.24); }
+.hero p.lead{ color:rgba(255,255,255,.90); font-size:1.02rem; line-height:1.62; max-width:620px; margin-bottom:28px; text-shadow:0 1px 12px rgba(55,0,10,.20); }
+.hero-actions{ display:flex; gap:12px; flex-wrap:wrap; }
+.hero .btn-primary{ background:var(--white); color:var(--pmr-red); box-shadow:0 12px 28px rgba(55,0,10,.18); }
 .hero .btn-primary:hover{ background:var(--pmr-red-light); }
-.hero .btn-outline{ border-color:rgba(255,255,255,0.68); color:var(--white); background:rgba(200,16,46,.10); backdrop-filter:blur(4px); }
-.hero .btn-outline:hover{ background:rgba(255,255,255,0.12); }
+.hero .btn-outline{ border-color:rgba(255,255,255,.70); color:var(--white); background:rgba(200,16,46,.12); backdrop-filter:blur(8px); }
+.hero .btn-outline:hover{ background:rgba(255,255,255,.12); }
+
+/* Statistik menjadi bagian dari hero, tetapi dibuat ringkas agar tidak pernah menutupi CTA. */
+.hero .hero-stats-strip{
+  position:absolute; z-index:3; left:50%; bottom:18px; transform:translateX(-50%);
+  width:min(560px, calc(100% - 48px)); margin:0; padding:0;
+  pointer-events:none;
+}
+.hero .hero-stats-strip .grid{
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0;
+  padding:9px 10px; border-radius:16px;
+  background:rgba(86,0,18,.44); border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 12px 26px rgba(45,0,8,.20); backdrop-filter:blur(12px);
+}
+.hero .hero-stats-strip .hero-stat{ color:var(--white); justify-content:center; padding:4px 10px; gap:8px; min-height:44px; }
+.hero .hero-stats-strip .hero-stat:nth-child(n+3){ display:none; }
+.hero .hero-stats-strip .hero-stat + .hero-stat{ border-left:1px solid rgba(255,255,255,.18); }
+.hero .hero-stats-strip .feature-icon{ color:var(--white); background:rgba(255,255,255,.08); margin-bottom:0; width:30px; height:30px; flex:0 0 30px; }
+.hero .hero-stats-strip .feature-icon svg{ width:16px; height:16px; }
+.hero .hero-stats-strip .num{ color:var(--white); font-size:1.15rem; line-height:1.05; }
+.hero .hero-stats-strip .lbl{ color:rgba(255,255,255,.74); font-size:.66rem; line-height:1.15; }
+.hero .hero-stats-strip a,
+.hero .hero-stats-strip button{ pointer-events:auto; }
 
 /* Kartu "lambang" di hero — signature element */
 .hero-emblem{
@@ -151,136 +153,6 @@
 .hero-emblem-stats .num{ font-family:var(--font-display); font-size:1.6rem; font-weight:700; color:var(--white); }
 .hero-emblem-stats .lbl{ font-size:0.7rem; color:rgba(255,255,255,0.78); }
 
-@media (max-width: 900px){
-  .hero{
-    min-height:620px;
-    padding:76px 20px 100px;
-  }
-  .hero::after{
-    background-image:
-      linear-gradient(180deg,
-        rgba(200,16,46,.97) 0%,
-        rgba(200,16,46,.92) 34%,
-        rgba(200,16,46,.62) 58%,
-        rgba(200,16,46,.40) 100%),
-      url('../assets/hero-kegiatan-pmr.jpg');
-    background-position:center bottom;
-  }
-  .hero::before{
-    background-size:42px 42px;
-    opacity:.18;
-    mask-image:linear-gradient(180deg, black 0%, transparent 78%);
-  }
-  .hero h1{ font-size:clamp(2rem, 8vw, 2.7rem); }
-  .hero p.lead{ font-size:.98rem; max-width:520px; }
-}
-
-@media (max-width: 560px){
-  .hero{
-    min-height:760px;
-    padding:34px 20px 62px;
-    align-items:flex-start;
-  }
-  .hero::after{
-    background-image:
-      linear-gradient(180deg,
-        rgba(200,16,46,.985) 0%,
-        rgba(200,16,46,.94) 30%,
-        rgba(200,16,46,.72) 55%,
-        rgba(200,16,46,.32) 100%),
-      url('../assets/hero-kegiatan-pmr.jpg');
-    background-position:center 54%;
-  }
-  .hero::before{
-    background-size:44px 44px;
-    opacity:.12;
-    mask-image:linear-gradient(180deg, black 0%, transparent 72%);
-  }
-  .hero-copy{ max-width:none; }
-  .hero-eyebrow{
-    font-size:.68rem;
-    padding:6px 12px;
-    margin-bottom:14px;
-  }
-  .hero h1{
-    font-size:clamp(2rem, 9vw, 2.35rem);
-    line-height:1.08;
-    margin-bottom:14px;
-    letter-spacing:-.02em;
-  }
-  .hero p.lead{
-    font-size:.91rem;
-    line-height:1.55;
-    max-width:100%;
-    margin-bottom:20px;
-  }
-  .hero-actions{
-    flex-direction:column;
-    align-items:stretch;
-    gap:10px;
-    width:min(100%, 330px);
-  }
-  .hero-actions .btn{
-    width:100%;
-    min-height:50px;
-    justify-content:center;
-  }
-
-  /* Login sengaja berada tepat di bawah Dashboard, bukan berdampingan. */
-  .hero-actions .btn-outline{
-    background:rgba(200,16,46,.16);
-    border-color:rgba(255,255,255,.78);
-    backdrop-filter:blur(6px);
-  }
-
-  /* Mobile nav menyatu dengan hero agar tidak terlihat seperti blok putih terpisah. */
-  .nav{
-    background:var(--pmr-red);
-    border-bottom:1px solid rgba(255,255,255,.10);
-    backdrop-filter:blur(10px);
-  }
-  .nav-inner{ padding:10px 16px; }
-  .nav-brand .brand-name{ color:var(--white); font-size:.98rem; }
-  .nav-brand .brand-sub{ color:rgba(255,255,255,.78); }
-  .nav-toggle{ width:38px; height:38px; }
-  .nav-toggle span,
-  .nav-toggle span::before,
-  .nav-toggle span::after{ background:var(--white); }
-  .nav-links{
-    background:var(--pmr-red);
-    border-bottom:1px solid rgba(255,255,255,.12);
-  }
-
-  /* Statistik tetap dekat dengan hero dan dibuat 2 kolom agar tidak menjulur jauh. */
-  .hero-stats-strip{
-    margin-top:-22px;
-    padding:0 14px;
-  }
-  .hero-stats-strip .grid.grid-4{
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:0;
-    padding:14px 10px;
-    border-radius:22px;
-    background:rgba(126,0,22,.42);
-    border:1px solid rgba(255,255,255,.22);
-    box-shadow:0 16px 34px rgba(70,0,12,.24);
-    backdrop-filter:blur(10px);
-  }
-  .hero-stats-strip .hero-stat:nth-child(n+3){ display:none; }
-  .hero-stats-strip .hero-stat{ color:var(--white); }
-  .hero-stats-strip .num{ color:var(--white); }
-  .hero-stats-strip .lbl{ color:rgba(255,255,255,.78); }
-  .hero-stat{
-    justify-content:flex-start;
-    padding:10px 8px;
-    gap:9px;
-  }
-  .hero-stat .feature-icon{ display:none; }
-  .hero-stat .num{ font-size:1.22rem; }
-  .hero-stat .lbl{ font-size:.70rem; line-height:1.3; }
-}
-
-
 /* [F5.1] Ilustrasi hero — pengganti .hero-emblem lama (kartu polos
    dengan bentuk palang). Kontainer visual tetap gaya "kaca" yang
    sama (translucent + blur + border tipis), isinya kini ilustrasi
@@ -295,30 +167,6 @@
   backdrop-filter:blur(4px);
 }
 .hero-illustration-wrap svg{ width:100%; height:auto; display:block; }
-
-/* [F5.1] Strip statistik — kartu putih melayang di bawah hero,
-   sedikit tumpang tindih ke section berikutnya untuk kesan modern. */
-.hero-stats-strip{
-  position:relative;
-  z-index:2;
-  max-width:var(--container-max);
-  margin:-46px auto 0;
-  padding:0 24px;
-}
-.hero-stats-strip .grid{
-  background:var(--white);
-  border-radius:var(--radius-lg);
-  box-shadow:var(--shadow-md);
-  padding:28px 20px;
-}
-.hero-stat{ display:flex; align-items:center; gap:12px; justify-content:center; }
-.hero-stat .feature-icon{ margin-bottom:0; }
-.hero-stat .num{ font-family:var(--font-display); font-size:1.35rem; font-weight:700; color:var(--ink); line-height:1.1; }
-.hero-stat .lbl{ font-size:0.76rem; color:var(--ink-soft); }
-@media (max-width: 900px){
-  .hero-stats-strip{ margin-top:-30px; }
-  .hero-stats-strip .grid{ padding:20px 16px; }
-}
 
 /* ---------- Section umum ---------- */
 .section{ padding:80px 24px; }
@@ -581,20 +429,69 @@
 .footer-inner p{ font-size:0.82rem; margin:0; color:var(--ink-soft); }
 
 /* ---------- Responsif ---------- */
+@media (max-width: 900px){
+  .nav-inner{ padding:12px 18px; }
+  .nav-links{ gap:18px; }
+  .hero{ padding-left:22px; padding-right:22px; }
+  .hero h1{ font-size:clamp(2.35rem,7vw,3.4rem); }
+}
+
 @media (max-width: 760px){
+  .nav{ position:sticky; }
+  .nav.nav-hero{ position:absolute; background:linear-gradient(180deg,rgba(74,0,10,.62),rgba(200,16,46,.08)); }
+  .nav-inner{ padding:12px 16px; }
+  .nav-brand img{ width:36px; height:36px; }
+  .nav-brand .brand-name{ font-size:.92rem; }
+  .nav-brand .brand-sub{ font-size:.68rem; }
   .nav-links{
-    position:absolute; top:100%; left:0; right:0;
-    background:var(--white);
-    flex-direction:column;
-    padding:16px 24px;
-    border-bottom:1px solid var(--gray-200);
-    display:none;
-    gap:14px;
+    position:absolute; top:calc(100% + 8px); left:12px; right:12px;
+    background:rgba(115,0,20,.92); flex-direction:column; align-items:stretch;
+    padding:10px; border:1px solid rgba(255,255,255,.16); border-radius:18px;
+    box-shadow:0 18px 40px rgba(45,0,8,.28); display:none; gap:4px;
+    backdrop-filter:blur(14px);
   }
   .nav-links.open{ display:flex; }
+  .nav-links a{ padding:12px 14px; border-radius:12px; color:rgba(255,255,255,.90); }
+  .nav-links a:hover{ background:rgba(255,255,255,.10); }
   .nav-toggle{ display:flex; }
   .nav-actions .btn-outline{ display:none; }
   .nav-actions .pmr-cs-nav-btn{ display:inline-flex; }
+
+  .hero{
+    height:100svh; min-height:0; padding:112px 20px 112px; align-items:flex-start;
+  }
+  .hero::after{
+    background-image:
+      linear-gradient(180deg,rgba(77,0,12,.84) 0%,rgba(200,16,46,.66) 42%,rgba(200,16,46,.30) 72%,rgba(66,0,10,.64) 100%),
+      url('../assets/hero-kegiatan-pmr.jpg');
+    background-position:center 34%;
+  }
+  .hero::before{ background-size:44px 44px; opacity:.12; mask-image:linear-gradient(180deg,black 0%,transparent 70%); }
+  .hero-inner{ height:100%; display:flex; align-items:center; }
+  .hero-copy{ max-width:100%; margin-top:-14px; padding-bottom:96px; }
+  .hero-eyebrow{ font-size:.67rem; padding:6px 12px; margin-bottom:14px; }
+  .hero h1{ font-size:clamp(2rem,9.4vw,2.8rem); line-height:1.03; margin-bottom:14px; letter-spacing:-.025em; max-width:680px; }
+  .hero p.lead{ font-size:.9rem; line-height:1.48; max-width:600px; margin-bottom:18px; }
+  .hero-actions{ flex-direction:column; align-items:stretch; gap:9px; width:min(100%,340px); }
+  .hero-actions .btn{ width:100%; min-height:48px; justify-content:center; }
+  .hero .hero-stats-strip{ width:calc(100% - 36px); bottom:12px; }
+  .hero .hero-stats-strip .grid{ padding:8px 7px; border-radius:16px; }
+  .hero .hero-stats-strip .hero-stat{ padding:5px 7px; gap:6px; min-height:42px; }
+  .hero .hero-stats-strip .feature-icon{ display:none; }
+  .hero .hero-stats-strip .num{ font-size:1.12rem; }
+  .hero .hero-stats-strip .lbl{ font-size:.64rem; line-height:1.15; }
+}
+
+@media (max-width: 420px){
+  .nav-brand .brand-sub{ font-size:.64rem; }
+  .hero{ padding-left:18px; padding-right:18px; }
+  .hero-copy{ margin-top:-4px; padding-bottom:92px; }
+  .hero h1{ font-size:clamp(1.9rem,9.8vw,2.35rem); }
+  .hero p.lead{ font-size:.86rem; }
+  .hero-actions{ width:100%; }
+  .hero .hero-stats-strip{ width:calc(100% - 28px); bottom:10px; }
+  .hero .hero-stats-strip .num{ font-size:1.05rem; }
+  .hero .hero-stats-strip .lbl{ font-size:.6rem; }
 }
 
 /* =========================================================
