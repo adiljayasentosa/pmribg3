@@ -92,6 +92,7 @@ const PRECACHE_URLS = [
   // Aset & manifest
   "/assets/logo.svg",
   "/assets/app-mockup.svg",
+  "/assets/hero-kegiatan-pmr.jpg",
   "/assets/registration-success.svg",
   "/assets/icons/icon-192.png",
   "/assets/icons/icon-512.png",
@@ -135,7 +136,8 @@ function _isAsetStatisSamaOrigin(url) {
   return url.origin === self.location.origin && (
     /\.(css|js)$/.test(url.pathname) ||
     url.pathname.startsWith("/assets/icons/") ||
-    url.pathname === "/assets/logo.svg"
+    url.pathname === "/assets/logo.svg" ||
+    url.pathname === "/assets/hero-kegiatan-pmr.jpg"
   );
 }
 
