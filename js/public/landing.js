@@ -34,6 +34,17 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   window.addEventListener("resize", () => { if (window.innerWidth > 760) closeMobileNav(); });
 
+  /* Navbar tetap mengikuti scroll di desktop + mobile.
+     Di puncak hero transparan; setelah pengguna bergerak, navbar
+     mendapat latar glass merah agar tetap terbaca tanpa memutus hero. */
+  const heroNav = document.querySelector(".nav.nav-hero");
+  const updateHeroNav = () => {
+    if (!heroNav) return;
+    heroNav.classList.toggle("is-scrolled", window.scrollY > 24);
+  };
+  updateHeroNav();
+  window.addEventListener("scroll", updateHeroNav, { passive: true });
+
   /* Scroll smooth ke anchor */
   document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
     anchor.addEventListener("click", (e) => {
