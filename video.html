@@ -1,117 +1,79 @@
 <!DOCTYPE html>
+
 <html lang="id">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Video · PMR WIRA UNIT</title>
-  <link rel="icon" href="assets/logo.svg" type="image/svg+xml"/>
-  <link rel="manifest" href="/manifest.json"/>
-  <meta name="theme-color" content="#C8102E"/>
-  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="css/variables.css"/>
-  <link rel="stylesheet" href="css/base.css"/>
-  <link rel="stylesheet" href="css/components.css"/>
-  <link rel="stylesheet" href="css/landing.css"/>
-  <link rel="stylesheet" href="css/content.css"/>
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1.0" name="viewport"/>
+<title>Video · PMR WIRA UNIT</title>
+<link href="assets/logo.svg" rel="icon" type="image/svg+xml"/>
+<link href="/manifest.json" rel="manifest"/>
+<meta content="#C8102E" name="theme-color"/>
+<link href="/assets/icons/apple-touch-icon.png" rel="apple-touch-icon"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="css/variables.css" rel="stylesheet"/>
+<link href="css/base.css" rel="stylesheet"/>
+<link href="css/components.css" rel="stylesheet"/>
+<link href="css/landing.css" rel="stylesheet"/>
+<link href="css/content.css" rel="stylesheet"/>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body data-content-tipe="video">
-
 <!-- ═══════════════════ NAVBAR ═══════════════════ -->
 <header class="nav" role="banner">
-  <div class="nav-inner">
-    <a href="index.html" class="nav-brand">
-      <img src="assets/logo.svg" alt="Logo PMR" width="36" height="36"/>
-      <div>
-        <div class="brand-name">PMR WIRA UNIT</div>
-        <div class="brand-sub">SMK IBG 3 · Masa Bakti 2025/2026</div>
-      </div>
-    </a>
-    <nav id="nav-links" class="nav-links" aria-label="Navigasi utama">
-      <a href="index.html#tentang">Tentang</a>
-      <a href="artikel.html">Artikel</a>
-      <a href="video.html">Video</a>
-      <a href="poster.html">Poster</a>
-      <a href="dokumentasi.html">Dokumentasi</a>
-      <a href="index.html#kontak">Kontak</a>
-    </nav>
-    <div class="nav-actions">
-      <a href="login.html" class="btn btn-outline btn-sm">Masuk</a>
-      <button id="nav-toggle" class="nav-toggle" aria-label="Buka menu" aria-expanded="false"><span></span></button>
-    </div>
-  </div>
+<div class="nav-inner">
+<a class="nav-brand" href="index.html">
+<img alt="Logo PMR" height="36" src="assets/logo.svg" width="36"/>
+<div><div class="brand-name">PMR WIRA UNIT</div><div class="brand-sub">SMK IBG 3 · Masa Bakti 2025/2026</div></div>
+</a>
+<nav aria-label="Navigasi utama" class="nav-links" id="nav-links">
+<a href="tentang.html">Tentang</a>
+<a href="program.html">Program</a>
+<a href="artikel.html">Edukasi</a>
+<a href="dokumentasi.html">Dokumentasi</a>
+<a href="struktur.html">Organisasi</a>
+<a href="faq.html">FAQ</a>
+<a href="download.html">Download</a>
+</nav>
+<div class="nav-actions"><a class="btn btn-outline btn-sm" href="login.html">Masuk</a><button aria-expanded="false" aria-label="Buka menu" class="nav-toggle" id="nav-toggle"><span></span></button></div>
+</div>
 </header>
-
 <main class="content-page">
-
-  <!-- View: Daftar -->
-  <div id="view-list">
-    <div class="content-header">
-      <h1>Video Edukasi</h1>
-      <p>Video edukasi dan dokumentasi kegiatan PMR WIRA UNIT.</p>
-    </div>
-    <div id="content-kategori-chips" class="chip-row"><button type="button" class="chip chip-active" data-kategori="">Semua</button></div>
-    <h2 class="section-label">▶️ Video Terbaru</h2>
-    <div class="content-grid-wrap" id="content-grid"></div>
-    <div class="content-back-home">
-      <a href="index.html" class="btn btn-outline btn-block">🏠 Kembali ke Halaman Utama</a>
-    </div>
-  </div>
-
-  <!-- View: Detail -->
-  <div id="view-detail" style="display:none">
-    <div id="content-detail"></div>
-  </div>
-
+<!-- View: Daftar -->
+<div id="view-list">
+<div class="content-header">
+<h1>Video Edukasi</h1>
+<p>Video edukasi dan dokumentasi kegiatan PMR WIRA UNIT.</p>
+</div>
+<div class="chip-row" id="content-kategori-chips"><button class="chip chip-active" data-kategori="" type="button">Semua</button></div>
+<h2 class="section-label">▶️ Video Terbaru</h2>
+<div class="content-grid-wrap" id="content-grid"></div>
+<div class="content-back-home">
+<a class="btn btn-outline btn-block" href="index.html">🏠 Kembali ke Halaman Utama</a>
+</div>
+</div>
+<!-- View: Detail -->
+<div id="view-detail" style="display:none">
+<div id="content-detail"></div>
+</div>
 </main>
-
 <footer class="site-footer" id="footer">
-  <div class="footer-grid">
-    <div class="footer-col">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-        <img src="assets/logo.svg" alt="" width="30" height="30"/>
-        <div>
-          <div style="font-weight:700;font-family:var(--font-display)">PMR WIRA UNIT</div>
-          <div style="font-size:0.76rem;color:var(--ink-soft)">SMK IBG 3 · Masa Bakti 2025/2026</div>
-        </div>
-      </div>
-      <p style="font-size:0.84rem;max-width:280px">Sistem Manajemen Internal PMR — Frontend Demo</p>
-      <div class="footer-social">
-        <a href="#" aria-label="Instagram"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5" stroke-width="2"/><circle cx="12" cy="12" r="4" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg></a>
-        <a href="#" aria-label="YouTube"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="4" stroke-width="2"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg></a>
-        <a href="#" aria-label="TikTok"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" d="M9 8v8a3 3 0 103-3M9 8h3m0 0V4a4 4 0 004 4"/></svg></a>
-      </div>
-    </div>
-    <div class="footer-col">
-      <h4>Navigasi</h4>
-      <ul>
-        <li><a href="index.html#tentang">Tentang</a></li>
-        <li><a href="index.html#program">Program Kerja</a></li>
-        <li><a href="artikel.html">Artikel</a></li>
-        <li><a href="dokumentasi.html">Dokumentasi</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>Lainnya</h4>
-      <ul>
-        <li><a href="index.html#faq">FAQ</a></li>
-        <li><a href="index.html#kontak">Kontak</a></li>
-        <li><a href="login.html">Masuk ke Dashboard</a></li>
-      </ul>
-    </div>
-  </div>
-  <div class="footer-inner footer-bottom">
-    <p>© 2025/2026 PMR WIRA UNIT · SMK IBG 3. Seluruh hak dilindungi.</p>
-    <p>Dibangun dengan ❤️ oleh PMR WIRA UNIT</p>
-  </div>
-</footer>
+<div aria-hidden="true" class="footer-wave"></div>
+<div class="footer-grid">
+<div class="footer-col footer-brand-col">
+<a class="footer-brand" href="index.html"><img alt="Logo PMR" height="42" src="assets/logo.svg" width="42"/><span><strong>PMR WIRA UNIT</strong><small>SMK IBG 3 · Masa Bakti 2025/2026</small></span></a>
+<p>Kepedulian, kesiapsiagaan, dan kemanusiaan dalam satu wadah pengembangan diri siswa.</p>
 
+</div>
+<div class="footer-col"><h4>Navigasi</h4><ul><li><a href="index.html">Beranda</a></li><li><a href="tentang.html">Tentang</a></li><li><a href="program.html">Program Kerja</a></li><li><a href="artikel.html">Artikel</a></li></ul></div>
+<div class="footer-col"><h4>Informasi</h4><ul><li><a href="video.html">Video</a></li><li><a href="poster.html">Poster</a></li><li><a href="dokumentasi.html">Dokumentasi</a></li><li><a href="faq.html">FAQ</a></li></ul></div>
+<div class="footer-col"><h4>Organisasi</h4><ul><li><a href="struktur.html">Struktur Pengurus</a></li><li><a href="download.html">Download APK</a></li><li><a href="kontak.html">Kontak</a></li><li><a href="login.html">Masuk ke Dashboard</a></li></ul></div>
+</div>
+<div class="footer-inner footer-bottom"><p>© 2025/2026 PMR WIRA UNIT · SMK IBG 3. Seluruh hak dilindungi.</p><p>Dibangun untuk mendukung kegiatan PMR WIRA UNIT.</p></div>
+</footer>
 <script src="js/firebase-config.js"></script>
 <script src="js/data-dummy.js"></script>
 <script src="js/core/auth.js"></script>

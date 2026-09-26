@@ -273,3 +273,9 @@ Made with ❤️ by PMR WIRA UNIT — *Siap, Peduli, Bersahabat*
 ## Statistik Publik Anggota Aktif
 
 Halaman publik menampilkan jumlah anggota berstatus `Aktif` melalui `/api/public-stats` dan melakukan sinkronisasi otomatis berkala. Data anggota tidak dibuka ke pengunjung.
+
+### v1.1.47 Public Redesign
+- Redesigned public information flow with dedicated pages for About, Programs, Features, Organization, FAQ, Download, Contact, Articles, Video, Posters, and Documentation.
+- Landing page focuses on overview and previews.
+- Public pages share a red/photo hero, curved transitions, and red footer design.
+- Android download page describes the APK accurately as a quick-access shortcut to the website.

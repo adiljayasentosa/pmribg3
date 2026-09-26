@@ -1,23 +1,17 @@
 /* ---------- Navbar ---------- */
 .nav{
-  position:fixed; top:0; left:0; right:0; z-index:100;
+  position:sticky; top:0; z-index:50;
   background:var(--pmr-red);
   border-bottom:1px solid rgba(255,255,255,.10);
   box-shadow:0 4px 18px rgba(91,0,18,.14);
 }
 .nav.nav-hero{
-  position:fixed;
+  position:absolute;
   top:0; left:0; right:0;
-  background:linear-gradient(180deg, rgba(58,0,10,.68), rgba(200,16,46,.10));
+  background:linear-gradient(180deg, rgba(80,0,12,.58), rgba(200,16,46,.08));
   border-bottom:1px solid rgba(255,255,255,.10);
   box-shadow:none;
-  backdrop-filter:blur(10px);
-  transition:background .25s ease, box-shadow .25s ease, backdrop-filter .25s ease;
-}
-.nav.nav-hero.is-scrolled{
-  background:rgba(116,0,18,.88);
-  box-shadow:0 8px 26px rgba(45,0,8,.22);
-  backdrop-filter:blur(16px);
+  backdrop-filter:blur(8px);
 }
 .nav-inner{
   display:flex; align-items:center; justify-content:space-between;
@@ -100,7 +94,6 @@
 }
 .hero-inner{ position:relative; z-index:2; width:100%; max-width:var(--container-max); margin:0 auto; }
 .hero-copy{ max-width:700px; padding-bottom:72px; }
-@media (min-width: 761px){ .hero-copy{ transform:translateY(34px); } }
 .hero-eyebrow{
   display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.14);
   padding:7px 14px; border-radius:var(--radius-pill); font-size:.76rem; font-weight:700;
@@ -444,8 +437,8 @@
 }
 
 @media (max-width: 760px){
-  .nav{ position:fixed; }
-  .nav.nav-hero{ position:fixed; background:linear-gradient(180deg,rgba(58,0,10,.72),rgba(200,16,46,.12)); }
+  .nav{ position:sticky; }
+  .nav.nav-hero{ position:absolute; background:linear-gradient(180deg,rgba(74,0,10,.62),rgba(200,16,46,.08)); }
   .nav-inner{ padding:12px 16px; }
   .nav-brand img{ width:36px; height:36px; }
   .nav-brand .brand-name{ font-size:.92rem; }
@@ -1096,4 +1089,386 @@
   .org-tree-pj-group .org-tree-person{
     width:min(260px, 100%);
   }
+}
+
+/* =========================================================
+   PUBLIC REDESIGN — information architecture + shared footer
+   ========================================================= */
+.public-page-hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#c8102e 0%,#a80d27 65%,#79091d 100%);color:#fff;padding:92px 24px 78px;margin-bottom:0}
+.public-page-hero::after{content:"";position:absolute;inset:auto -5% -42px;height:90px;background:var(--white);border-radius:50% 50% 0 0/100% 100% 0 0;opacity:.98}
+.public-page-hero .container{position:relative;z-index:1}.public-page-hero .eyebrow{color:#fff;border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.1)}
+.public-page-hero h1{color:#fff;font-size:clamp(2rem,5vw,3.5rem);max-width:850px;margin:10px 0}.public-page-hero p{color:rgba(255,255,255,.84);max-width:720px;font-size:1rem;line-height:1.7}
+.info-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}.info-card{background:var(--white);border:1px solid var(--gray-200);border-radius:22px;padding:26px;box-shadow:0 12px 30px rgba(31,31,31,.06);transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}.info-card:hover{transform:translateY(-3px);box-shadow:0 18px 38px rgba(31,31,31,.09);border-color:rgba(200,16,46,.24)}.info-card.large{padding:32px}.info-card h3{margin:12px 0 8px}.info-card h2{margin:8px 0 14px}.info-card p{color:var(--ink-soft);line-height:1.7}.info-card-icon{width:42px;height:42px;border-radius:14px;background:var(--pmr-red-light);color:var(--pmr-red);display:grid;place-items:center;font-weight:800}.info-card .btn{margin-top:14px}.section-more{text-align:center;margin-top:28px}.public-hub{position:relative;overflow:hidden}.public-hub::before{content:"";position:absolute;width:280px;height:280px;right:-100px;top:80px;border-radius:50%;background:rgba(200,16,46,.06);filter:blur(8px)}
+.contact-list{display:grid;gap:14px;margin-top:20px}.contact-list div{display:flex;justify-content:space-between;gap:20px;padding:14px 0;border-bottom:1px solid var(--gray-200)}.contact-list span{color:var(--ink-soft);text-align:right}.public-info-page .faq-list{max-width:900px;margin:0 auto}.public-info-page .app-download-grid{margin-top:0}
+.site-footer{position:relative;margin-top:0;padding:78px 24px 26px;background:#17171a;color:#fff;border-top:0;overflow:hidden}.footer-wave{position:absolute;top:-1px;left:-5%;width:110%;height:54px;background:var(--white);border-radius:0 0 50% 50%/0 0 100% 100%;transform:translateY(-50%)}.footer-grid{max-width:var(--container-max);margin:0 auto;display:grid;grid-template-columns:1.7fr 1fr 1fr 1fr;gap:42px}.site-footer .footer-col h4{color:#fff;margin:0 0 14px}.site-footer .footer-col p{color:rgba(255,255,255,.68);line-height:1.7}.footer-brand{display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none;margin-bottom:14px}.footer-brand strong{display:block;font-family:var(--font-display);font-size:1rem}.footer-brand small{display:block;color:rgba(255,255,255,.58);font-size:.72rem;margin-top:3px}.site-footer ul{list-style:none;margin:0;padding:0;display:grid;gap:9px}.site-footer li,.site-footer a{font-size:.84rem}.site-footer a{color:rgba(255,255,255,.7);text-decoration:none}.site-footer a:hover{color:#fff}.footer-social{display:flex;gap:8px;margin-top:16px}.footer-social a{border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:7px 10px;font-size:.72rem}.footer-bottom{max-width:var(--container-max);margin:40px auto 0;padding-top:20px;border-top:1px solid rgba(255,255,255,.12)}.footer-bottom p{color:rgba(255,255,255,.52)!important}
+@media(max-width:900px){.info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.public-page-hero{padding:76px 20px 64px}.public-page-hero h1{font-size:2rem}.info-grid{grid-template-columns:1fr}.info-card.large{padding:24px}.contact-list div{display:grid;gap:4px}.contact-list span{text-align:left}.footer-grid{grid-template-columns:1fr;gap:28px}.site-footer{padding-left:20px;padding-right:20px}.footer-bottom{display:block}.footer-bottom p+p{margin-top:8px}}
+/* Public content pages share the same visual language as the redesigned hub. */
+.content-page > #view-list > .content-header{max-width:none;margin:0 0 34px;padding:72px 24px 62px;background:linear-gradient(135deg,#c8102e 0%,#a80d27 68%,#79091d 100%);position:relative;overflow:hidden}
+.content-page > #view-list > .content-header::after{content:"";position:absolute;left:-5%;right:-5%;bottom:-44px;height:80px;background:var(--white);border-radius:50% 50% 0 0/100% 100% 0 0}
+.content-page > #view-list > .content-header h1,.content-page > #view-list > .content-header p{position:relative;z-index:1;max-width:var(--container-max);margin-left:auto;margin-right:auto}.content-page > #view-list > .content-header h1{color:#fff;font-size:clamp(2rem,5vw,3rem)}.content-page > #view-list > .content-header p{color:rgba(255,255,255,.84);line-height:1.7}
+@media(max-width:760px){.content-page > #view-list > .content-header{padding:58px 20px 54px}.content-page > #view-list > .content-header h1,.content-page > #view-list > .content-header p{max-width:100%}}
+
+/* =========================================================
+   PUBLIC REDESIGN v1.1.47 — visual direction from approved concept
+   ========================================================= */
+:root{ --public-red:#c8102e; --public-red-dark:#8f0a20; --public-soft:#fff5f6; --public-gray:#f3f4f6; }
+
+/* Global public navigation */
+.nav{transition:background .25s ease, box-shadow .25s ease, backdrop-filter .25s ease;}
+.nav.nav-hero{position:absolute;}
+.nav.nav-hero .nav-inner{padding-top:18px;padding-bottom:18px;}
+.nav.nav-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(34,0,7,.34),transparent);pointer-events:none;z-index:-1;}
+
+/* Landing hero: image-first, full viewport, same visual language as concept */
+.hero{padding-top:108px;padding-bottom:132px;}
+.hero::after{background-image:linear-gradient(90deg,rgba(78,0,15,.92) 0%,rgba(151,8,31,.78) 38%,rgba(200,16,46,.40) 70%,rgba(40,0,8,.40) 100%),url('../assets/hero-kegiatan-pmr.jpg');background-position:center 42%;}
+.hero::before{background:radial-gradient(circle at 75% 30%,rgba(255,255,255,.12),transparent 32%),linear-gradient(180deg,rgba(255,255,255,.04),transparent 30%);mask-image:none;opacity:1;}
+.hero-copy{max-width:720px;padding-bottom:50px;}
+.hero-eyebrow{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);letter-spacing:.075em;}
+.hero h1{font-size:clamp(2.75rem,6vw,5.2rem);max-width:760px;}
+.hero p.lead{max-width:610px;font-size:1.04rem;}
+.hero-actions .btn{min-height:48px;padding-inline:20px;}
+.hero .hero-stats-strip{bottom:28px;width:min(520px,calc(100% - 40px));}
+.hero .hero-stats-strip .grid{background:rgba(28,0,7,.46);border-color:rgba(255,255,255,.22);box-shadow:0 18px 44px rgba(40,0,8,.25);}
+
+/* Curved transition under major sections */
+.section{position:relative;overflow:hidden;padding-top:92px;padding-bottom:92px;}
+.section-alt{background:var(--public-gray);}
+.section:nth-of-type(2)::before,.section-alt::before{content:"";position:absolute;top:-42px;left:-5%;width:110%;height:84px;background:inherit;border-radius:50% 50% 0 0/100% 100% 0 0;}
+.section:nth-of-type(2)::before{background:var(--white);}
+.section-alt::before{background:var(--public-gray);}
+.section-head{position:relative;z-index:1;margin-bottom:48px;}
+.section-head .eyebrow{display:inline-flex;background:var(--public-soft);padding:7px 12px;border-radius:999px;}
+.feature-card{border-radius:22px;border:1px solid rgba(17,24,39,.07);box-shadow:0 12px 35px rgba(17,24,39,.06);padding:28px;}
+.feature-card:hover{transform:translateY(-6px);box-shadow:0 18px 42px rgba(17,24,39,.10);}
+.feature-card .feature-icon{border-radius:14px;background:var(--public-soft);}
+
+/* Public information pages */
+.public-info-page{background:var(--white);}
+.public-page-hero{padding:126px 24px 112px!important;background:linear-gradient(105deg,rgba(80,0,14,.92),rgba(200,16,46,.76)),url('../assets/hero-kegiatan-pmr.jpg') center 40%/cover!important;}
+.public-page-hero::after{height:72px!important;bottom:-36px!important;background:var(--white)!important;border-radius:50% 50% 0 0/100% 100% 0 0!important;}
+.public-page-hero h1{font-size:clamp(2.2rem,5vw,4rem);letter-spacing:-.03em;}
+.public-page-hero p{font-size:1.02rem;max-width:700px;}
+
+/* Content pages such as Video/Artikel/Poster/Dokumentasi */
+.content-page{background:var(--public-gray);padding-top:0;}
+.content-page .content-header{max-width:none;margin:0;padding:118px max(24px,calc((100% - var(--container-max))/2)) 88px;background:linear-gradient(105deg,rgba(80,0,14,.94),rgba(200,16,46,.74)),url('../assets/hero-kegiatan-pmr.jpg') center 40%/cover;color:#fff;position:relative;overflow:hidden;}
+.content-page .content-header::after{content:"";position:absolute;left:-5%;right:-5%;bottom:-42px;height:84px;background:var(--public-gray);border-radius:50% 50% 0 0/100% 100% 0 0;}
+.content-page .content-header h1{color:#fff;font-size:clamp(2.2rem,5vw,3.7rem);margin-bottom:12px;position:relative;z-index:1;}
+.content-page .content-header p{color:rgba(255,255,255,.84);max-width:700px;position:relative;z-index:1;font-size:1rem;}
+.content-page .chip-row{padding-top:4px;margin-bottom:30px;}
+.content-page .chip{border:1px solid #e5e7eb;background:#fff;box-shadow:0 4px 14px rgba(17,24,39,.04);}
+.content-page .chip-active{background:var(--public-red);border-color:var(--public-red);color:#fff;}
+.content-page .section-label{max-width:var(--container-max);margin:0 auto 18px;padding:0 24px;font-size:1.2rem;}
+.content-page .content-grid-wrap{padding-bottom:20px;}
+.content-page .content-back-home{max-width:var(--container-max);margin:30px auto 0;padding:0 24px 30px;}
+
+/* Footer: red, not generic black */
+.site-footer{background:linear-gradient(135deg,#b70e2a 0%,#c8102e 58%,#9e0b24 100%)!important;padding-top:88px!important;}
+.footer-wave{background:var(--white)!important;height:62px!important;top:-2px!important;}
+.site-footer .footer-col h4,.site-footer .footer-brand strong{color:#fff;}
+.site-footer .footer-col p,.site-footer .footer-brand small,.site-footer a{color:rgba(255,255,255,.78);}
+.site-footer a:hover{color:#fff;}
+.site-footer ul{gap:11px;}
+.footer-social a{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22);}
+.footer-bottom{border-color:rgba(255,255,255,.20);}
+
+/* Remove dead placeholder social links rather than presenting # as a real account. */
+.footer-social:has(a[href="#"]){display:none;}
+
+@media(max-width:760px){
+  .nav.nav-hero .nav-inner{padding-top:13px;padding-bottom:13px;}
+  .hero{padding:104px 20px 126px;min-height:100svh;height:100svh;}
+  .hero::after{background-image:linear-gradient(180deg,rgba(70,0,13,.56) 0%,rgba(143,8,30,.76) 42%,rgba(82,0,14,.88) 100%),url('../assets/hero-kegiatan-pmr.jpg');background-position:center 36%;}
+  .hero-copy{padding-bottom:42px;}
+  .hero h1{font-size:clamp(2.45rem,11vw,3.5rem);line-height:1.03;}
+  .hero p.lead{font-size:.94rem;line-height:1.58;}
+  .hero-actions{display:grid;grid-template-columns:1fr;}
+  .hero-actions .btn{width:100%;justify-content:center;}
+  .hero .hero-stats-strip{bottom:18px;width:calc(100% - 32px);}
+  .hero .hero-stats-strip .grid{padding:7px 4px;}
+  .hero .hero-stats-strip .hero-stat{padding:5px 6px;gap:6px;}
+  .hero .hero-stats-strip .feature-icon{display:none;}
+  .hero .hero-stats-strip .num{font-size:1.05rem;}
+  .hero .hero-stats-strip .lbl{font-size:.62rem;}
+  .section{padding:74px 20px;}
+  .section:nth-of-type(2)::before,.section-alt::before{top:-30px;height:60px;}
+  .feature-card{padding:22px;border-radius:18px;}
+  .public-page-hero{padding:104px 20px 88px!important;}
+  .public-page-hero h1{font-size:2.35rem;}
+  .content-page .content-header{padding:104px 20px 82px;}
+  .content-page .content-header h1{font-size:2.35rem;}
+  .content-page .content-header::after{bottom:-30px;height:60px;}
+  .site-footer{padding:76px 20px 24px!important;}
+}
+
+/* =========================================================
+   [FINAL VISUAL FIX] Match approved PMR public mockup
+   No version bump. Visual/UX only.
+   ========================================================= */
+:root{
+  --public-red:#c8102e;
+  --public-red-dark:#8f0b21;
+  --public-soft:#fff0f3;
+  --public-gray:#f7f8fa;
+}
+
+/* Navbar: fixed, transparent over hero, then adapts to the page while scrolling. */
+.nav,
+.nav.nav-hero{
+  position:fixed !important;
+  top:0;left:0;right:0;
+  width:100%;
+  z-index:1000;
+  background:rgba(93,0,15,.18) !important;
+  border-bottom:1px solid rgba(255,255,255,.12) !important;
+  box-shadow:none !important;
+  backdrop-filter:blur(8px);
+  transition:background .28s ease, box-shadow .28s ease, border-color .28s ease, backdrop-filter .28s ease;
+}
+.nav.scrolled{
+  background:rgba(200,16,46,.94) !important;
+  border-bottom-color:rgba(255,255,255,.14) !important;
+  box-shadow:0 10px 28px rgba(77,0,12,.20) !important;
+  backdrop-filter:blur(14px);
+}
+.nav.scrolled.nav-light{
+  background:rgba(255,255,255,.96) !important;
+  border-bottom-color:rgba(17,24,39,.08) !important;
+  box-shadow:0 10px 28px rgba(17,24,39,.10) !important;
+}
+.nav.scrolled.nav-light .brand-name,
+.nav.scrolled.nav-light .nav-links a{color:var(--ink) !important;}
+.nav.scrolled.nav-light .brand-sub{color:var(--ink-soft) !important;}
+.nav.scrolled.nav-light .nav-actions .btn-outline{
+  color:var(--pmr-red) !important;
+  border-color:rgba(200,16,46,.30) !important;
+  background:rgba(200,16,46,.05) !important;
+}
+.nav.scrolled.nav-light .nav-toggle{border-color:rgba(200,16,46,.25);background:rgba(200,16,46,.05);}
+.nav.scrolled.nav-light .nav-toggle span,
+.nav.scrolled.nav-light .nav-toggle span::before,
+.nav.scrolled.nav-light .nav-toggle span::after{background:var(--pmr-red);}
+.nav.scrolled.nav-light .nav-toggle[aria-expanded="true"] span{background:transparent;}
+
+/* Every page gets enough breathing room under a fixed navigation. */
+.public-info-page,
+.content-page{scroll-margin-top:80px;}
+
+/* Hero -> first content transition. */
+.hero{margin-bottom:0;}
+.hero + .section,
+.hero + section{
+  position:relative;
+  margin-top:0;
+  padding-top:116px;
+}
+.hero + .section::before,
+.hero + section::before{
+  content:"";
+  position:absolute;
+  z-index:0;
+  top:-54px;left:-6%;width:112%;height:108px;
+  background:var(--white);
+  border-radius:50% 50% 0 0 / 100% 100% 0 0;
+  box-shadow:0 -10px 35px rgba(91,0,18,.06);
+}
+.hero + .section > *,
+.hero + section > *{position:relative;z-index:1;}
+
+/* All major public sections get a visible, soft wave instead of hard color cuts. */
+.public-info-page > .section,
+.public-info-page > section.section,
+.content-page > .section{
+  position:relative;
+  overflow:hidden;
+}
+.public-info-page > .section + .section::before,
+.public-info-page > section.section + section.section::before,
+.content-page > .section + .section::before{
+  content:"";
+  position:absolute;
+  z-index:0;
+  top:-42px;left:-7%;width:114%;height:84px;
+  background:inherit;
+  border-radius:50% 50% 0 0 / 100% 100% 0 0;
+}
+.public-info-page > .section:nth-of-type(even),
+.content-page > .section:nth-of-type(even){background:var(--public-gray);}
+.public-info-page > .section:nth-of-type(odd),
+.content-page > .section:nth-of-type(odd){background:var(--white);}
+.public-info-page > .section > *,
+.content-page > .section > *{position:relative;z-index:1;}
+
+/* Dedicated page hero: same photo language as the landing hero. */
+.public-page-hero,
+.content-page .content-header{
+  position:relative;
+  overflow:hidden;
+  color:#fff;
+  background:
+    linear-gradient(105deg,rgba(75,0,14,.95),rgba(200,16,46,.72)),
+    url('../assets/hero-kegiatan-pmr.jpg') center 42%/cover;
+}
+.public-page-hero{padding:132px 24px 116px !important;}
+.public-page-hero::before,
+.content-page .content-header::before{
+  content:"";
+  position:absolute;inset:0;
+  background:radial-gradient(circle at 80% 25%,rgba(255,255,255,.13),transparent 34%);
+}
+.public-page-hero::after,
+.content-page .content-header::after{
+  content:"";
+  position:absolute;
+  left:-7%;right:-7%;bottom:-48px;height:96px;
+  background:var(--white);
+  border-radius:50% 50% 0 0/100% 100% 0 0;
+}
+.public-page-hero .container,
+.content-page .content-header > *{position:relative;z-index:2;}
+.public-page-hero h1,
+.content-page .content-header h1{color:#fff;max-width:900px;}
+.public-page-hero p,
+.content-page .content-header p{color:rgba(255,255,255,.88);max-width:760px;}
+
+/* Back-to-home action on every dedicated public page. */
+.public-back{
+  display:inline-flex;align-items:center;gap:8px;
+  margin-top:22px;
+  padding:10px 15px;
+  border:1px solid rgba(255,255,255,.34);
+  border-radius:999px;
+  background:rgba(255,255,255,.10);
+  color:#fff !important;
+  font-size:.82rem;font-weight:700;text-decoration:none;
+  backdrop-filter:blur(8px);
+  transition:transform .2s ease,background .2s ease;
+}
+.public-back:hover{transform:translateY(-2px);background:rgba(255,255,255,.18);}
+
+/* Better FAQ. */
+.faq-list{max-width:880px;gap:12px;}
+.faq-item{
+  border:1px solid rgba(17,24,39,.08);
+  border-radius:18px;
+  box-shadow:0 10px 30px rgba(17,24,39,.055);
+  transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;
+}
+.faq-item:hover{transform:translateY(-2px);box-shadow:0 16px 36px rgba(17,24,39,.08);border-color:rgba(200,16,46,.18);}
+.faq-q{padding:19px 20px;font-size:.94rem;}
+.faq-q span{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--public-soft);color:var(--pmr-red);font-size:1rem;flex:0 0 30px;}
+.faq-a{font-size:.9rem;line-height:1.7;}
+
+/* Better Android download card. */
+.app-download-grid{
+  max-width:1000px;margin:0 auto;
+  grid-template-columns:.82fr 1.18fr;
+  gap:64px;
+  padding:18px;
+  border:1px solid rgba(17,24,39,.07);
+  border-radius:28px;
+  background:linear-gradient(145deg,#fff,#fff7f8);
+  box-shadow:0 24px 60px rgba(17,24,39,.08);
+}
+.app-mockup-col{padding:24px;border-radius:22px;background:linear-gradient(145deg,#ffe9ee,#fff);}
+.app-mockup-col img{max-width:300px;}
+.app-download-content{padding:14px 14px 14px 0;}
+.app-info-list{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0;}
+.app-info-row{padding:14px;border-radius:16px;background:#fff;border:1px solid rgba(17,24,39,.07);display:flex;flex-direction:column;gap:5px;}
+.app-info-row span{font-size:.72rem;color:var(--ink-soft);}
+.app-info-row strong{font-size:.92rem;color:var(--ink);}
+.app-note-card{border-color:rgba(200,16,46,.12);background:var(--public-soft);}
+
+/* Contact uses broad rectangular information panels. */
+.contact-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;}
+.contact-item{
+  min-height:150px;
+  display:grid;grid-template-columns:auto 1fr;align-items:center;gap:16px;
+  text-align:left;padding:24px 26px;
+  border-radius:20px;
+  background:#fff;
+  box-shadow:0 12px 32px rgba(17,24,39,.06);
+}
+.contact-item .feature-icon{margin:0;}
+.contact-item p{color:var(--ink-soft);}
+
+/* Content pages: cards are the actual content, not empty decorative boxes. */
+.content-page .content-header{margin:0;padding:132px max(24px,calc((100% - var(--container-max))/2)) 116px;}
+.content-page .content-header h1{font-size:clamp(2.2rem,5vw,3.8rem);}
+.content-page .content-header p{font-size:1rem;line-height:1.7;}
+.content-page .chip-row{padding-top:0;margin-top:34px;}
+.content-page .chip{background:#fff;border:1px solid rgba(17,24,39,.08);box-shadow:0 5px 16px rgba(17,24,39,.04);}
+.content-page .chip.chip-active{background:var(--pmr-red);color:#fff;border-color:var(--pmr-red);}
+.content-page .content-grid-wrap{padding-bottom:18px;}
+.content-page .article-card,
+.content-page .video-card,
+.content-page .poster-card{
+  border-radius:22px;
+  box-shadow:0 12px 34px rgba(17,24,39,.065);
+}
+.content-page .ph-thumb{background:linear-gradient(145deg,#ffe7ec,#f3f4f6);}
+.content-page .content-back-home{display:flex;justify-content:center;margin:42px auto 0;}
+.content-page .content-back-home .btn{min-width:220px;}
+.detail-wrap{padding-top:28px;}
+.detail-back{padding:9px 13px;border:1px solid rgba(200,16,46,.15);border-radius:999px;background:var(--public-soft);}
+
+/* Footer: red, wave preserved, remove the distracting white dot/shape. */
+.site-footer{
+  position:relative;
+  margin-top:0;
+  padding:88px 24px 28px;
+  background:linear-gradient(145deg,#a90d27 0%,#760819 100%) !important;
+  color:#fff;
+  border-top:0 !important;
+  overflow:hidden;
+}
+.site-footer::after{
+  content:"";position:absolute;inset:auto -10% 0;height:150px;
+  background:radial-gradient(ellipse at 20% 120%,rgba(255,255,255,.08),transparent 48%),radial-gradient(ellipse at 80% 120%,rgba(255,255,255,.06),transparent 48%);
+  pointer-events:none;
+}
+.footer-wave{
+  top:-2px !important;height:66px !important;
+  background:var(--public-soft) !important;
+  border-radius:0 0 50% 50%/0 0 100% 100% !important;
+  transform:translateY(-50%) !important;
+}
+.site-footer .footer-grid,.site-footer .footer-bottom{position:relative;z-index:2;}
+.site-footer .footer-col a,.site-footer .footer-col p{color:rgba(255,255,255,.78);}
+.site-footer .footer-col a:hover{color:#fff;}
+.site-footer .footer-bottom{border-top-color:rgba(255,255,255,.16);}
+.footer-social{display:flex;gap:9px;flex-wrap:wrap;}
+.footer-social a{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:42px;height:34px;padding:0 11px;
+  border:1px solid rgba(255,255,255,.22) !important;
+  border-radius:999px !important;
+  background:rgba(255,255,255,.08) !important;
+  color:#fff !important;
+}
+.footer-social a:hover{background:rgba(255,255,255,.18) !important;}
+
+@media (max-width:900px){
+  .contact-grid{grid-template-columns:1fr 1fr;}
+  .app-download-grid{grid-template-columns:1fr;gap:26px;}
+  .app-download-content{padding:8px;}
+}
+@media (max-width:760px){
+  .nav,.nav.nav-hero{position:fixed !important;}
+  .nav.scrolled.nav-light .nav-links{background:rgba(255,255,255,.97);}
+  .nav.scrolled.nav-light .nav-links a{color:var(--ink) !important;}
+  .nav.scrolled.nav-light .nav-links a:hover{background:rgba(200,16,46,.06);}
+  .public-page-hero{padding:118px 20px 104px !important;}
+  .public-page-hero::after,.content-page .content-header::after{height:72px;bottom:-36px;}
+  .content-page .content-header{padding:118px 20px 104px;}
+  .contact-grid{grid-template-columns:1fr;}
+  .contact-item{min-height:110px;padding:20px;}
+  .app-info-list{grid-template-columns:1fr;}
+  .app-download-grid{padding:12px;border-radius:22px;}
+  .app-mockup-col{padding:18px;}
+  .content-page .chip-row{margin-top:26px;padding-inline:18px;overflow-x:auto;flex-wrap:nowrap;}
+  .content-page .chip{white-space:nowrap;}
+  .site-footer{padding-top:72px;}
 }

@@ -34,17 +34,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   window.addEventListener("resize", () => { if (window.innerWidth > 760) closeMobileNav(); });
 
-  /* Navbar tetap mengikuti scroll di desktop + mobile.
-     Di puncak hero transparan; setelah pengguna bergerak, navbar
-     mendapat latar glass merah agar tetap terbaca tanpa memutus hero. */
-  const heroNav = document.querySelector(".nav.nav-hero");
-  const updateHeroNav = () => {
-    if (!heroNav) return;
-    heroNav.classList.toggle("is-scrolled", window.scrollY > 24);
-  };
-  updateHeroNav();
-  window.addEventListener("scroll", updateHeroNav, { passive: true });
-
   /* Scroll smooth ke anchor */
   document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
     anchor.addEventListener("click", (e) => {
@@ -302,3 +291,42 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+/* =========================================================
+   FINAL PUBLIC NAV + PAGE NAVIGATION
+   Fixed navigation follows scroll; color changes with the page.
+   ========================================================= */
+(() => {
+  const initPublicChrome = () => {
+    const nav = document.querySelector('.nav');
+    if (!nav) return;
+
+    const hero = document.querySelector('.hero, .public-page-hero, .content-header');
+    const isHeroPage = !!document.querySelector('.hero');
+
+    const syncNav = () => {
+      const scrolled = window.scrollY > 28;
+      nav.classList.toggle('scrolled', scrolled);
+      nav.classList.toggle('nav-light', !isHeroPage && scrolled);
+    };
+    syncNav();
+    window.addEventListener('scroll', syncNav, { passive: true });
+
+    /* Dedicated pages get a clear route back to the public landing page. */
+    if (!isHeroPage && hero && !hero.querySelector('.public-back')) {
+      const target = hero.querySelector('.container') || hero;
+      const back = document.createElement('a');
+      back.className = 'public-back';
+      back.href = 'index.html';
+      back.innerHTML = '← Kembali ke Beranda';
+      target.appendChild(back);
+    }
+
+    /* Content list pages already have a back button; give it the same wording. */
+    const oldBack = document.querySelector('.content-back-home a');
+    if (oldBack) oldBack.innerHTML = '← Kembali ke Beranda';
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initPublicChrome, { once:true });
+  else initPublicChrome();
+})();
