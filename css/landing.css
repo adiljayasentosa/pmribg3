@@ -1219,7 +1219,7 @@
 @media(max-width:760px){ .content-page-blob-transition{height:68px;margin-top:26px;} }
 
 /* =========================================================
-   PUBLIC REDESIGN 1.1.52
+   PUBLIC REDESIGN 1.1.53
    Landing dipadatkan + halaman khusus dipisahkan.
    ========================================================= */
 .nav-public{background:rgba(116,0,18,.92);backdrop-filter:blur(14px);box-shadow:0 8px 24px rgba(45,0,8,.18)}
@@ -1272,7 +1272,7 @@
 
 /* =========================================================
    PUBLIC PAGES POLISH — HEADER / TRANSITIONS / FOOTER
-   Keep version unchanged: v1.1.52 / versionCode 62
+   Release: v1.1.53 / versionCode 63
    ========================================================= */
 .nav-public{
   position:fixed;
@@ -1376,7 +1376,7 @@
 }
 
 /* =========================================================
-   PUBLIC CONTENT VISUAL REFRESH — v1.1.52
+   PUBLIC CONTENT VISUAL REFRESH — v1.1.53
    Artikel = editorial, Video = media library,
    Poster = gallery, Dokumentasi = photo story.
    Tidak mengubah UX/data source. Hanya presentasi.
@@ -1597,4 +1597,106 @@ body[data-content-tipe="dokumentasi"] .content-grid-wrap .doc-card-body{padding:
   body[data-content-tipe="dokumentasi"] .content-grid-wrap .doc-card:first-child{grid-row:auto}
   body[data-content-tipe="dokumentasi"] .content-grid-wrap .doc-card .ph-thumb,
   body[data-content-tipe="dokumentasi"] .content-grid-wrap .doc-card:first-child .ph-thumb{height:210px;min-height:210px}
+}
+
+/* =========================================================
+   SPECIAL PAGE HEADER VISUAL — v1.1.53
+   Uses the dedicated light PMR editorial background instead
+   of reusing the landing-page photography.
+   ========================================================= */
+.public-page-hero{
+  min-height:380px;
+  align-items:flex-end;
+  padding-bottom:54px;
+  isolation:isolate;
+  background:#fff7f8;
+  color:#5b2028;
+}
+.public-page-hero::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  background-image:url('../assets/public-page-header-bg.png');
+  background-size:cover;
+  background-position:center center;
+  background-repeat:no-repeat;
+  transform:none;
+}
+.public-page-hero::after{display:none}
+.public-page-hero-overlay{
+  display:none;
+}
+.public-page-hero-content{
+  position:relative;
+  z-index:2;
+  padding:126px 24px 62px;
+}
+.public-page-hero .breadcrumb{
+  color:#7d3440;
+  text-shadow:none;
+}
+.public-page-hero .breadcrumb a{
+  color:#8d001b;
+  font-weight:800;
+}
+.public-page-hero .eyebrow{
+  color:#c8102e;
+  text-shadow:none;
+  font-weight:800;
+}
+.public-page-hero h1{
+  color:#7f0019;
+  text-shadow:none;
+  max-width:780px;
+  letter-spacing:-.035em;
+}
+.public-page-hero p{
+  color:#5f3940;
+  text-shadow:none;
+  max-width:700px;
+  font-size:1.02rem;
+}
+
+/* The generated Web PMR illustration is intentionally larger than the
+   previous generic mockup and is allowed to breathe inside the card. */
+.download-visual{
+  min-height:360px;
+  overflow:visible;
+}
+.download-visual img{
+  width:min(100%,520px);
+  max-height:390px;
+  object-fit:contain;
+  filter:drop-shadow(0 22px 28px rgba(50,0,10,.12));
+}
+.download-card{
+  overflow:visible;
+}
+
+@media(max-width:760px){
+  .public-page-hero{
+    min-height:410px;
+    padding-bottom:42px;
+  }
+  .public-page-hero::before{
+    background-size:auto 100%;
+    background-position:center center;
+  }
+  .public-page-hero-content{
+    padding:112px 20px 62px;
+  }
+  .public-page-hero h1{
+    font-size:clamp(2rem,9vw,2.55rem);
+  }
+  .public-page-hero p{
+    font-size:.94rem;
+  }
+  .download-visual{
+    min-height:250px;
+  }
+  .download-visual img{
+    width:min(100%,440px);
+    max-height:300px;
+  }
 }
