@@ -1152,3 +1152,68 @@
     height:116px;
   }
 }
+
+/* =========================================================
+   SECTION → SECTION : DESIGN 7 / SHAPE-BLOB TRANSITION
+   Dipakai di seluruh section publik landing, bukan hanya hero.
+   Struktur: warna section saat ini → soft pink blob → warna
+   section berikutnya. Tidak memakai garis lurus / ruang kosong.
+   ========================================================= */
+.section-blob-transition{
+  position:relative;
+  height:108px;
+  width:100%;
+  margin:0;
+  overflow:hidden;
+  line-height:0;
+  z-index:2;
+  pointer-events:none;
+}
+.section-blob-transition.from-light{ background:#fff; }
+.section-blob-transition.from-alt{ background:var(--gray-100); }
+.section-blob-transition svg{
+  display:block;
+  width:100%;
+  height:100%;
+}
+.section-blob-transition .section-blob-back{
+  fill:rgba(255,221,228,.86);
+}
+.section-blob-transition.to-light .section-blob-front{ fill:#fff; }
+.section-blob-transition.to-alt .section-blob-front{ fill:var(--gray-100); }
+.section-blob-transition .section-blob-dot.dot-a{ fill:rgba(200,16,46,.15); }
+.section-blob-transition .section-blob-dot.dot-b{ fill:rgba(200,16,46,.10); }
+
+/* Variasi kecil supaya seluruh halaman tidak terlihat seperti satu
+   SVG yang di-copy-paste mentah. Tetap satu bahasa visual. */
+.section-blob-transition:nth-of-type(4n) .section-blob-back{
+  transform:translateY(5px);
+}
+.section-blob-transition:nth-of-type(4n+2) .section-blob-front{
+  transform:translateY(-4px);
+}
+
+@media (max-width:760px){
+  .section-blob-transition{ height:78px; }
+  .section-blob-transition .section-blob-dot.dot-a{ r:5; }
+  .section-blob-transition .section-blob-dot.dot-b{ r:2.5; }
+}
+@media (max-width:420px){
+  .section-blob-transition{ height:66px; }
+}
+
+/* Public content pages: satu transition blob sebelum tombol kembali,
+   sehingga daftar konten tidak berhenti mendadak di background datar. */
+.content-page-blob-transition{
+  position:relative;
+  height:92px;
+  overflow:hidden;
+  margin:34px 0 0;
+  background:var(--cp-bg, #F8F9FA);
+  line-height:0;
+  pointer-events:none;
+}
+.content-page-blob-transition svg{ width:100%; height:100%; display:block; }
+.content-page-blob-transition .section-blob-back{ fill:rgba(255,221,228,.82); }
+.content-page-blob-transition .section-blob-front{ fill:var(--white); }
+@media(max-width:760px){ .content-page-blob-transition{height:68px;margin-top:26px;} }
