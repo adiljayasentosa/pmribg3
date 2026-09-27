@@ -34,7 +34,7 @@
 </head>
 <body data-content-tipe="artikel">
 <!-- ═══════════════════ NAVBAR ═══════════════════ -->
-<header class="nav nav-public" role="banner">
+<header class="nav nav-public" role="banner" data-public-nav>
 <div class="nav-inner">
 <a class="nav-brand" href="index.html">
 <img alt="Logo PMR" height="36" src="assets/logo.svg" width="36"/>
@@ -110,5 +110,5 @@
 <script src="js/public/content-public.js"></script>
 <script src="js/public/landing.js"></script>
 <script src="js/system/pwa-register.js"></script>
-</body>
+<script>document.addEventListener("DOMContentLoaded",()=>{const n=document.querySelector("[data-public-nav]");if(!n)return;const sync=()=>n.classList.toggle("is-scrolled",window.scrollY>24);sync();window.addEventListener("scroll",sync,{passive:true});});</script></body>
 </html>
