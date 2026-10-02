@@ -69,8 +69,7 @@
               <div class="field"><label for="reg-username">Username</label><input id="reg-username" name="username" placeholder="Contoh: fradil11" autocomplete="username" minlength="4" maxlength="40" pattern="[a-zA-Z0-9._-]+" required></div>
               <div class="field"><label for="reg-email">Email</label><input id="reg-email" name="email" type="email" placeholder="nama@email.com" autocomplete="email" required></div>
               <div class="field field-full"><label for="reg-password">Buat Kata Sandi</label><div class="registration-password-wrap"><input id="reg-password" name="password" type="password" placeholder="Minimal 6 karakter" autocomplete="new-password" minlength="6" required><button type="button" id="toggle-reg-password" aria-label="Tampilkan password">◉</button></div></div>
-              <div class="field"><label for="reg-kategori">Kategori</label><select id="reg-kategori" name="kategori" required><option value="">Pilih kategori</option><option value="Anggota Baru">Anggota Baru</option></select></div>
-              <div class="field"><label for="reg-kategori-detail">Unit</label><select id="reg-kategori-detail" name="kategoriDetail" required><option value="">Pilih unit</option><option value="PMR WIRA UNIT">PMR WIRA UNIT</option></select></div>
+              <div class="field field-full"><label for="reg-divisi">Divisi</label><select id="reg-divisi" name="divisi" required><option value="">Pilih divisi</option><option value="Tandu">Tandu</option><option value="Pertolongan Pertama">Pertolongan Pertama</option></select></div>
             </div>
             <div class="registration-note"><span>i</span><p>Role dan hak akses ditentukan otomatis oleh sistem. Akun baru belum bisa masuk sampai pendaftaran disetujui.</p></div>
           </section>
@@ -96,7 +95,6 @@
             <div class="registration-grid">
               <div class="field"><label for="reg-kelas">Kelas</label><input id="reg-kelas" name="kelas" placeholder="Contoh: XI TKJ" required></div>
               <div class="field"><label for="reg-jurusan">Jurusan</label><input id="reg-jurusan" name="jurusan" placeholder="Contoh: TKJ" required></div>
-              <div class="field field-full"><label for="reg-divisi">Divisi PMR</label><select id="reg-divisi" name="divisi" required><option value="">Pilih divisi</option><option value="Pertolongan Pertama">Pertolongan Pertama</option><option value="Tandu">Tandu</option></select></div>
             </div>
           </section>
 
@@ -111,6 +109,6 @@
   </section>
 </main>
 <script src="js/firebase-config.js"></script>
-<script src="js/public/pendaftaran.js?v=1.1.56"></script>
+<script src="js/public/pendaftaran.js?v=1.1.58"></script>
 </body>
 </html>

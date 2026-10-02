@@ -1,5 +1,5 @@
 /* =========================================================
-   AUTH PAGE LOGIC — v1.1.56
+   AUTH PAGE LOGIC — v1.1.58
    Login menggunakan username + password.
    Role ditentukan dari profil Firebase/Firestore, bukan pilihan user.
    ========================================================= */

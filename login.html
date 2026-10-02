@@ -21,43 +21,16 @@
 </head>
 <body class="auth-body">
   <main class="auth-page">
-    <section class="auth-visual auth-visual-login" aria-label="PMR WIRA UNIT">
-      <div class="auth-visual-glow auth-glow-one"></div>
-      <div class="auth-visual-glow auth-glow-two"></div>
-      <a class="auth-visual-brand" href="index.html" aria-label="Kembali ke halaman utama">
-        <img src="assets/logo.svg" alt=""/>
-        <span><strong>PMR WIRA UNIT</strong><small>SMK IBG 3</small></span>
-      </a>
-
-      <div class="auth-visual-copy">
-        <span class="auth-kicker"><i></i> PALANG MERAH REMAJA</span>
-        <h1>Bersama untuk<br/><em>kemanusiaan.</em></h1>
-        <p>Masuk ke satu sistem untuk mengelola kegiatan, anggota, presensi, KTA, dan administrasi PMR.</p>
-      </div>
-
-      <div class="auth-showcase" aria-hidden="true">
-        <div class="auth-showcase-window">
-          <div class="showcase-bar"><span></span><span></span><span></span><b>PMR WIRA UNIT</b></div>
-          <img src="assets/app-web-pmr.png" alt=""/>
-        </div>
-        <div class="auth-floating-card auth-float-kta"><span class="float-icon">✚</span><div><b>KTA Digital</b><small>Terintegrasi sistem</small></div></div>
-        <div class="auth-floating-card auth-float-online"><i></i><div><b>Sistem Online</b><small>Data tersinkron</small></div></div>
-      </div>
-
-      <div class="auth-visual-footer"><span>Bergerak Dengan Hati, Bukan Dengan Gengsi.</span><span>© PMR WIRA UNIT</span></div>
-    </section>
-
-    <section class="auth-form-side">
+    <section class="auth-form-side" aria-label="Login PMR WIRA UNIT">
       <div class="auth-form-container">
-        <a class="auth-mobile-brand" href="index.html">
+        <a class="auth-mobile-brand" href="index.html" aria-label="Kembali ke halaman utama">
           <img src="assets/logo.svg" alt="Logo PMR WIRA UNIT"/>
           <span><strong>PMR WIRA UNIT</strong><small>SMK IBG 3</small></span>
         </a>
 
         <div class="auth-heading auth-heading-left">
-          <span class="auth-step-label">AKSES AKUN</span>
-          <h2>Selamat datang kembali.</h2>
-          <p>Masukkan akunmu untuk melanjutkan ke sistem PMR WIRA UNIT.</p>
+          <h2>Selamat Datang</h2>
+          <p>Silakan masuk ke akun PMR WIRA UNIT untuk melanjutkan.</p>
         </div>
 
         <div id="login-error" class="alert alert-danger auth-alert" style="display:none" role="alert">
@@ -67,40 +40,38 @@
         <form id="login-form" class="auth-form" novalidate>
           <div class="field auth-field">
             <label for="input-username">Username</label>
-            <div class="auth-input-wrap"><span class="auth-input-icon">@</span><input id="input-username" type="text" name="username" placeholder="Masukkan username" autocomplete="username" minlength="4" required/></div>
+            <div class="auth-input-wrap"><span class="auth-input-icon">♙</span><input id="input-username" type="text" name="username" placeholder="Masukkan username" autocomplete="username" minlength="4" required/></div>
           </div>
           <div class="field auth-field">
             <label for="input-password">Password</label>
             <div class="auth-input-wrap auth-password-wrap">
-              <span class="auth-input-icon">••</span>
+              <span class="auth-input-icon">▣</span>
               <input id="input-password" type="password" name="password" placeholder="Masukkan password" autocomplete="current-password" required/>
               <button type="button" id="btn-toggle-password" class="password-toggle" aria-label="Tampilkan password">◉</button>
             </div>
           </div>
 
           <div class="auth-form-row auth-form-row-clean">
-            <label class="auth-checkbox"><input type="checkbox" id="input-remember" checked/><span>Ingat saya</span></label>
             <button type="button" id="btn-lupa-password" class="auth-link-btn">Lupa password?</button>
           </div>
 
-          <button id="btn-login" type="submit" class="btn btn-primary btn-block auth-main-btn">Masuk ke Sistem <span>→</span></button>
+          <button id="btn-login" type="submit" class="btn btn-primary btn-block auth-main-btn">Login</button>
         </form>
 
         <div class="auth-switch-card">
-          <div><strong>Belum punya akun?</strong><span>Daftar sebagai anggota PMR secara mandiri.</span></div>
-          <a href="pendaftaran.html">Daftar <span>↗</span></a>
+          <div><strong>Belum punya akun?</strong></div>
+          <a href="pendaftaran.html">Daftar</a>
         </div>
 
         <a href="index.html" class="auth-home-link">← Kembali ke halaman utama</a>
-        <div class="auth-security-note"><span>●</span> Akses akun dilindungi dan role ditentukan oleh sistem.</div>
       </div>
     </section>
   </main>
 
   <script src="js/firebase-config.js"></script>
-  <script src="js/core/auth.js?v=1.1.56"></script>
-  <script src="js/core/activity.js?v=1.1.56"></script>
-  <script src="js/login/login.js?v=1.1.56"></script>
+  <script src="js/core/auth.js?v=1.1.58"></script>
+  <script src="js/core/activity.js?v=1.1.58"></script>
+  <script src="js/login/login.js?v=1.1.58"></script>
   <script src="js/system/pwa-register.js"></script>
 </body>
 </html>

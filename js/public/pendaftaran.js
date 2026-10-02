@@ -1,5 +1,5 @@
 /* =========================================================
-   PENDAFTARAN ANGGOTA PMR — v1.1.56
+   PENDAFTARAN ANGGOTA PMR — v1.1.58
    Step 1: buat akun pribadi Firebase Auth
    Step 2: lengkapi data anggota lalu kirim pendaftaran
    KTA tidak lagi membuat akun.
