@@ -43,7 +43,7 @@
   <section class="registration-form-side">
     <div class="registration-shell">
       <div class="registration-topbar">
-        <a class="registration-back" href="login.html" aria-label="Kembali ke login">←</a>
+        <a class="registration-back" href="login.html" aria-label="Kembali ke login"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M10 6l-6 6 6 6"/></svg></a>
         <div class="registration-mobile-title"><strong>Daftar Anggota</strong><small>PMR WIRA UNIT</small></div>
         <a class="registration-login-link" href="login.html">Sudah punya akun? <strong>Masuk</strong></a>
       </div>
@@ -68,7 +68,7 @@
               <div class="field field-full"><label for="reg-nama">Nama Lengkap</label><input id="reg-nama" name="nama" placeholder="Masukkan nama lengkap" autocomplete="name" required></div>
               <div class="field"><label for="reg-username">Username</label><input id="reg-username" name="username" placeholder="Contoh: fradil11" autocomplete="username" minlength="4" maxlength="40" pattern="[a-zA-Z0-9._-]+" required></div>
               <div class="field"><label for="reg-email">Email</label><input id="reg-email" name="email" type="email" placeholder="nama@email.com" autocomplete="email" required></div>
-              <div class="field field-full"><label for="reg-password">Buat Kata Sandi</label><div class="registration-password-wrap"><input id="reg-password" name="password" type="password" placeholder="Minimal 6 karakter" autocomplete="new-password" minlength="6" required><button type="button" id="toggle-reg-password" aria-label="Tampilkan password">◉</button></div></div>
+              <div class="field field-full"><label for="reg-password">Buat Kata Sandi</label><div class="registration-password-wrap"><input id="reg-password" name="password" type="password" placeholder="Minimal 6 karakter" autocomplete="new-password" minlength="6" required><button type="button" id="toggle-reg-password" aria-label="Tampilkan password"><svg class="eye-icon" viewBox="0 0 24 24" focusable="false"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg></button></div></div>
               <div class="field field-full"><label for="reg-divisi">Divisi</label><select id="reg-divisi" name="divisi" required><option value="">Pilih divisi</option><option value="Tandu">Tandu</option><option value="Pertolongan Pertama">Pertolongan Pertama</option></select></div>
             </div>
             <div class="registration-note"><span>i</span><p>Role dan hak akses ditentukan otomatis oleh sistem. Akun baru belum bisa masuk sampai pendaftaran disetujui.</p></div>
@@ -99,8 +99,8 @@
           </section>
 
           <div class="registration-actions">
-            <button type="button" class="btn btn-outline" id="reg-prev" style="display:none">← Sebelumnya</button>
-            <button type="button" class="btn btn-primary" id="reg-next">Lanjutkan <span>→</span></button>
+            <button type="button" class="btn btn-outline" id="reg-prev" style="display:none"><svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M10 6l-6 6 6 6"/></svg><span>Sebelumnya</span></button>
+            <button type="button" class="btn btn-primary" id="reg-next"><span>Lanjutkan</span><svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M14 6l6 6-6 6"/></svg></button>
             <button type="submit" class="btn btn-primary" id="reg-submit" style="display:none">Kirim Pendaftaran <span>✓</span></button>
           </div>
         </form>
@@ -109,6 +109,6 @@
   </section>
 </main>
 <script src="js/firebase-config.js"></script>
-<script src="js/public/pendaftaran.js?v=1.1.58"></script>
+<script src="js/public/pendaftaran.js?v=1.1.59"></script>
 </body>
 </html>

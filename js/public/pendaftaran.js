@@ -1,5 +1,5 @@
 /* =========================================================
-   PENDAFTARAN ANGGOTA PMR — v1.1.58
+   PENDAFTARAN ANGGOTA PMR — v1.1.59
    Step 1: buat akun pribadi Firebase Auth
    Step 2: lengkapi data anggota lalu kirim pendaftaran
    KTA tidak lagi membuat akun.
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.getElementById('toggle-reg-password')?.addEventListener('click',e=>{
-    const input=document.getElementById('reg-password'), visible=input.type==='text'; input.type=visible?'password':'text'; e.currentTarget.textContent=visible?'◉':'◌';
+    const input=document.getElementById('reg-password'), visible=input.type==='text'; input.type=visible?'password':'text'; e.currentTarget.innerHTML=visible?'<svg class="eye-icon" viewBox="0 0 24 24" focusable="false"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>':'<svg class="eye-icon" viewBox="0 0 24 24" focusable="false"><path d="M3 3l18 18"/><path d="M10.6 5.2A10.7 10.7 0 0 1 12 5c6 0 9.5 7 9.5 7a18.4 18.4 0 0 1-3.1 3.8M6.1 6.1C3.7 8.1 2.5 12 2.5 12s3.5 7 9.5 7c1.1 0 2.1-.2 3-.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
   });
 
   next.addEventListener('click',async()=>{
