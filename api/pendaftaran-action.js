@@ -89,7 +89,7 @@ module.exports = async function handler(req, res) {
        oleh seluruh akun login yang memang membutuhkan daftar anggota. */
     const anggotaData = {
       nama: p.nama || '', nomorInduk, kelas: p.kelas || '', jurusan: p.jurusan || '', divisi: p.divisi || 'Pertolongan Pertama',
-      jabatan: 'Anggota', statusKeanggotaan: 'Aktif', statusAkun: 'active', sumberData: 'registration',
+      foto: p.fotoDrive || '', jabatan: 'Anggota', statusKeanggotaan: 'Aktif', statusAkun: 'active', sumberData: 'registration',
       bergabung: new Date().toISOString().slice(0, 10),
       createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp()
     };

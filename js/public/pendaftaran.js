@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const payload={
         idToken:token, authUid:current.uid, nama:value('reg-nama'), username:value('reg-username').toLowerCase(), email:value('reg-email').toLowerCase(),
         nik:value('reg-nik'), kelas:value('reg-kelas'), jurusan:value('reg-jurusan'), tempatLahir:value('reg-tempat'), tanggalLahir:value('reg-tanggal'), agama:value('reg-agama'), jenisKelamin:gender,
-        noHandphone:value('reg-hp'), golonganDarah:value('reg-darah'), alamat:value('reg-alamat'), divisi:value('reg-divisi')
+        noHandphone:value('reg-hp'), golonganDarah:value('reg-darah'), alamat:value('reg-alamat'), divisi:value('reg-divisi'), fotoDrive:value('reg-foto-drive')
       };
       const resp=await fetch('/api/pendaftaran',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       const data=await resp.json().catch(()=>({}));
