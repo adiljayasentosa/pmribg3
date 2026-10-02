@@ -62,9 +62,9 @@ async function login(username, password) {
     /* Firebase Auth menerima email, sementara UI login memakai username.
        API hanya menyelesaikan username -> email. Password tetap diverifikasi
        langsung oleh Firebase Auth, bukan oleh endpoint ini. */
-    const lookupResp = await fetch('/api/auth-lookup', {
+    const lookupResp = await fetch('/api/auth', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ username })
+      body:JSON.stringify({ action:'lookup', username })
     });
     const lookup = await lookupResp.json().catch(()=>({}));
     if (!lookupResp.ok || !lookup.email) return { ok:false, message:lookup.error || 'Username tidak ditemukan.' };
@@ -77,8 +77,8 @@ async function login(username, password) {
     let profile = snap.exists ? snap.data() : null;
     if (!profile) {
       const idToken = await cred.user.getIdToken(true);
-      const response = await fetch('/api/auth-profile', {
-        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({idToken})
+      const response = await fetch('/api/auth', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'profile', idToken})
       });
       const data = await response.json().catch(()=>({}));
       if (!response.ok || !data.ok) {
@@ -180,10 +180,10 @@ function initAuth(onUser, onNoUser) {
         _currentUser = user;
       } else {
         const idToken = await firebaseUser.getIdToken(true);
-        const response = await fetch("/api/auth-profile", {
+        const response = await fetch("/api/auth", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken })
+          body: JSON.stringify({ action:'profile', idToken })
         });
         let data = {};
         try { data = await response.json(); } catch (_) {}

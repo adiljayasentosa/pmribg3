@@ -54,7 +54,7 @@ async function login(username, password) {
 
   /* ── Mode Firebase ── */
   try {
-    const lookupResp = await fetch('/api/auth-lookup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username})});
+    const lookupResp = await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'lookup',username})});
     const lookup = await lookupResp.json().catch(()=>({}));
     if (!lookupResp.ok || !lookup.email) return {ok:false,message:lookup.error||'Username tidak ditemukan.'};
     const cred = await firebase.auth().signInWithEmailAndPassword(lookup.email, password);

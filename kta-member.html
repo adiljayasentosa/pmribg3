@@ -78,7 +78,7 @@ const ktaCard = document.getElementById('kta-card');
 
 function m(t,kind=''){if(!msg)return;msg.textContent=t;msg.className='kta-msg '+kind}
 async function resolveLoginEmail(username){
-  const r=await fetch('/api/auth-lookup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:String(username).trim().toLowerCase()})});
+  const r=await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'lookup',username:String(username).trim().toLowerCase()})});
   const data=await r.json().catch(()=>({}));
   if(!r.ok||!data.email)throw new Error(data.error||'Username tidak ditemukan.');
   return data.email;

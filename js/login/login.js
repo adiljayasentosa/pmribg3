@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const username = (document.getElementById("input-username").value || prompt("Masukkan username akunmu:") || "").trim().toLowerCase();
     if (!username) return;
     try {
-      const lookup = await fetch("/api/auth-lookup", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({username}) });
+      const lookup = await fetch("/api/auth", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:'lookup',username}) });
       const data = await lookup.json().catch(()=>({}));
       if (!lookup.ok || !data.email) throw new Error("Username tidak ditemukan.");
       await firebase.auth().sendPasswordResetEmail(data.email);
