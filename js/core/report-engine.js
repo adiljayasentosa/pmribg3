@@ -61,7 +61,7 @@ const LAPORAN_ORG = {
    RBAC di inventaris.js/piket.js), begitu juga Pengumuman
    karena sumber datanya sama dengan Kegiatan.
 ───────────────────────────────────────────────────────── */
-const _SEMUA_ROLE = ["admin","ketua","wakil","sekretaris","bendahara","pj","anggota","demo"];
+const _SEMUA_ROLE = ["admin","pembina","pengurus","anggota"];
 
 const REPORT_ROLE_ACCESS = {
   anggota:    _SEMUA_ROLE.filter(r => r !== "anggota"),

@@ -1,167 +1,18 @@
 /* =========================================================
-   AUTH / LOGIN PAGE
+   AUTHENTICATION — v1.1.56
+   Dedicated login layout. Registration keeps its own page
+   while sharing the same visual language.
    ========================================================= */
-.auth-screen{
-  min-height:100vh;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-}
-.auth-panel{
-  /* [F5.0 — UI Polish] Sebelumnya flat var(--pmr-red) — diberi
-     gradient tipis (token yang SUDAH ADA, bukan warna baru) agar
-     "lebih hidup" sesuai permintaan, dengan arah & pasangan warna
-     yang sama seperti gradient sidebar dashboard (--pmr-red →
-     --pmr-red-dark) supaya terasa satu design system. */
-  background:linear-gradient(160deg, var(--pmr-red) 0%, var(--pmr-red-dark) 100%);
-  color:var(--white);
-  position:relative;
-  overflow:hidden;
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-  padding:48px;
-}
-.auth-panel::before{
-  content:'';
-  position:absolute; inset:0;
-  background-image:
-    linear-gradient(var(--pmr-red-dark) 2px, transparent 2px),
-    linear-gradient(90deg, var(--pmr-red-dark) 2px, transparent 2px);
-  background-size:44px 44px;
-  opacity:0.16;
-  mask-image:radial-gradient(circle at 30% 80%, black 0%, transparent 70%);
-}
-/* [F5.0] Ilustrasi tema PMR — layer dekoratif di belakang konten,
-   monokrom putih transparan (bukan warna baru) supaya tetap elegan
-   & tidak mengganggu keterbacaan teks di atasnya. */
-.auth-illustration{
-  position:absolute;
-  right:-60px; bottom:-60px;
-  width:380px; height:380px;
-  z-index:0;
-  pointer-events:none;
-}
-.auth-illustration svg{ width:100%; height:100%; display:block; }
-
-.auth-panel-top{ position:relative; z-index:1; display:flex; align-items:center; gap:10px; }
-.auth-panel-top .brand-name{ font-family:var(--font-display); font-weight:700; }
-.auth-panel-top .brand-sub{ font-size:0.72rem; color:rgba(255,255,255,0.8); }
-.auth-panel-mid{ position:relative; z-index:1; max-width:380px; }
-.auth-panel-mid h2{ color:var(--white); font-size:1.7rem; }
-.auth-panel-mid p{ color:rgba(255,255,255,0.85); }
-.auth-panel-stats{ position:relative; z-index:1; display:flex; gap:28px; }
-
-.auth-form-wrap{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:40px 24px;
-}
-/* [F5.1] Form dibungkus jadi "card" — token radius/shadow SAMA
-   persis dengan .card di components.css (dashboard), bukan nilai
-   baru. Hanya di viewport lebar (di mana .auth-panel kiri masih
-   terlihat) supaya di mobile form tetap terasa penuh-layar seperti
-   sebelumnya, bukan kartu mengambang kecil. */
-.auth-form{ width:100%; max-width:380px; }
-@media (min-width:861px){
-  .auth-form{
-    max-width:420px;
-    background:var(--white);
-    border:1px solid var(--gray-200);
-    border-radius:var(--radius-lg);
-    box-shadow:var(--shadow-md);
-    padding:36px 40px;
-  }
-}
-.auth-form .auth-mobile-brand{ display:none; }
-.auth-form h1{ font-size:1.6rem; }
-.auth-form .auth-lead{ margin-bottom:28px; }
-
-/* [F6.0] Role selector — horizontal chips modern, pengganti grid
-   tombol besar. Elemen & class (`.role-pill[data-role]`) SENGAJA
-   dipertahankan sama persis supaya js/login.js tidak perlu diubah
-   sedikit pun — hanya tampilannya yang berubah total. */
-.role-label{ font-size:0.82rem; font-weight:600; margin-bottom:8px; color:var(--ink); }
-.role-chips{
-  display:flex; flex-wrap:wrap; gap:8px;
-  margin-bottom:20px;
-}
-.role-pill{
-  display:inline-flex; align-items:center; gap:6px;
-  border:1.5px solid var(--gray-300);
-  border-radius:var(--radius-pill);
-  padding:8px 14px;
-  font-size:0.78rem;
-  font-weight:600;
-  color:var(--ink-soft);
-  background:var(--white);
-  transition:all var(--transition);
-}
-.role-pill svg{ width:14px; height:14px; flex-shrink:0; }
-.role-pill:hover{ border-color:var(--pmr-red); color:var(--pmr-red-dark); }
-.role-pill.active{
-  border-color:var(--pmr-red);
-  background:var(--pmr-red-light);
-  color:var(--pmr-red-dark);
-}
-
-/* Remember Me + Lupa Password */
-.auth-form-row{
-  display:flex; align-items:center; justify-content:space-between;
-  margin:14px 0 18px;
-}
-.auth-checkbox{
-  display:inline-flex; align-items:center; gap:8px;
-  font-size:0.82rem; color:var(--ink-soft);
-  cursor:pointer;
-}
-.auth-checkbox input{
-  width:16px; height:16px;
-  accent-color:var(--pmr-red);
-  cursor:pointer;
-}
-.auth-link-btn{
-  background:none; border:none;
-  font-size:0.8rem; font-weight:600;
-  color:var(--pmr-red);
-}
-.auth-link-btn:hover{ text-decoration:underline; }
-
-.auth-divider{
-  text-align:center;
-  font-size:0.76rem;
-  color:var(--gray-400);
-  margin:18px 0;
-}
-
-@media (max-width: 860px){
-  .auth-screen{ grid-template-columns:1fr; }
-  .auth-panel{ display:none; }
-  .auth-form-wrap{ padding:40px 20px; min-height:100vh; }
-  .auth-form .auth-mobile-brand{
-    display:flex; align-items:center; gap:10px; margin-bottom:28px;
-  }
-}
-
-/* [PENDAFTARAN] Brand login baru: logo besar, terpusat, teks bertingkat. */
-.auth-brand-center{text-align:center;margin:0 auto 24px}
-.auth-brand-center img{width:78px;height:78px;display:block;margin:0 auto 12px}
-.auth-brand-title{font-family:var(--font-display);font-size:1.25rem;font-weight:800;line-height:1.1;color:var(--ink)}
-.auth-brand-sub{font-size:.84rem;color:var(--ink-soft);margin-top:4px}
-.auth-register-divider{display:flex;align-items:center;gap:10px;margin:18px 0 12px;color:var(--gray-400);font-size:.74rem}
-.auth-register-divider::before,.auth-register-divider::after{content:"";height:1px;background:var(--gray-200);flex:1}
-.auth-register-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px 14px;border:1.5px solid var(--pmr-red);border-radius:12px;color:var(--pmr-red);font-size:.82rem;font-weight:700;text-decoration:none;background:#fff;transition:all var(--transition)}
-.auth-register-btn:hover{background:var(--pmr-red-light)}
-.auth-register-note{text-align:center;color:var(--gray-400);font-size:.7rem;margin:8px 0 0}
-@media(max-width:860px){.auth-form-wrap{padding:26px 20px;align-items:flex-start}.auth-form{padding-top:6px}.auth-brand-center{margin-bottom:22px}}
-
-/* Role hierarchy — Pembina → Pengurus → PJ Divisi → Anggota */
-.role-groups{display:flex;flex-direction:column;gap:11px;margin-bottom:20px}
-.role-group{padding:10px 11px 11px;border:1px solid var(--gray-200);border-radius:14px;background:var(--gray-100)}
-.role-group-pembina{border-color:var(--pmr-red-soft);background:var(--pmr-red-light)}
-.role-group-label{font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 7px 2px}
-.role-group-pembina .role-group-label{color:var(--pmr-red-dark)}
-.role-group-chips{display:flex;flex-wrap:wrap;gap:7px}
-.role-group-chips-pengurus{flex-wrap:nowrap}
-.role-group .role-pill{background:var(--white);margin:0}
-@media(max-width:520px){.role-group-chips-pengurus{flex-wrap:wrap}}
+.auth-body{margin:0;background:#f7f4f1;color:var(--ink);font-family:var(--font-body)}
+.auth-page{min-height:100svh;display:grid;grid-template-columns:minmax(440px,1.02fr) minmax(460px,.98fr);overflow:hidden;background:#fff}
+.auth-visual{position:relative;overflow:hidden;min-height:100svh;padding:38px 7%;display:flex;flex-direction:column;color:#fff;background:linear-gradient(145deg,#8f0c1f 0%,#c8102e 46%,#ef3d57 100%)}
+.auth-visual::before{content:"";position:absolute;width:520px;height:520px;right:-210px;top:-220px;border:1px solid rgba(255,255,255,.16);border-radius:50%;box-shadow:0 0 0 70px rgba(255,255,255,.035),0 0 0 140px rgba(255,255,255,.025)}
+.auth-visual::after{content:"";position:absolute;width:420px;height:420px;left:-250px;bottom:-240px;border:1px solid rgba(255,255,255,.12);border-radius:50%;box-shadow:0 0 0 55px rgba(255,255,255,.025)}
+.auth-visual-glow{position:absolute;border-radius:50%;filter:blur(2px);pointer-events:none}.auth-glow-one{width:260px;height:260px;right:12%;bottom:18%;background:rgba(255,255,255,.06)}.auth-glow-two{width:180px;height:180px;left:9%;top:30%;background:rgba(255,255,255,.04)}
+.auth-visual-brand{position:relative;z-index:2;display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none;width:max-content}.auth-visual-brand img{width:46px;height:46px;filter:brightness(0) invert(1);opacity:.98}.auth-visual-brand span{display:flex;flex-direction:column;line-height:1.1}.auth-visual-brand strong{font-family:var(--font-display);font-size:1rem;letter-spacing:.02em}.auth-visual-brand small{font-size:.68rem;opacity:.72;margin-top:4px}
+.auth-visual-copy{position:relative;z-index:2;max-width:560px;margin:auto 0 34px;padding-top:50px}.auth-kicker{display:inline-flex;align-items:center;gap:8px;font-size:.68rem;font-weight:800;letter-spacing:.13em;opacity:.78}.auth-kicker i{width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 0 5px rgba(255,255,255,.12)}.auth-visual-copy h1{margin:14px 0 14px;font-family:var(--font-display);font-size:clamp(2.8rem,4vw,4.7rem);line-height:1.02;letter-spacing:-.055em;color:#fff}.auth-visual-copy h1 em{font-style:normal;color:#ffe5e9}.auth-visual-copy p{max-width:510px;margin:0;font-size:.9rem;line-height:1.75;color:rgba(255,255,255,.78)}
+.auth-showcase{position:relative;z-index:2;width:min(100%,610px);margin:0 auto 36px;min-height:260px}.auth-showcase-window{position:absolute;left:6%;right:8%;bottom:0;height:230px;border-radius:18px 18px 10px 10px;background:#fff;box-shadow:0 26px 70px rgba(60,0,12,.3);overflow:hidden;transform:perspective(900px) rotateX(1deg) rotateY(-3deg)}.showcase-bar{height:30px;background:#f8f8f8;display:flex;align-items:center;gap:5px;padding:0 12px;color:#69707a}.showcase-bar span{width:6px;height:6px;border-radius:50%;background:#d4d4d4}.showcase-bar b{margin-left:auto;font-size:.52rem;font-family:var(--font-display);letter-spacing:.05em}.auth-showcase-window img{width:100%;height:calc(100% - 30px);object-fit:cover;object-position:top center;display:block}
+.auth-floating-card{position:absolute;display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.97);color:#1d2027;border-radius:14px;padding:10px 12px;box-shadow:0 18px 42px rgba(55,0,12,.25);font-size:.68rem}.auth-floating-card b,.auth-floating-card small{display:block}.auth-floating-card b{font-size:.7rem}.auth-floating-card small{margin-top:2px;color:#858891}.auth-float-kta{left:0;top:44px}.auth-float-online{right:0;bottom:24px}.float-icon{display:grid;place-items:center;width:29px;height:29px;border-radius:9px;background:#fdeef0;color:var(--pmr-red);font-weight:900}.auth-float-online i{width:8px;height:8px;border-radius:50%;background:#2aa65a;box-shadow:0 0 0 4px #e5f6eb}.auth-visual-footer{position:relative;z-index:2;display:flex;justify-content:space-between;gap:15px;font-size:.62rem;opacity:.56}.auth-visual-footer span:last-child{white-space:nowrap}
+.auth-form-side{display:flex;align-items:center;justify-content:center;overflow:auto;background:#fbfaf8;padding:42px 6%}.auth-form-container{width:min(100%,470px);padding:16px 0}.auth-mobile-brand{display:none}.auth-heading-left{text-align:left;margin:0 0 28px}.auth-step-label{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:#fdeef0;color:var(--pmr-red);font-size:.62rem;font-weight:800;letter-spacing:.1em}.auth-heading-left h2{margin:14px 0 8px;font-family:var(--font-display);font-size:clamp(1.9rem,3vw,2.55rem);line-height:1.08;letter-spacing:-.04em;color:#171923}.auth-heading-left p{margin:0;color:#777a82;font-size:.82rem;line-height:1.65;max-width:390px}.auth-alert{margin-bottom:16px}.auth-form .field{margin-bottom:17px}.auth-form .field label{display:block;margin:0 0 8px;font-size:.74rem;font-weight:800;color:#262830}.auth-input-wrap{position:relative}.auth-input-wrap input{width:100%;box-sizing:border-box;min-height:54px;border:1px solid #dedbdd;border-radius:14px;background:#fff;padding:0 16px 0 43px;font:inherit;font-size:.82rem;color:#20222a;outline:none;transition:border-color .18s,box-shadow .18s}.auth-input-wrap input:focus{border-color:#e36a7e;box-shadow:0 0 0 4px rgba(200,16,46,.08)}.auth-input-icon{position:absolute;z-index:1;left:15px;top:50%;transform:translateY(-50%);font-size:.72rem;font-weight:900;color:#a0a1a8}.auth-password-wrap input{padding-right:50px}.password-toggle{position:absolute;right:9px;top:50%;transform:translateY(-50%);width:35px;height:35px;border:0;border-radius:10px;background:transparent;color:#8f9097;cursor:pointer}.password-toggle:hover{background:#f5f3f3;color:var(--pmr-red)}.auth-form-row{display:flex;align-items:center;justify-content:space-between}.auth-form-row-clean{margin:3px 0 20px}.auth-checkbox{display:flex;align-items:center;gap:7px;font-size:.72rem;color:#74767e}.auth-checkbox input{accent-color:var(--pmr-red)}.auth-link-btn{border:0;background:none;color:var(--pmr-red);font-size:.72rem;font-weight:800;cursor:pointer;padding:4px 0}.auth-main-btn{min-height:54px;border-radius:14px;font-size:.82rem;font-weight:800;box-shadow:0 10px 24px rgba(200,16,46,.18)}.auth-main-btn span{margin-left:7px;font-size:1rem}.auth-switch-card{margin-top:24px;padding:15px 16px;border:1px solid #ebe7e5;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:15px}.auth-switch-card div{display:flex;flex-direction:column;gap:3px}.auth-switch-card strong{font-size:.75rem;color:#292b31}.auth-switch-card span{font-size:.66rem;color:#909198;line-height:1.4}.auth-switch-card a{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;color:var(--pmr-red);font-size:.72rem;font-weight:800;text-decoration:none}.auth-switch-card a span{color:var(--pmr-red)}.auth-home-link{display:block;text-align:center;margin-top:19px;color:#7c7d84;text-decoration:none;font-size:.7rem}.auth-home-link:hover{color:var(--pmr-red)}.auth-security-note{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:13px;color:#a0a1a7;font-size:.6rem}.auth-security-note span{color:#2c9c57;font-size:.7rem}
+@media(max-width:980px){.auth-page{grid-template-columns:1fr}.auth-visual{display:none}.auth-form-side{min-height:100svh;padding:32px 22px}.auth-mobile-brand{display:flex;align-items:center;justify-content:center;gap:10px;width:max-content;margin:0 auto 38px;text-decoration:none;color:#20222a}.auth-mobile-brand img{width:48px;height:48px}.auth-mobile-brand span{display:flex;flex-direction:column;line-height:1.1}.auth-mobile-brand strong{font-family:var(--font-display);font-size:.95rem}.auth-mobile-brand small{font-size:.65rem;color:#8a8b92;margin-top:4px}.auth-form-container{padding:0}}
+@media(max-width:520px){.auth-form-side{padding:22px 18px 28px}.auth-mobile-brand{margin-bottom:28px}.auth-heading-left{margin-bottom:23px}.auth-heading-left h2{font-size:1.75rem}.auth-heading-left p{font-size:.76rem}.auth-switch-card{align-items:flex-start}.auth-switch-card a{padding-top:2px}.auth-security-note{line-height:1.4;text-align:center}}

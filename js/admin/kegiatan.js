@@ -9,7 +9,7 @@
    KEGIATAN
 ───────────────────────────────────────────────────────── */
 function renderKegiatan(el, user) {
-  const canEdit = ["admin","ketua","wakil","pj"].includes(user.role);
+  const canEdit = hasManagementAccess(user);
   const isAnggota = user.role === "anggota";
 
   el.innerHTML = `

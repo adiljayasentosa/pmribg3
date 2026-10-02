@@ -241,8 +241,7 @@ service cloud.firestore {
 
         <!-- Role yang tersedia -->
         <div style="font-size:0.78rem;color:var(--ink-soft);margin-bottom:12px">
-          Role yang tersedia: <code>admin</code> <code>ketua</code> <code>wakil</code>
-          <code>sekretaris</code> <code>bendahara</code> <code>pj</code>
+          Role yang tersedia: <code>admin</code> <code>pembina</code> <code>pengurus</code> <code>anggota</code>
         </div>
 
         <!-- Textarea input -->
@@ -314,13 +313,9 @@ service cloud.firestore {
 <script>
 /* ── Daftar akun yang akan dibuat di Firebase Auth ── */
 const AKUN_BUAT = [
-  { username:"admin",       password:"admin123",    role:"admin",      nama:"Admin Sistem"    },
-  { username:"ketua",       password:"ketua123",    role:"ketua",      nama:"M. Arif Hidayat" },
-  { username:"wakil",       password:"wakil123",    role:"wakil",      nama:"Nadia Salsabila" },
-  { username:"sekretaris",  password:"sekre123",    role:"sekretaris", nama:"Dewi Lestari"    },
-  { username:"bendahara",   password:"bendahara123",role:"bendahara",  nama:"Putri Ramadhani" },
-  { username:"pj",          password:"pj123",       role:"pj",         nama:"Raka Pratama"    },
-  { username:"demo",         password:"demo123",     role:"demo",       nama:"Demo Client"      }
+  { username:"admin",    password:"admin123",    role:"admin",    nama:"Admin Sistem" },
+  { username:"pembina",  password:"pembina123",  role:"pembina",  nama:"Pembina PMR" },
+  { username:"pengurus", password:"pengurus123", role:"pengurus", nama:"Pengurus PMR" }
 ];
 
 const logPanel   = document.getElementById("log-panel");
@@ -421,7 +416,7 @@ function salinRules() {
    IMPORT MASSAL — logika inti
    ═══════════════════════════════════════════════════════ */
 
-const VALID_ROLES = new Set(["admin","ketua","wakil","sekretaris","bendahara","pj","pembina","demo"]);
+const VALID_ROLES = new Set(["admin","pembina","pengurus","anggota"]);
 
 /**
  * Parse textarea → array objek {username, nama, role, email, error?}

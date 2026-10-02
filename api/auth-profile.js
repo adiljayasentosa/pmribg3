@@ -59,7 +59,7 @@ module.exports = async function handler(req, res) {
         migratedAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp()
       };
-      const allowedRoles = ['admin','ketua','wakil','sekretaris','bendahara','pj','anggota','demo'];
+      const allowedRoles = ['admin','pembina','pengurus','anggota'];
       if (!allowedRoles.includes(profile.role)) return json(res, 409, { error: 'Role profil lama tidak valid. Hubungi admin.' });
 
       await uidRef.set(profile, { merge: true });

@@ -25,9 +25,9 @@
    pj           : anggota, kegiatan, pengurus, presensi
    admin/ketua/wakil : semua collection
 ───────────────────────────────────────────────────────── */
-const ROLE_AKSES_KEUANGAN = ['admin', 'ketua', 'wakil', 'bendahara', 'pembina', 'demo'];
-const ROLE_AKSES_PRESENSI = ['admin', 'ketua', 'wakil', 'sekretaris', 'pj', 'pembina', 'demo'];
-const ROLE_AKSES_IURAN     = ['admin', 'ketua', 'wakil', 'bendahara', 'demo'];
+const ROLE_AKSES_KEUANGAN = ['admin', 'pembina', 'pengurus'];
+const ROLE_AKSES_PRESENSI = ['admin', 'pembina', 'pengurus'];
+const ROLE_AKSES_IURAN     = ['admin', 'pembina', 'pengurus'];
 
 /* [Phase 2 — PWA] Helper read-only: laporkan ke UI apakah snapshot
    Firestore yang baru diterima berasal dari cache lokal (offline/
@@ -249,8 +249,8 @@ const DB = {
       fdb.collection("kegiatan").orderBy("tanggal", "desc").get(),
       fdb.collection("pengurus").doc("struktur").get(),
       fdb.collection("inventaris").orderBy("nama").get(),
-      role === 'pembina' ? Promise.resolve({ docs: [] }) : fdb.collection("piket").orderBy("tanggal", "desc").get(),
-      role === 'pembina' ? Promise.resolve({ docs: [] }) : fdb.collection("upacara").orderBy("tanggal", "desc").get()
+      fdb.collection("piket").orderBy("tanggal", "desc").get(),
+      fdb.collection("upacara").orderBy("tanggal", "desc").get()
     ]);
 
     AppState.anggota    = snapAnggota.docs.map(d => _normalisasiAnggota({ id: d.id, ...d.data() })).sort(compareAnggotaKelasNama);

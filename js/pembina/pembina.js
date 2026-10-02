@@ -65,8 +65,8 @@ function _pembinaStrukturSummary() {
 }
 
 function renderPembina(el, user) {
-  if (user?.role !== "pembina") {
-    el.innerHTML = `<div class="alert alert-danger" style="display:flex">Halaman ini khusus untuk akun Pembina.</div>`;
+  if (!hasManagementAccess(user)) {
+    el.innerHTML = `<div class="alert alert-danger" style="display:flex">Halaman ini hanya untuk akun pengelola PMR.</div>`;
     return;
   }
 
@@ -87,9 +87,9 @@ function renderPembina(el, user) {
     <div class="pembina-page">
       <section class="pembina-hero">
         <div>
-          <div class="pembina-eyebrow">LIMITED EDITION · PEMBINA PMR</div>
+          <div class="pembina-eyebrow">RUANG PENGELOLAAN · PMR WIRA UNIT</div>
           <h1>Selamat datang, ${_pembinaEsc(user.nama)} 👋</h1>
-          <p>Masa Bakti ${_pembinaEsc(currentPeriod)} · Ruang pemantauan PMR WIRA UNIT SMK IBG 3</p>
+          <p>Masa Bakti ${_pembinaEsc(currentPeriod)} · Ringkasan organisasi dan pengelolaan PMR WIRA UNIT SMK IBG 3</p>
         </div>
         <button type="button" class="btn btn-outline btn-sm pembina-logout" id="btn-pembina-logout">Keluar</button>
       </section>
@@ -153,7 +153,7 @@ function renderPembina(el, user) {
       <section class="card pembina-notes-card">
         <div class="pembina-section-head">
           <div><h2>Catatan Pembina</h2><p>Dokumentasi dan evaluasi langsung dari Pembina.</p></div>
-          <div class="pembina-note-actions"><button type="button" class="btn btn-outline btn-sm" id="btn-pembina-view-notes">Lihat Semua</button><button type="button" class="btn btn-primary btn-sm" id="btn-pembina-add-note">＋ Tambah Catatan</button></div>
+          <div class="pembina-note-actions"><button type="button" class="btn btn-outline btn-sm" id="btn-pembina-view-notes">Lihat Semua</button>${user.role === "pembina" ? `<button type="button" class="btn btn-primary btn-sm" id="btn-pembina-add-note">＋ Tambah Catatan</button>` : ""}</div>
         </div>
         <div id="pembina-notes-list" data-pembina-notes>Memuat catatan…</div>
       </section>

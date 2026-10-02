@@ -85,7 +85,7 @@ function _hitungRekapIuran(bulan, tahun) {
    RENDER UTAMA — 2 tab
 ───────────────────────────────────────────────────────── */
 function renderKeuangan(el, user) {
-  const canEdit = ["admin","bendahara"].includes(user.role);
+  const canEdit = hasManagementAccess(user);
 
   el.innerHTML = `
   <div class="page-head">

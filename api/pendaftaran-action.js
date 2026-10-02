@@ -33,7 +33,7 @@ module.exports = async function handler(req, res) {
     const db = getFirestore();
     const adminDoc = await db.collection('users').doc(decoded.uid).get();
     const role = adminDoc.exists ? adminDoc.data().role : null;
-    if (!['admin', 'ketua', 'wakil', 'sekretaris'].includes(role)) return json(res, 403, { error: 'Tidak berwenang memproses pendaftaran.' });
+    if (!['admin', 'pembina', 'pengurus'].includes(role)) return json(res, 403, { error: 'Tidak berwenang memproses pendaftaran.' });
 
     const ref = db.collection('pendaftaran').doc(String(pendaftaranId));
     const snap = await ref.get();
@@ -88,9 +88,9 @@ module.exports = async function handler(req, res) {
        Data pribadi pendaftaran disimpan terpisah agar tidak ikut terbaca
        oleh seluruh akun login yang memang membutuhkan daftar anggota. */
     const anggotaData = {
-      nama: p.nama || '', nomorInduk, kelas: p.kelas || '', divisi: p.divisi || 'Pertolongan Pertama',
-      jabatan: 'Anggota', statusKeanggotaan: 'Aktif', statusAkun: 'pending', sumberData: 'registration',
-      foto: p.linkDrive || '', linkDrive: p.linkDrive || '', bergabung: new Date().toISOString().slice(0, 10),
+      nama: p.nama || '', nomorInduk, kelas: p.kelas || '', jurusan: p.jurusan || '', divisi: p.divisi || 'Pertolongan Pertama',
+      jabatan: 'Anggota', statusKeanggotaan: 'Aktif', statusAkun: 'active', sumberData: 'registration',
+      bergabung: new Date().toISOString().slice(0, 10),
       createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp()
     };
     const anggotaPrivateData = {
@@ -99,13 +99,21 @@ module.exports = async function handler(req, res) {
       agama: p.agama || '', jenisKelamin: p.jenisKelamin || '', noHandphone: p.noHandphone || '',
       golonganDarah: p.golonganDarah || '', provinsi: p.provinsi || '', kabKota: p.kabKota || '',
       kecamatan: p.kecamatan || '', desaKelurahan: p.desaKelurahan || '', alamat: p.alamat || '',
-      linkDrive: p.linkDrive || '',
       createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp()
     };
     await db.runTransaction(async tx => {
       tx.set(anggotaRef, anggotaData);
       tx.set(db.collection('anggota_private').doc(anggotaRef.id), anggotaPrivateData);
       tx.update(ref, { status: 'approved', anggotaId: anggotaRef.id, nomorInduk, diprosesOleh: decoded.uid, diprosesPada: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+      if (p.authUid) {
+        tx.set(db.collection('users').doc(String(p.authUid)), {
+          username: String(p.username || '').trim().toLowerCase(),
+          nama: String(p.nama || '').trim(),
+          email: String(p.email || '').trim().toLowerCase(),
+          role: 'anggota', status: 'active', registrationStatus: 'approved', anggotaId: anggotaRef.id,
+          updatedAt: FieldValue.serverTimestamp()
+        }, { merge: true });
+      }
     });
     return json(res, 200, { ok: true, status: 'approved', anggotaId: anggotaRef.id, nomorInduk });
   } catch (e) {

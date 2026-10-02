@@ -33,7 +33,6 @@ document.addEventListener("DOMContentLoaded", () => {
       setReRenderHandler(() => {
         let halaman = location.hash.replace("#","") || "beranda";
         if (user.role === "anggota" && halaman !== "anggota") halaman = "anggota";
-        if (user.role === "pembina" && halaman !== "pembina") halaman = "pembina";
         if (PAGES[halaman]) {
           document.getElementById("content-area").innerHTML = "";
           PAGES[halaman].render(document.getElementById("content-area"), user);
@@ -74,7 +73,7 @@ function _setLoadingState(loading) {
    didefinisikan di js/admin/*.js + js/member/*.js + js/pembina/*.js (dimuat sebelum file ini).
 ───────────────────────────────────────────────────────── */
 async function renderPersetujuanAnggota(el, user) {
-  const allowed = ["admin","ketua","wakil","sekretaris","demo"].includes(user.role);
+  const allowed = hasManagementAccess(user);
   if (!allowed) { el.innerHTML = `<div class="empty-state"><p>Akses hanya untuk pengurus yang berwenang.</p></div>`; return; }
 
   let pending = [];
@@ -125,7 +124,7 @@ async function renderPersetujuanAnggota(el, user) {
     const alamat = [a.alamat,a.desaKelurahan,a.kecamatan,a.kabKota,a.provinsi].filter(Boolean).join(", ");
     return `<div class="registration-admin-detail">
       <div class="detail-hero"><div class="avatar">${getInisial(a.nama||"?")}</div><div><div class="detail-nama">${escapeHtmlKta(a.nama||"—")}</div><div class="detail-kelas">${escapeHtmlKta(a.kelas||"—")} · ${escapeHtmlKta(a.divisi||"—")}</div></div></div>
-      ${a.foto?`<div style="text-align:center;margin:14px 0"><img src="${escapeHtmlKta(a.foto)}" alt="Foto wajah ${escapeHtmlKta(a.nama)} untuk KTA" style="max-width:180px;max-height:180px;border-radius:14px;object-fit:cover;border:1px solid var(--gray-200)"></div>`:""}
+      
       <div class="detail-info-grid" style="margin-top:0">
         <div class="detail-info-item"><div class="lbl">NIK</div><div class="val">${escapeHtmlKta(a.nik||"—")}</div></div>
         <div class="detail-info-item"><div class="lbl">Nomor Induk PMR</div><div class="val">${escapeHtmlKta(a.nomorInduk||"Belum ditentukan")}</div></div>
@@ -136,7 +135,7 @@ async function renderPersetujuanAnggota(el, user) {
         <div class="detail-info-item"><div class="lbl">Golongan Darah</div><div class="val">${escapeHtmlKta(a.golonganDarah||"—")}</div></div>
         <div class="detail-info-item" style="grid-column:1/-1"><div class="lbl">Alamat</div><div class="val">${escapeHtmlKta(alamat||"—")}</div></div>
       </div>
-      <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-outline btn-sm" href="${escapeHtmlKta(a.linkDrive||"#")}" target="_blank" rel="noopener noreferrer">↗ Buka Google Drive</a></div>
+      <div style="margin-top:14px;color:var(--ink-soft);font-size:.78rem">Data pendaftaran telah dikirim oleh calon anggota melalui akun pribadinya.</div>
     </div>`;
   };
 
@@ -209,7 +208,7 @@ async function renderPersetujuanAnggota(el, user) {
 }
 
 async function renderKta(el, user) {
-  const allowed = ["admin","ketua","wakil","sekretaris","demo"].includes(user.role);
+  const allowed = hasManagementAccess(user);
   if (!allowed) { el.innerHTML = `<div class="empty-state"><p>Akses hanya untuk pengurus yang berwenang.</p></div>`; return; }
 
   if (FIREBASE_ENABLED && user.role !== "demo") {
@@ -260,7 +259,7 @@ async function renderKta(el, user) {
       <td>${escapeHtmlKta(a.nomorInduk||'—')}</td><td>${escapeHtmlKta(a.kelas||'—')}</td><td>${escapeHtmlKta(a.jabatan||'Anggota')}</td>
       <td>${a.authUid ? '<span class="badge badge-success">Siap</span>' : '<span class="badge badge-gray">Belum</span>'}</td>
       <td>${a.ktaToken ? '<span class="badge badge-success">Siap</span>' : '<span class="badge badge-gray">Belum</span>'}</td>
-      <td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" data-kta-preview="${a.id}">Preview</button><button class="btn btn-primary btn-sm" data-kta-account="${a.id}">${a.authUid?'Kelola Akun':'Buat Akun'}</button></div></td>
+      <td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" data-kta-preview="${a.id}">Preview</button>${a.authUid ? `<button class="btn btn-primary btn-sm" data-kta-account="${a.id}">${a.ktaToken?'Kelola KTA':'Aktifkan KTA'}</button>` : '<span class="badge badge-gray">Akun belum terhubung</span>'}</div></td>
     </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--ink-soft)">Tidak ada anggota yang cocok.</td></tr>';
   }
   draw();
@@ -273,9 +272,9 @@ async function renderKta(el, user) {
     if (account) await kelolaAkunKta(active.find(a=>a.id===account.dataset.ktaAccount), user);
   });
   document.getElementById('btn-kta-generate-all')?.addEventListener('click', async()=>{
-    const ready = active.filter(a => a.authUid && a.ktaToken);
-    const skipped = active.filter(a => !a.authUid || !a.ktaToken);
-    if (!ready.length) return tampilToast('Belum ada KTA siap. Buat akun anggota terlebih dahulu.', 'error');
+    const ready = active.filter(a => a.ktaToken);
+    const skipped = active.filter(a => !a.ktaToken);
+    if (!ready.length) return tampilToast('Belum ada verifikasi KTA yang aktif.', 'error');
     if (!window.JSZip) return tampilToast('Library ZIP belum termuat. Muat ulang halaman lalu coba lagi.', 'error');
     const zip = new JSZip();
     const status = Modal.buka({judul:'Generate Semua KTA', konten:`<p id="kta-batch-status">Menyiapkan ${ready.length} KTA…</p><div class="progress-bar" style="height:8px;background:#eee;border-radius:99px;overflow:hidden"><div id="kta-batch-progress" style="height:100%;width:0%;background:var(--primary);transition:width .2s"></div></div><p id="kta-batch-skip" style="font-size:.82rem;color:var(--ink-soft);margin-top:10px">${skipped.length ? skipped.length+' anggota dilewati karena akun/KTA belum siap.' : 'Semua anggota aktif siap.'}</p>`, aksi:[{label:'Batal',kelas:'btn-outline',id:'btn-kta-batch-cancel',onClick:()=>Modal.tutup()}]});
@@ -301,109 +300,35 @@ function escapeHtmlKta(v) {
 
 async function kelolaAkunKta(a, adminUser) {
   if (!a) return;
-  if (!a.authUid) {
-    if (!a.nomorInduk) return tampilToast('NI wajib diisi sebelum membuat akun KTA.','error');
-    Modal.buka({judul:'Buat Akun Anggota', konten:`<p>Akun akan dibuat untuk <strong>${escapeHtmlKta(a.nama)}</strong>.</p><div class="kta-credential-warning">Username: <strong>${escapeHtmlKta(a.nomorInduk)}</strong><br>Password awal akan dibuat otomatis oleh sistem.</div><p style="color:var(--ink-soft);font-size:.84rem">Setelah akun dibuat, username dan password awal akan langsung ditampilkan di Kelola Akun. Password Firebase tidak bisa dibaca kembali setelah dibuat.</p>`, aksi:[{label:'Buat Akun',kelas:'btn-primary',id:'btn-confirm-create-kta-account',onClick:async()=>{
-      const btn=document.getElementById('btn-confirm-create-kta-account'); if(btn) btn.disabled=true;
-      try {
-        const token=await firebase.auth().currentUser.getIdToken(true);
-        const r=await fetch('/api/kta-account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:token,anggotaId:a.id,action:'create'})});
-        const contentType=(r.headers.get('content-type')||'').toLowerCase();
-        const raw=await r.text(); let data={};
-        if(contentType.includes('application/json')){try{data=JSON.parse(raw||'{}')}catch(_){} } else {data={error:raw.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim()||'Server mengembalikan respons yang tidak valid.'};}
-        if(!r.ok) throw new Error(data.error||`Gagal membuat akun (HTTP ${r.status}).`);
-        if(!data.uid) throw new Error('Server tidak mengembalikan UID akun.');
-        await DB.anggota.update(a.id,{authUid:data.uid,statusAkun:'active'});
-        a.authUid=data.uid; a.ktaToken=data.ktaToken;
-        Modal.tutup();
-        tampilKredensialKta(a, data.temporaryPassword, true);
-      } catch(err){ if(btn) btn.disabled=false; tampilToast(err.message,'error'); }
-    }}]});
+  if (!a.authUid) return tampilToast('Anggota ini belum memiliki akun pribadi. KTA tidak lagi membuat akun.', 'error');
+
+  if (a.ktaToken) {
+    Modal.buka({
+      judul:'Verifikasi KTA Aktif',
+      konten:`<div style="padding:4px 0"><p><strong>${escapeHtmlKta(a.nama)}</strong> sudah memiliki verifikasi KTA aktif.</p><div class="kta-credential-warning"><strong>KTA tidak mengelola akun login.</strong><br>Akun dibuat sendiri oleh anggota saat pendaftaran. Halaman ini hanya mengaktifkan dan mengelola akses verifikasi KTA.</div><p style="color:var(--ink-soft);font-size:.82rem;margin:10px 0 0">Token verifikasi: <code style="word-break:break-all">${escapeHtmlKta(a.ktaToken)}</code></p></div>`,
+      aksi:[{label:'Tutup',kelas:'btn-primary',id:'kta-close',onClick:()=>Modal.tutup()}]
+    });
     return;
   }
 
-  tampilKredensialKta(a, null, false);
-}
-
-function clipboardIcon() {
-  return `<svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>`;
-}
-
-function copyTextKta(text, label) {
-  return navigator.clipboard.writeText(String(text)).then(()=>{
-    tampilToast(`${label} disalin.`,'success');
-  }).catch(()=>{
-    tampilToast(`${label} tidak bisa disalin otomatis.`,'error');
+  Modal.buka({
+    judul:'Aktifkan Verifikasi KTA',
+    konten:`<p>Aktifkan verifikasi KTA untuk <strong>${escapeHtmlKta(a.nama)}</strong>?</p><div class="kta-credential-warning">Akun anggota <strong>tidak dibuat di sini</strong>. Akun sudah dibuat oleh anggota saat pendaftaran. Sistem hanya akan membuat token verifikasi KTA.</div>`,
+    aksi:[
+      {label:'Batal',kelas:'btn-ghost',id:'kta-activate-cancel',onClick:()=>Modal.tutup()},
+      {label:'Aktifkan KTA',kelas:'btn-primary',id:'btn-activate-kta',onClick:async()=>{
+        const btn=document.getElementById('btn-activate-kta'); if(btn)btn.disabled=true;
+        try{
+          const current=firebase.auth().currentUser; if(!current)throw new Error('Sesi login tidak ditemukan.');
+          const token=await current.getIdToken(true);
+          const r=await fetch('/api/kta-account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:token,anggotaId:a.id,action:'activate'})});
+          const data=await r.json().catch(()=>({})); if(!r.ok)throw new Error(data.error||`Gagal mengaktifkan KTA (${r.status}).`);
+          a.ktaToken=data.ktaToken; Modal.tutup(); tampilToast('Verifikasi KTA berhasil diaktifkan.','success');
+          await renderKta(document.getElementById('content-area'),adminUser);
+        }catch(err){if(btn)btn.disabled=false;tampilToast(err.message,'error');}
+      }}
+    ]
   });
-}
-
-function tampilKredensialKta(a, temporaryPassword=null, justCreated=false) {
-  const username = String(a.nomorInduk || '—');
-  const email = username !== '—' ? `${username}@pmr-smkibg3.app` : '—';
-  const status = String(a.statusAkun || 'active').toLowerCase() === 'active' ? 'Aktif' : 'Tidak Aktif';
-  const passwordHtml = temporaryPassword
-    ? `<div class="kta-credential-box">
-        <div class="kta-credential-row-head"><span>Password ${justCreated ? 'awal' : 'baru'}</span><span class="kta-credential-badge">${justCreated ? 'Akun dibuat' : 'Password di-reset'}</span></div>
-        <div class="kta-copy-field"><code id="kta-password-value">${escapeHtmlKta(temporaryPassword)}</code><button type="button" class="kta-copy-btn" id="btn-copy-kta-password" title="Salin password" aria-label="Salin password">${clipboardIcon()}</button></div>
-        <small>Password hanya ditampilkan pada proses buat/reset akun.</small>
-      </div>`
-    : `<div class="kta-credential-warning"><strong>Password belum dapat ditampilkan.</strong><br>Password Firebase tidak bisa dibaca kembali. Gunakan <strong>Reset Password</strong> untuk membuat password baru.</div>`;
-
-  const actions = [];
-  if (!temporaryPassword) actions.push({label:'Reset Password',kelas:'btn-primary',id:'btn-reset-kta-password',onClick:()=>resetPasswordKta(a)});
-  actions.push({label:'Tutup',kelas:temporaryPassword?'btn-primary':'btn-outline',id:'btn-close-kta-credentials',onClick:()=>Modal.tutup()});
-
-  Modal.buka({judul:'Kelola Akun Anggota', konten:`
-    <div class="kta-manage-wrap">
-      <div class="kta-member-summary">
-        <div class="avatar kta-manage-avatar">${getInisial(a.nama)}</div>
-        <div><strong>${escapeHtmlKta(a.nama)}</strong><span>Anggota PMR · ${escapeHtmlKta(a.divisi || 'Belum ada divisi')}</span></div>
-        <span class="badge badge-success">${status}</span>
-      </div>
-      <div class="kta-manage-grid">
-        <div class="kta-member-info">
-          <h4>Informasi Anggota</h4>
-          <dl>
-            <div><dt>Nomor Induk</dt><dd>${escapeHtmlKta(username)}</dd></div>
-            <div><dt>Kelas</dt><dd>${escapeHtmlKta(a.kelas || '—')}</dd></div>
-            <div><dt>Jabatan</dt><dd>${escapeHtmlKta(a.jabatan || 'Anggota')}</dd></div>
-            <div><dt>Divisi</dt><dd>${escapeHtmlKta(a.divisi || '—')}</dd></div>
-          </dl>
-        </div>
-        <div class="kta-account-panel">
-          <div class="kta-panel-title">Akun Anggota</div>
-          <label>Username</label>
-          <div class="kta-copy-field"><code>${escapeHtmlKta(username)}</code><button type="button" class="kta-copy-btn" id="btn-copy-kta-username" title="Salin username" aria-label="Salin username">${clipboardIcon()}</button></div>
-          <label>Password ${temporaryPassword ? (justCreated ? 'awal' : 'baru') : ''}</label>
-          ${passwordHtml}
-          <div class="kta-system-email">Email sistem: <code>${escapeHtmlKta(email)}</code></div>
-        </div>
-      </div>
-      <p class="kta-manage-note">${temporaryPassword ? 'Simpan atau salin password ini sekarang. Setelah modal ditutup, password tersebut tidak dapat dibaca kembali dari Firebase.' : 'Jika anggota lupa password, lakukan reset. Password baru akan ditampilkan satu kali dan dapat langsung disalin.'}</p>
-    </div>`, aksi: actions});
-
-  setTimeout(()=>{
-    document.getElementById('btn-copy-kta-username')?.addEventListener('click', ()=>copyTextKta(username,'Username'));
-    if (temporaryPassword) document.getElementById('btn-copy-kta-password')?.addEventListener('click', ()=>copyTextKta(temporaryPassword,'Password'));
-  },0);
-}
-
-async function resetPasswordKta(a) {
-  const btn=document.getElementById('btn-reset-kta-password'); if(btn) btn.disabled=true;
-  try {
-    const token=await firebase.auth().currentUser.getIdToken(true);
-    const r=await fetch('/api/kta-account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:token,anggotaId:a.id,action:'reset'})});
-    const contentType=(r.headers.get('content-type')||'').toLowerCase();
-    const raw=await r.text(); let data={};
-    if(contentType.includes('application/json')){try{data=JSON.parse(raw||'{}')}catch(_){} } else {data={error:raw.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim()||'Server mengembalikan respons yang tidak valid.'};}
-    if(!r.ok) throw new Error(data.error||`Gagal reset password (HTTP ${r.status}).`);
-    if(!data.temporaryPassword) throw new Error('Server tidak mengembalikan password baru.');
-    Modal.tutup();
-    tampilKredensialKta(a, data.temporaryPassword, false);
-  } catch(err) {
-    if(btn) btn.disabled=false;
-    tampilToast(err.message,'error');
-  }
 }
 
 async function previewKta(a, fromAll=false) {
@@ -517,7 +442,7 @@ function _initDashboard(user) {
 
   PAGES = {
     beranda:    { title:"Beranda",      render:renderBeranda    },
-    pembina:    { title:"Dashboard Pembina", render:renderPembina },
+    pembina:    { title:"Ringkasan Organisasi", render:renderPembina },
     anggota:    { title:"Data Anggota", render:(el,u)=>u.role === "anggota" ? renderMemberPortal(el,u) : renderAnggota(el,u) },
     "persetujuan-anggota": { title:"Persetujuan Anggota PMR", render:renderPersetujuanAnggota },
     kta:        { title:"KTA PMR", render:renderKta },
@@ -550,21 +475,12 @@ function _initDashboard(user) {
     document.querySelectorAll(".sidebar,.bottom-nav,.topbar").forEach(node => { node.style.display = "none"; });
   }
 
-  /* Portal khusus Pembina: satu halaman overview read-only.
-     Sidebar/bottom-nav disembunyikan agar dashboard terasa seperti ruang
-     pemantauan khusus, bukan dashboard pengurus dengan menu yang dikurangi. */
-  if (user.role === "pembina") {
-    document.body.classList.add("pembina-mode");
-    document.querySelectorAll(".sidebar,.bottom-nav").forEach(node => { node.style.display = "none"; });
-  }
-
   function navigateTo(pageId) {
     /* Route guard lapis UI: portal khusus tidak boleh keluar dari
        satu halaman hanya dengan mengubah hash. Firestore Rules tetap
        menjadi lapisan keamanan utama untuk data. */
     if (user.role === "anggota" && pageId !== "anggota") pageId = "anggota";
-    if (user.role === "pembina" && pageId !== "pembina") pageId = "pembina";
-
+    
     const page = PAGES[pageId];
     if (!page) return;
     navLinks.forEach(a => a.classList.toggle("active", a.dataset.page === pageId));

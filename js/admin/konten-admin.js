@@ -32,12 +32,10 @@ const _KONTEN_ADMIN_KONFIG = {
 };
 
 function _bolehKelolaItemKonten(user, item) {
-  if (user.role === "admin") return true;
-  if (user.role === "pj" && user.divisi && item.pjDivisi === user.divisi) return true;
-  return false;
+  return hasManagementAccess(user);
 }
 function _bolehTambahKonten(user) {
-  return user.role === "admin" || user.role === "pj";
+  return hasManagementAccess(user);
 }
 
 async function renderKontenAdmin(el, user, tipe) {
@@ -248,7 +246,7 @@ function _bukaFormKonten(tipe, cfg, data, user, onSimpan) {
         <div class="field">
           <label>PJ Divisi</label>
           <select id="f-k-pjdivisi">
-            ${_DIVISI_PJ_OPSI.map(d => `<option ${data?.pjDivisi === d ? "selected" : (user.role === "pj" && user.divisi === d ? "selected" : "")}>${d}</option>`).join("")}
+            ${_DIVISI_PJ_OPSI.map(d => `<option ${data?.pjDivisi === d ? "selected" : ("")}>${d}</option>`).join("")}
           </select>
         </div>
         ${fieldEkstra}
@@ -271,10 +269,7 @@ function _bukaFormKonten(tipe, cfg, data, user, onSimpan) {
           const pjDivisi = document.getElementById("f-k-pjdivisi").value;
           /* Pengaman sisi klien — pencocokan sesungguhnya tetap di
              firestore.rules (tulisKontenBaru/tulisKontenUbah). */
-          if (user.role === "pj" && user.divisi !== pjDivisi) {
-            tampilkanError(`Sebagai PJ Divisi ${user.divisi}, kamu hanya bisa mengelola konten dengan PJ Divisi yang sama.`);
-            return;
-          }
+
 
           /* [F7.0] Jangan simpan selagi ada upload yang masih berjalan */
           const widgetAktif = [widgetCover, widgetThumb, widgetGaleri].filter(Boolean);

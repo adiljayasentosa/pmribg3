@@ -24,6 +24,7 @@ module.exports = async function handler(req, res) {
   try {
     const { initializeApp, cert, getApps } = require('firebase-admin/app');
     const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+    const { getAuth } = require('firebase-admin/auth');
     if (!getApps().length) {
       const serviceAccount = getServiceAccount();
       if (!serviceAccount) return json(res, 500, { error: 'Backend Firebase belum dikonfigurasi.' });
@@ -42,7 +43,7 @@ module.exports = async function handler(req, res) {
       const db = getFirestore();
       const adminDoc = await db.collection('users').doc(decoded.uid).get();
       const role = adminDoc.exists ? String(adminDoc.data().role || '') : '';
-      if (!['admin', 'ketua', 'wakil', 'sekretaris'].includes(role)) {
+      if (!['admin', 'pembina', 'pengurus'].includes(role)) {
         return json(res, 403, { error: 'Tidak berwenang melihat pendaftaran.' });
       }
 
@@ -78,6 +79,17 @@ module.exports = async function handler(req, res) {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     if (clean(body.website, 100)) return json(res, 400, { error: 'Pendaftaran tidak valid.' });
 
+    const idToken = clean(body.idToken, 5000);
+    if (!idToken) return json(res, 401, { error: 'Akun pendaftaran belum terautentikasi.' });
+    const decoded = await getAuth().verifyIdToken(idToken, true);
+    const uid = decoded.uid;
+    const userSnap = await getFirestore().collection('users').doc(uid).get();
+    if (!userSnap.exists) return json(res, 403, { error: 'Profil akun belum siap. Ulangi tahap pembuatan akun.' });
+    const userProfile = userSnap.data() || {};
+    if (String(userProfile.status || '').toLowerCase() !== 'pending' || String(userProfile.role || '') !== 'anggota') {
+      return json(res, 409, { error: 'Akun ini sudah memiliki status pendaftaran yang berbeda.' });
+    }
+
     const data = {
       nama: clean(body.nama, 120),
       nik: clean(body.nik, 32),
@@ -94,34 +106,36 @@ module.exports = async function handler(req, res) {
       desaKelurahan: clean(body.desaKelurahan, 100),
       alamat: clean(body.alamat, 500),
       divisi: clean(body.divisi, 80),
-      linkDrive: clean(body.linkDrive, 1000),
+      jurusan: clean(body.jurusan, 80),
       status: 'pending',
+      authUid: uid,
+      username: clean(userProfile.username || body.username, 40).toLowerCase(),
+      email: clean(userProfile.email || decoded.email || body.email, 160).toLowerCase(),
       sumber: 'pendaftaran-publik',
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp()
     };
 
     const required = [
-      ['nama', 'Nama lengkap'], ['nik', 'NIK'], ['tempatLahir', 'Tempat lahir'],
-      ['tanggalLahir', 'Tanggal lahir'], ['agama', 'Agama'], ['jenisKelamin', 'Jenis kelamin'],
-      ['noHandphone', 'Nomor handphone'], ['golonganDarah', 'Golongan darah'],
-      ['provinsi', 'Provinsi'], ['kabKota', 'Kab/Kota'], ['kecamatan', 'Kecamatan'],
-      ['desaKelurahan', 'Desa/Kelurahan'], ['alamat', 'Alamat'],
-      ['kelas', 'Kelas']
+      ['nama', 'Nama lengkap'], ['tempatLahir', 'Tempat lahir'], ['tanggalLahir', 'Tanggal lahir'],
+      ['agama', 'Agama'], ['jenisKelamin', 'Jenis kelamin'], ['noHandphone', 'Nomor handphone'],
+      ['golonganDarah', 'Golongan darah'], ['alamat', 'Alamat'], ['kelas', 'Kelas'], ['jurusan', 'Jurusan'], ['divisi', 'Divisi PMR']
     ];
     const missing = required.find(([key]) => !data[key]);
     if (missing) return json(res, 400, { error: `${missing[1]} wajib diisi.` });
-    if (!/^\d{10,20}$/.test(data.nik)) return json(res, 400, { error: 'NIK harus berupa 10–20 digit angka.' });
-    if (!data.linkDrive) return json(res, 400, { error: 'Link Google Drive wajib diisi.' });
-    if (!/^https:\/\/(drive\.google\.com|docs\.google\.com)\//i.test(data.linkDrive)) return json(res, 400, { error: 'Link Google Drive tidak valid.' });
+    if (data.nik && !/^\d{5,20}$/.test(data.nik)) return json(res, 400, { error: 'NIK/NISN harus berupa 5–20 digit angka.' });
 
     const db = getFirestore();
-    const existing = await db.collection('pendaftaran').where('nik', '==', data.nik).limit(5).get();
-    if (existing.docs.some(d => ['pending', 'approved'].includes(String(d.data().status || '')))) {
-      return json(res, 409, { error: 'NIK tersebut sudah memiliki pendaftaran yang sedang diproses atau sudah disetujui.' });
+    if (data.nik) {
+      const existing = await db.collection('pendaftaran').where('nik', '==', data.nik).limit(5).get();
+      if (existing.docs.some(d => ['pending', 'approved'].includes(String(d.data().status || '')))) {
+        return json(res, 409, { error: 'NIK/NISN tersebut sudah memiliki pendaftaran yang sedang diproses atau sudah disetujui.' });
+      }
+      const anggotaExisting = await db.collection('anggota_private').where('nik', '==', data.nik).limit(1).get();
+      if (!anggotaExisting.empty) return json(res, 409, { error: 'NIK/NISN tersebut sudah terdaftar sebagai anggota.' });
     }
-    const anggotaExisting = await db.collection('anggota').where('nik', '==', data.nik).limit(1).get();
-    if (!anggotaExisting.empty) return json(res, 409, { error: 'NIK tersebut sudah terdaftar sebagai anggota.' });
+    const ownRegistrations = await db.collection('pendaftaran').where('authUid', '==', uid).limit(5).get();
+    if (ownRegistrations.docs.some(d => String(d.data().status || '') === 'pending')) return json(res, 409, { error: 'Pendaftaran untuk akun ini sudah dikirim dan sedang menunggu persetujuan.' });
 
     const ref = await db.collection('pendaftaran').add(data);
     return json(res, 201, { ok: true, id: ref.id, status: 'pending' });

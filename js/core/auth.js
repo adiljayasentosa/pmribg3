@@ -11,16 +11,16 @@ const SESSION_KEY = "pmr_session";
 
 /** Daftar role yang dikenal sistem + label & badge */
 const ROLES = {
-  admin:      { label: "Admin",       badge: "badge-red"     },
-  ketua:      { label: "Ketua",       badge: "badge-red"     },
-  wakil:      { label: "Wakil Ketua", badge: "badge-info"    },
-  sekretaris: { label: "Sekretaris",  badge: "badge-info"    },
-  bendahara:  { label: "Bendahara",   badge: "badge-success" },
-  pj:         { label: "PJ Divisi",   badge: "badge-warning" },
-  pembina:    { label: "Pembina",     badge: "badge-red"     },
-  anggota:    { label: "Anggota PMR", badge: "badge-gray"    },
-  demo:       { label: "Demo",        badge: "badge-info"     }
+  admin:    { label: "Admin",    badge: "badge-red" },
+  pembina:  { label: "Pembina",  badge: "badge-info" },
+  pengurus: { label: "Pengurus", badge: "badge-red" },
+  anggota:  { label: "Anggota",  badge: "badge-success" }
 };
+
+const MANAGEMENT_ROLES = ["admin", "pembina", "pengurus"];
+function hasManagementAccess(user = getCurrentUser()) {
+  return !!user && MANAGEMENT_ROLES.includes(user.role);
+}
 
 /** Akun demo untuk mode tanpa backend.
  *  [F6.0] Field `divisi` ditambahkan HANYA pada akun role "pj" —
@@ -28,15 +28,9 @@ const ROLES = {
  *  & firestore.rules getDivisi()). Tidak dibaca oleh logic login/
  *  session manapun yang sudah ada, jadi tidak mengubah perilaku lama. */
 const DUMMY_USERS = [
-  { username:"admin",      password:"admin123",    role:"admin",      nama:"Admin Sistem"    },
-  { username:"ketua",      password:"ketua123",    role:"ketua",      nama:"M. Arif Hidayat" },
-  { username:"wakil",      password:"wakil123",    role:"wakil",      nama:"Nadia Salsabila" },
-  { username:"sekretaris", password:"sekre123",    role:"sekretaris", nama:"Dewi Lestari"    },
-  { username:"bendahara",  password:"bendahara123",role:"bendahara",  nama:"Putri Ramadhani" },
-  { username:"pj",         password:"pj123",       role:"pj",         nama:"Raka Pratama",    divisi:"Dokumentasi" },
-  { username:"pembina",    password:"pembina123",  role:"pembina",    nama:"Pembina PMR" },
-  { username:"anggota",    password:"anggota123",  role:"anggota",    nama:"Raka Pratama", anggotaId:"1" },
-  { username:"demo",       password:"demo123",     role:"demo",       nama:"Demo Client" }
+  { username:"admin", password:"admin123", role:"admin", nama:"Admin Sistem" },
+  { username:"pembina", password:"pembina123", role:"pembina", nama:"Pembina PMR" },
+  { username:"pengurus", password:"pengurus123", role:"pengurus", nama:"Pengurus PMR" }
 ];
 
 /** Cache user aktif di memori (sinkron setelah init) */
@@ -51,74 +45,76 @@ function _toEmail(username) {
    LOGIN
    Mengembalikan Promise<{ok, message?}>
 ──────────────────────────────────── */
-async function login(username, password, role) {
+async function login(username, password) {
   username = username.trim().toLowerCase();
 
   /* ── Mode Demo ── */
   if (!FIREBASE_ENABLED) {
-    const user = DUMMY_USERS.find(u => u.username === username);
-    if (!user)               return { ok:false, message:"Username tidak ditemukan." };
-    if (user.role !== role)  return { ok:false, message:"Role tidak sesuai dengan akun ini." };
+    const user = DUMMY_USERS.find(u => u.username === username && u.role !== 'demo');
+    if (!user) return { ok:false, message:"Username tidak ditemukan." };
     if (user.password !== password) return { ok:false, message:"Password salah." };
-
-    _currentUser = { nama:user.nama, username, role, anggotaId:user.anggotaId || null };
+    _currentUser = { nama:user.nama, username, role:user.role, anggotaId:user.anggotaId || null };
     localStorage.setItem(SESSION_KEY, JSON.stringify(_currentUser));
     return { ok:true };
   }
 
-  /* ── Mode Firebase ── */
   try {
-    const cred = await firebase.auth()
-      .signInWithEmailAndPassword(_toEmail(username), password);
+    /* Firebase Auth menerima email, sementara UI login memakai username.
+       API hanya menyelesaikan username -> email. Password tetap diverifikasi
+       langsung oleh Firebase Auth, bukan oleh endpoint ini. */
+    const lookupResp = await fetch('/api/auth-lookup', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ username })
+    });
+    const lookup = await lookupResp.json().catch(()=>({}));
+    if (!lookupResp.ok || !lookup.email) return { ok:false, message:lookup.error || 'Username tidak ditemukan.' };
 
+    const cred = await firebase.auth().signInWithEmailAndPassword(lookup.email, password);
     const fdb = firebase.firestore();
     const uid = cred.user.uid;
 
-    /* Cari profil berdasarkan UID. Untuk akun lama yang masih menyimpan
-       profil users/{Auto-ID}, sinkronisasi dilakukan lewat Admin SDK API
-       hanya ketika profil UID belum ada. Rules Firestore sengaja tidak
-       mengizinkan client membuat users/{uid} sendiri. */
-    let snap = await fdb.collection("users").doc(uid).get();
+    let snap = await fdb.collection('users').doc(uid).get();
     let profile = snap.exists ? snap.data() : null;
-
     if (!profile) {
       const idToken = await cred.user.getIdToken(true);
-      const response = await fetch("/api/auth-profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken })
+      const response = await fetch('/api/auth-profile', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({idToken})
       });
-      let data = {};
-      try { data = await response.json(); } catch (_) {}
+      const data = await response.json().catch(()=>({}));
       if (!response.ok || !data.ok) {
         await firebase.auth().signOut();
-        return { ok:false, message:data.error || "Profil pengguna belum dibuat. Hubungi admin." };
+        return { ok:false, message:data.error || 'Profil pengguna belum dibuat.' };
       }
       profile = data.profile || null;
     }
-
     if (!profile) {
       await firebase.auth().signOut();
-      return { ok:false, message:"Profil pengguna belum dibuat. Hubungi admin." };
+      return { ok:false, message:'Profil pengguna belum dibuat.' };
     }
-    if (profile.role !== "demo" && profile.role !== role) {
+    if (profile.role === 'demo') {
       await firebase.auth().signOut();
-      return { ok:false, message:"Role tidak sesuai dengan akun ini." };
+      return { ok:false, message:'Akun Demo sudah dinonaktifkan.' };
+    }
+    if (String(profile.status || '').toLowerCase() === 'pending' || !profile.anggotaId && profile.role === 'anggota') {
+      await firebase.auth().signOut();
+      return { ok:false, message:'Pendaftaran akunmu masih menunggu persetujuan pengurus.' };
     }
 
-    _currentUser = { nama:profile.nama, username:profile.username, role:profile.role, anggotaId:profile.anggotaId || null, authUid:uid };
+    _currentUser = {
+      nama:profile.nama, username:profile.username || username, role:profile.role,
+      anggotaId:profile.anggotaId || null, authUid:uid
+    };
     localStorage.setItem(SESSION_KEY, JSON.stringify(_currentUser));
     return { ok:true };
-
   } catch(e) {
     const MSG = {
-      "auth/user-not-found":         "Username tidak ditemukan.",
-      "auth/wrong-password":         "Password salah.",
-      "auth/invalid-credential":     "Username atau password salah.",
-      "auth/too-many-requests":      "Terlalu banyak percobaan. Coba lagi nanti.",
-      "auth/network-request-failed": "Gagal terhubung ke server. Periksa koneksi internet."
+      'auth/user-not-found':'Username tidak ditemukan.',
+      'auth/wrong-password':'Password salah.',
+      'auth/invalid-credential':'Username atau password salah.',
+      'auth/too-many-requests':'Terlalu banyak percobaan. Coba lagi nanti.',
+      'auth/network-request-failed':'Gagal terhubung ke server. Periksa koneksi internet.'
     };
-    return { ok:false, message: MSG[e.code] || "Login gagal: " + e.message };
+    return { ok:false, message:MSG[e.code] || 'Login gagal: ' + e.message };
   }
 }
 
@@ -202,6 +198,13 @@ function initAuth(onUser, onNoUser) {
       user = getCurrentUser();
     }
 
+    if (user && user.role === 'anggota' && (String(user.status || '').toLowerCase() === 'pending' || !user.anggotaId)) {
+      try { await firebase.auth().signOut(); } catch (_) {}
+      localStorage.removeItem(SESSION_KEY);
+      _currentUser = null;
+      onNoUser();
+      return;
+    }
     if (user) onUser(user);
     else onNoUser();
   });

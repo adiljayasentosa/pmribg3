@@ -80,8 +80,8 @@ function generateJadwalPiket(tanggalTarget, jumlahPetugas, minimalJeda, dikecual
    RENDER UTAMA — 2 tab: Jadwal (CRUD) & Riwayat (statistik)
 ───────────────────────────────────────────────────────── */
 function renderPiket(el, user) {
-  const canEdit   = ["admin","ketua","wakil","sekretaris","pj"].includes(user.role);
-  const canDelete = ["admin","ketua"].includes(user.role);
+  const canEdit   = hasManagementAccess(user);
+  const canDelete = hasManagementAccess(user);
   const canGenerate = canEdit; /* Generate = operasi Create, RBAC sama */
 
   el.innerHTML = `

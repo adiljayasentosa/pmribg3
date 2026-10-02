@@ -11,22 +11,19 @@ const SESSION_KEY = "pmr_session";
 
 /** Daftar role yang dikenal sistem + label & badge */
 const ROLES = {
-  admin:      { label: "Admin",       badge: "badge-red"     },
-  ketua:      { label: "Ketua",       badge: "badge-red"     },
-  wakil:      { label: "Wakil Ketua", badge: "badge-info"    },
-  sekretaris: { label: "Sekretaris",  badge: "badge-info"    },
-  bendahara:  { label: "Bendahara",   badge: "badge-success" },
-  pj:         { label: "PJ Divisi",   badge: "badge-warning" }
+  admin:{label:"Admin",badge:"badge-red"},
+  pembina:{label:"Pembina",badge:"badge-info"},
+  pengurus:{label:"Pengurus",badge:"badge-red"},
+  anggota:{label:"Anggota",badge:"badge-success"}
 };
+const MANAGEMENT_ROLES = ["admin","pembina","pengurus"];
+function hasManagementAccess(user = getCurrentUser()) { return !!user && MANAGEMENT_ROLES.includes(user.role); }
 
 /** Akun demo untuk mode tanpa backend */
 const DUMMY_USERS = [
-  { username:"admin",      password:"admin123",    role:"admin",      nama:"Admin Sistem"    },
-  { username:"ketua",      password:"ketua123",    role:"ketua",      nama:"M. Arif Hidayat" },
-  { username:"wakil",      password:"wakil123",    role:"wakil",      nama:"Nadia Salsabila" },
-  { username:"sekretaris", password:"sekre123",    role:"sekretaris", nama:"Dewi Lestari"    },
-  { username:"bendahara",  password:"bendahara123",role:"bendahara",  nama:"Putri Ramadhani" },
-  { username:"pj",         password:"pj123",       role:"pj",         nama:"Raka Pratama"    }
+  {username:"admin",password:"admin123",role:"admin",nama:"Admin Sistem"},
+  {username:"pembina",password:"pembina123",role:"pembina",nama:"Pembina PMR"},
+  {username:"pengurus",password:"pengurus123",role:"pengurus",nama:"Pengurus PMR"}
 ];
 
 /** Cache user aktif di memori (sinkron setelah init) */
@@ -41,14 +38,13 @@ function _toEmail(username) {
    LOGIN
    Mengembalikan Promise<{ok, message?}>
 ──────────────────────────────────── */
-async function login(username, password, role) {
+async function login(username, password) {
   username = username.trim().toLowerCase();
 
   /* ── Mode Demo ── */
   if (!FIREBASE_ENABLED) {
     const user = DUMMY_USERS.find(u => u.username === username);
     if (!user)               return { ok:false, message:"Username tidak ditemukan." };
-    if (user.role !== role)  return { ok:false, message:"Role tidak sesuai dengan akun ini." };
     if (user.password !== password) return { ok:false, message:"Password salah." };
 
     _currentUser = { nama:user.nama, username, role };
@@ -58,8 +54,10 @@ async function login(username, password, role) {
 
   /* ── Mode Firebase ── */
   try {
-    const cred = await firebase.auth()
-      .signInWithEmailAndPassword(_toEmail(username), password);
+    const lookupResp = await fetch('/api/auth-lookup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username})});
+    const lookup = await lookupResp.json().catch(()=>({}));
+    if (!lookupResp.ok || !lookup.email) return {ok:false,message:lookup.error||'Username tidak ditemukan.'};
+    const cred = await firebase.auth().signInWithEmailAndPassword(lookup.email, password);
 
     const fdb = firebase.firestore();
     const uid = cred.user.uid;

@@ -14,7 +14,7 @@
 const DIVISI_ANGGOTA_LIST = ["Pertolongan Pertama", "Tandu"];
 
 function renderAnggota(el, user) {
-  const canEdit = ["admin","ketua","wakil","sekretaris"].includes(user.role);
+  const canEdit = hasManagementAccess(user);
   const GROUPS = ["XII", "XI", "X", "Alumni"];
 
   el.innerHTML = `

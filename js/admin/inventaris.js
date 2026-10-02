@@ -26,8 +26,8 @@ const _URUTAN_KONDISI = { "Rusak Berat": 0, "Perlu Diganti": 1, "Rusak Ringan": 
    RENDER UTAMA
 ───────────────────────────────────────────────────────── */
 function renderInventaris(el, user) {
-  const canEdit   = ["admin","ketua","wakil","pj"].includes(user.role);
-  const canDelete = ["admin","ketua"].includes(user.role);
+  const canEdit   = hasManagementAccess(user);
+  const canDelete = hasManagementAccess(user);
 
   const total       = AppState.inventaris.length;
   const totalItem   = AppState.inventaris.reduce((s,x) => s + (+x.jumlah || 0), 0);

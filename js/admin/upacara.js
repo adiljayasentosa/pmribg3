@@ -38,8 +38,8 @@ const PILIHAN_JUMLAH_PETUGAS_UPACARA = [8,9,10,11,12,13,14,15];
    tanpa memengaruhi halaman lain.
 ───────────────────────────────────────────────────────── */
 function renderUpacara(el, user) {
-  const canEdit   = ["admin","ketua","wakil","sekretaris","pj"].includes(user.role);
-  const canDelete = ["admin","ketua"].includes(user.role);
+  const canEdit   = hasManagementAccess(user);
+  const canDelete = hasManagementAccess(user);
   const canGenerate = canEdit;
 
   el.innerHTML = `

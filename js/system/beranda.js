@@ -103,7 +103,7 @@ function _hitungReminder(user) {
      ROLE_AKSES_PRESENSI di core/firebase-db.js (dibaca sebagai
      referensi, tidak diubah). Granularitas per-tanggal (bukan
      per-kegiatan) — keputusan final F4.2 poin 3. */
-  const bolehLihatPresensi = ["admin","ketua","wakil","sekretaris","pj","demo"].includes(user.role);
+  const bolehLihatPresensi = hasManagementAccess(user);
   if (bolehLihatPresensi) {
     const tanggalKegiatanLewat = [...new Set(
       AppState.kegiatan.filter(k => k.tanggal < sekarang && k.status !== "Dibatalkan").map(k => k.tanggal)
@@ -189,8 +189,8 @@ function renderBerandaPengurus(el, user) {
      dan ROLE_AKSES_PRESENSI di core/firebase-db.js (tidak diubah, hanya
      dibaca sebagai referensi) — supaya kartu tidak menampilkan "Rp 0"
      atau "0%" palsu untuk role yang datanya memang tidak pernah di-fetch. */
-  const bolehLihatKeuangan  = ["admin","ketua","wakil","bendahara","demo"].includes(user.role);
-  const bolehLihatPresensi  = ["admin","ketua","wakil","sekretaris","pj","demo"].includes(user.role);
+  const bolehLihatKeuangan  = hasManagementAccess(user);
+  const bolehLihatPresensi  = hasManagementAccess(user);
 
   const statCards = [
     statCard("Anggota Aktif", r.anggotaAktif, "dari "+r.totalAnggota+" total", "neutral",
@@ -216,23 +216,23 @@ function renderBerandaPengurus(el, user) {
      - Generate Jadwal : sama dengan canGenerate di pages/piket.js (F4.1)
      - Input Presensi  : sama dengan hak tulis presensi (Firestore Rules) */
   const aksi = [];
-  if (["admin","ketua","sekretaris"].includes(user.role)) {
+  if (hasManagementAccess(user)) {
     aksi.push({ icon:"👤", label:"Tambah Anggota", onClick: () =>
       bukaFormAnggota(null, () => renderBeranda(el, user)) });
   }
-  if (["admin","ketua","wakil","pj"].includes(user.role)) {
+  if (hasManagementAccess(user)) {
     aksi.push({ icon:"📅", label:"Tambah Kegiatan", onClick: () =>
       bukaFormKegiatan(null, () => renderBeranda(el, user)) });
   }
-  if (["admin","bendahara"].includes(user.role)) {
+  if (hasManagementAccess(user)) {
     aksi.push({ icon:"💰", label:"Catat Transaksi", onClick: () =>
       bukaFormKas(null, () => renderBeranda(el, user)) });
   }
-  if (["admin","ketua","wakil","pj"].includes(user.role)) {
+  if (hasManagementAccess(user)) {
     aksi.push({ icon:"📦", label:"Tambah Barang", onClick: () =>
       bukaFormInventaris(null, () => renderBeranda(el, user)) });
   }
-  if (["admin","ketua","wakil","sekretaris","pj","demo"].includes(user.role)) {
+  if (hasManagementAccess(user)) {
     aksi.push({ icon:"🗓️", label:"Generate Jadwal", onClick: () => {
       /* Navigasi lalu trigger tombol Generate di halaman Piket.
          click() bersifat sinkron dan navigateTo() me-render halaman
@@ -244,7 +244,7 @@ function renderBerandaPengurus(el, user) {
       document.getElementById("btn-generate-piket")?.click();
     }});
   }
-  if (["admin","ketua","wakil","sekretaris","pj","demo"].includes(user.role)) {
+  if (hasManagementAccess(user)) {
     aksi.push({ icon:"📋", label:"Input Presensi", onClick: () => {
       location.hash = "presensi";
       document.querySelector('.sidebar-link[data-page="presensi"]')?.click();
@@ -299,14 +299,14 @@ function renderBerandaPengurus(el, user) {
     </div>
   </div>
 
-  ${user.role === "admin" ? `<div class="card admin-pembina-notes-card" style="margin-top:24px">
+  ${hasManagementAccess(user) ? `<div class="card admin-pembina-notes-card" style="margin-top:24px">
     <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span>📝 Catatan Pembina</span><button class="btn btn-outline btn-sm" id="btn-admin-view-pembina-notes">Lihat Semua</button></div>
     <div id="admin-pembina-notes-list"><div class="empty-state" style="padding:22px 10px"><p>Memuat catatan…</p></div></div>
   </div>` : ""}`;
 
   _renderPanelReminder(reminderList);
 
-  if (user.role === "admin") {
+  if (hasManagementAccess(user)) {
     const wrapNotes = document.getElementById("admin-pembina-notes-list");
     const renderAdminNotes = async () => {
       const notes = await fetchPembinaNotes(3, true);

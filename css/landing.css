@@ -1219,7 +1219,7 @@
 @media(max-width:760px){ .content-page-blob-transition{height:68px;margin-top:26px;} }
 
 /* =========================================================
-   PUBLIC REDESIGN 1.1.53
+   PUBLIC REDESIGN 1.1.54
    Landing dipadatkan + halaman khusus dipisahkan.
    ========================================================= */
 .nav-public{background:rgba(116,0,18,.92);backdrop-filter:blur(14px);box-shadow:0 8px 24px rgba(45,0,8,.18)}
@@ -1272,7 +1272,7 @@
 
 /* =========================================================
    PUBLIC PAGES POLISH — HEADER / TRANSITIONS / FOOTER
-   Release: v1.1.53 / versionCode 63
+   Release: v1.1.54 / versionCode 63
    ========================================================= */
 .nav-public{
   position:fixed;
@@ -1376,7 +1376,7 @@
 }
 
 /* =========================================================
-   PUBLIC CONTENT VISUAL REFRESH — v1.1.53
+   PUBLIC CONTENT VISUAL REFRESH — v1.1.54
    Artikel = editorial, Video = media library,
    Poster = gallery, Dokumentasi = photo story.
    Tidak mengubah UX/data source. Hanya presentasi.
@@ -1600,7 +1600,7 @@ body[data-content-tipe="dokumentasi"] .content-grid-wrap .doc-card-body{padding:
 }
 
 /* =========================================================
-   SPECIAL PAGE HEADER VISUAL — v1.1.53
+   SPECIAL PAGE HEADER VISUAL — v1.1.54
    Uses the dedicated light PMR editorial background instead
    of reusing the landing-page photography.
    ========================================================= */

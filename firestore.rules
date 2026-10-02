@@ -74,13 +74,12 @@ service cloud.firestore {
     }
 
     function isPimpinan() {
-      return hasAnyRole(['admin', 'ketua', 'wakil']);
+      return hasAnyRole(['admin', 'pembina', 'pengurus']);
     }
 
+    // Tiga role pengelola utama memiliki akses operasional CRUD.
     function isPengurus() {
-      return hasAnyRole([
-        'admin', 'ketua', 'wakil', 'sekretaris', 'bendahara', 'pj'
-      ]);
+      return hasAnyRole(['admin', 'pembina', 'pengurus']);
     }
 
 
@@ -99,7 +98,7 @@ service cloud.firestore {
       // Wakil: view-only — tidak ada hak update profil orang lain.
       allow read: if isLoggedIn() && (
         isOwner(uid) ||
-        hasAnyRole(['admin', 'ketua', 'wakil'])
+        hasAnyRole(['admin', 'pembina', 'pengurus'])
       );
 
       // CREATE: Hanya admin.
@@ -129,7 +128,7 @@ service cloud.firestore {
     // browser. Hanya pengurus berwenang yang boleh membaca.
     // ═══════════════════════════════════════════════════
     match /pendaftaran/{pendaftaranId} {
-      allow read: if hasAnyRole(['admin', 'ketua', 'wakil', 'sekretaris']);
+      allow read: if isPengurus();
       allow create, update, delete: if false;
     }
 
@@ -147,12 +146,10 @@ service cloud.firestore {
       allow read: if isLoggedIn();
 
       // CREATE & UPDATE: Admin, ketua, sekretaris.
-      allow create, update: if hasAnyRole([
-        'admin', 'ketua', 'wakil', 'sekretaris'
-      ]);
+      allow create, update: if isPengurus();
 
       // DELETE: Admin dan ketua — operasi destruktif.
-      allow delete: if hasAnyRole(['admin', 'ketua']);
+      allow delete: if isPimpinan();
     }
 
 
@@ -163,7 +160,7 @@ service cloud.firestore {
     // menulis langsung; approval dilakukan melalui Admin SDK API.
     // ═══════════════════════════════════════════════════
     match /anggota_private/{anggotaId} {
-      allow read: if hasAnyRole(['admin', 'ketua', 'wakil', 'sekretaris']) || isMyMemberId(anggotaId);
+      allow read: if isPengurus() || isMyMemberId(anggotaId);
       allow create, update, delete: if false;
     }
 
@@ -181,9 +178,7 @@ service cloud.firestore {
 
       // CREATE & UPDATE: Pengurus kecuali bendahara.
       // PJ boleh kelola kegiatan divisinya.
-      allow create, update: if hasAnyRole([
-        'admin', 'ketua', 'wakil', 'sekretaris', 'pj'
-      ]);
+      allow create, update: if isPengurus();
 
       // DELETE: Level pimpinan.
       allow delete: if isPimpinan();
@@ -200,12 +195,10 @@ service cloud.firestore {
     match /keuangan/{transaksiId} {
 
       // READ: Admin, ketua, wakil (pengawasan), bendahara.
-      allow read: if hasAnyRole([
-        'admin', 'ketua', 'wakil', 'bendahara', 'pembina'
-      ]) || (isActiveMember() && (resource.data.get('anggotaId','') == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.anggotaId || resource.id == '_pengaturan'));
+      allow read: if isPengurus() || (isActiveMember() && (resource.data.get('anggotaId','') == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.anggotaId || resource.id == '_pengaturan'));
 
       // CREATE & UPDATE: Admin dan bendahara.
-      allow create, update: if hasAnyRole(['admin', 'bendahara']);
+      allow create, update: if isPengurus();
 
       // DELETE: Hanya admin — menjaga integritas laporan.
       allow delete: if isAdmin();
@@ -223,17 +216,13 @@ service cloud.firestore {
     match /presensi/{presensiId} {
 
       // READ: Admin, ketua, wakil, sekretaris, pj.
-      allow read: if hasAnyRole([
-        'admin', 'ketua', 'wakil', 'sekretaris', 'pj', 'pembina'
-      ]) || (isActiveMember() && isMyMemberId(resource.data.anggotaId));
+      allow read: if isPengurus() || (isActiveMember() && isMyMemberId(resource.data.anggotaId));
 
       // CREATE & UPDATE: Admin, ketua, wakil, sekretaris, pj.
-      allow create, update: if hasAnyRole([
-        'admin', 'ketua', 'wakil', 'sekretaris', 'pj'
-      ]);
+      allow create, update: if isPengurus();
 
       // DELETE: Admin dan ketua.
-      allow delete: if hasAnyRole(['admin', 'ketua']);
+      allow delete: if isPimpinan();
     }
 
 
@@ -252,7 +241,7 @@ service cloud.firestore {
 
       // CREATE & UPDATE: Admin dan ketua.
       // Perubahan struktur adalah keputusan strategis pimpinan.
-      allow create, update: if hasAnyRole(['admin', 'ketua']);
+      allow create, update: if isPimpinan();
 
       // DELETE: Hanya admin.
       // pengurus/struktur adalah dokumen tunggal kritis —
@@ -273,18 +262,10 @@ service cloud.firestore {
       allow read: if isLoggedIn();
 
       // CREATE & UPDATE: Admin, Ketua, Wakil, PJ
-      allow create, update: if hasAnyRole([
-        'admin',
-        'ketua',
-        'wakil',
-        'pj'
-      ]);
+      allow create, update: if isPengurus();
 
       // DELETE: Admin dan Ketua
-      allow delete: if hasAnyRole([
-        'admin',
-        'ketua'
-      ]);
+      allow delete: if isPimpinan();
     }
     
     // ═══════════════════════════════════════════════════════════════
@@ -303,32 +284,20 @@ match /piket/{jadwalId} {
   // Semua user yang login boleh melihat jadwal piket,
   // termasuk akun anggota, karena jadwal merupakan informasi
   // operasional yang perlu diketahui seluruh anggota.
-  allow read: if hasAnyRole([
-    'admin', 'ketua', 'wakil',
-    'sekretaris', 'bendahara', 'pj'
-  ]) || isPortalMember();
+  allow read: if isLoggedIn();
 
   // CREATE & UPDATE ────────────────────────────────────────────
   // Admin, ketua, wakil, sekretaris, dan PJ dapat membuat
   // maupun memperbarui jadwal piket.
   // Hak ini juga mencakup hasil Generate Jadwal otomatis
   // dari Smart Fair Scheduler maupun penyesuaian manual.
-  allow create, update: if hasAnyRole([
-    'admin',
-    'ketua',
-    'wakil',
-    'sekretaris',
-    'pj'
-  ]);
+  allow create, update: if isPengurus();
 
   // DELETE ─────────────────────────────────────────────────────
   // Hanya admin dan ketua yang boleh menghapus jadwal.
   // Menghapus jadwal piket berpotensi menghilangkan riwayat
   // pembagian tugas, sehingga dibatasi pada level pimpinan.
-  allow delete: if hasAnyRole([
-    'admin',
-    'ketua'
-  ]);
+  allow delete: if isPimpinan();
 }
 
     // ═══════════════════════════════════════════════════════════════
@@ -347,29 +316,17 @@ match /piket/{jadwalId} {
       // Semua user yang login boleh melihat jadwal upacara,
       // termasuk akun anggota — informasi operasional terbuka,
       // identik alasan dengan Piket.
-      allow read: if hasAnyRole([
-        'admin', 'ketua', 'wakil',
-        'sekretaris', 'bendahara', 'pj'
-      ]) || isPortalMember();
+      allow read: if isPengurus() || isPortalMember();
 
       // CREATE & UPDATE ────────────────────────────────────────────
       // Admin, ketua, wakil, sekretaris, dan PJ — sama persis
       // dengan Piket. Mencakup hasil Generate Petugas otomatis
       // dari Rotation Engine maupun penyesuaian manual.
-      allow create, update: if hasAnyRole([
-        'admin',
-        'ketua',
-        'wakil',
-        'sekretaris',
-        'pj'
-      ]);
+      allow create, update: if isPengurus();
 
       // DELETE ─────────────────────────────────────────────────────
       // Hanya admin dan ketua — sama persis dengan Piket.
-      allow delete: if hasAnyRole([
-        'admin',
-        'ketua'
-      ]);
+      allow delete: if isPimpinan();
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -401,16 +358,14 @@ match /piket/{jadwalId} {
 
       // READ: Admin, ketua, wakil (pengawasan), bendahara —
       // identik keuangan.
-      allow read: if hasAnyRole([
-        'admin', 'ketua', 'wakil', 'bendahara'
-      ]);
+      allow read: if isPengurus();
 
       // CREATE & UPDATE: Admin dan bendahara — identik keuangan.
       // Mencakup .set(...,{merge:true}) pada iuran/_pengaturan
       // (ubah nominal standar), yang di Firestore rules dievaluasi
       // sebagai create ATAU update tergantung dokumen sudah ada
       // atau belum — keduanya sudah diizinkan di sini.
-      allow create, update: if hasAnyRole(['admin', 'bendahara']);
+      allow create, update: if isPengurus();
 
       // DELETE: Hanya admin — identik keuangan, demi konsistensi
       // batch dengan collection keuangan (lihat catatan di atas).
@@ -422,7 +377,7 @@ match /piket/{jadwalId} {
     // Catatan hanya dibuat/dikelola Pembina. Admin dapat membaca.
     // ═══════════════════════════════════════════════════════════════
     match /catatanPembina/{noteId} {
-      allow read: if hasAnyRole(['admin', 'pembina']);
+      allow read: if isPengurus();
       allow create: if hasAnyRole(['pembina']) && request.resource.data.authorUid == request.auth.uid;
       allow update, delete: if hasAnyRole(['pembina']) && resource.data.authorUid == request.auth.uid;
     }
@@ -473,7 +428,7 @@ match /piket/{jadwalId} {
     // PJ boleh kelola HANYA item yang pjDivisi-nya sama dengan
     // divisinya sendiri.
     function isPjPemilikDivisi(data) {
-      return hasAnyRole(['pj']) && data.pjDivisi == getDivisi();
+      return false;
     }
 
     // Dipakai bersama oleh keempat collection konten publik di bawah,
@@ -482,11 +437,10 @@ match /piket/{jadwalId} {
       return resource.data.get('publish', false) == true || isPengurus();
     }
     function tulisKontenBaru() {
-      return isAdmin() ||
-        (hasAnyRole(['pj']) && request.resource.data.pjDivisi == getDivisi());
+      return isPengurus();
     }
     function tulisKontenUbah() {
-      return isAdmin() || isPjPemilikDivisi(resource.data);
+      return isPengurus();
     }
 
     match /artikel/{artikelId} {
@@ -520,10 +474,10 @@ match /piket/{jadwalId} {
     // KTA private: token QR dan binding akun tidak boleh dibaca anggota lain.
     match /kta/{anggotaId} {
       allow read: if isLoggedIn() && (
-        hasAnyRole(['admin','ketua','wakil','sekretaris']) ||
+        isPengurus() ||
         (userDocExists() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.anggotaId == anggotaId)
       );
-      allow create, update, delete: if hasAnyRole(['admin','ketua','wakil','sekretaris']);
+      allow create, update, delete: if isPengurus();
     }
 
 }

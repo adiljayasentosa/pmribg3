@@ -1,116 +1,72 @@
 /* =========================================================
-   AUTH PAGE LOGIC — v2 (async login untuk Firebase)
+   AUTH PAGE LOGIC — v1.1.56
+   Login menggunakan username + password.
+   Role ditentukan dari profil Firebase/Firestore, bukan pilihan user.
    ========================================================= */
 document.addEventListener("DOMContentLoaded", () => {
-  /* Kalau sudah login, langsung ke dashboard */
   initAuth(
     () => { window.location.href = "dashboard.html"; },
-    () => { /* belum login — tampilkan form */ }
+    () => { /* belum login */ }
   );
 
-  let selectedRole = "ketua";
-
-  /* ── Pilihan role ── */
-  document.querySelectorAll(".role-pill").forEach((pill) => {
-    pill.addEventListener("click", () => {
-      document.querySelectorAll(".role-pill").forEach(p => p.classList.remove("active"));
-      pill.classList.add("active");
-      selectedRole = pill.dataset.role;
-    });
-  });
-
-  /* ── Form submit (async) ── */
-  const form    = document.getElementById("login-form");
-  const errEl   = document.getElementById("login-error");
+  const form = document.getElementById("login-form");
+  const errEl = document.getElementById("login-error");
+  const errMsg = document.getElementById("login-error-msg");
   const btnSubmit = document.getElementById("btn-login");
+  const password = document.getElementById("input-password");
+
+  document.getElementById("btn-toggle-password")?.addEventListener("click", (e) => {
+    const btn = e.currentTarget;
+    const visible = password.type === "text";
+    password.type = visible ? "password" : "text";
+    btn.textContent = visible ? "◉" : "◌";
+    btn.setAttribute("aria-label", visible ? "Tampilkan password" : "Sembunyikan password");
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const username = document.getElementById("input-username").value.trim();
-    const password = document.getElementById("input-password").value;
+    const pass = password.value;
+    if (!username || !pass) return showError("Mohon isi username dan password.");
 
-    if (!username || !password) {
-      showError("Mohon isi username dan password.");
-      return;
-    }
-
-    errEl.style.display = "none";
+    clearError();
     btnSubmit.disabled = true;
-    btnSubmit.textContent = "Masuk…";
+    btnSubmit.textContent = "Memeriksa…";
 
-    /* [P0 HOTFIX] Sesi HARUS selalu LOCAL, apa pun status checkbox
-       "Ingat saya". Sebelumnya kode ini men-set SESSION persistence
-       kalau checkbox tidak dicentang (dan checkbox tidak dicentang
-       secara default di login.html) — SESSION tidak bertahan saat
-       proses TWA di-kill & dibuka ulang oleh Android, jadi user yang
-       tidak sengaja mencentang "Ingat saya" ter-logout sendiri setiap
-       kali reopen app. Ini melanggar aturan P0: "Logout harus jadi
-       satu-satunya aksi yang menghapus autentikasi". Checkbox "Ingat
-       saya" dibiarkan ada di UI (tidak redesign), tapi sudah tidak
-       memengaruhi persistence lagi. */
-    if (FIREBASE_ENABLED) {
-      await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    }
-
-    const result = await login(username, password, selectedRole);
+    if (FIREBASE_ENABLED) await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    const result = await login(username, pass);
 
     if (result.ok) {
-      await logActivity("Login", `Login sebagai ${selectedRole}`);
+      try { await logActivity("Login", "Login berhasil"); } catch (_) {}
       btnSubmit.textContent = "✓ Berhasil!";
-      setTimeout(() => (window.location.href = "dashboard.html"), 400);
+      setTimeout(() => (window.location.href = "dashboard.html"), 350);
     } else {
       showError(result.message || "Login gagal.");
       btnSubmit.disabled = false;
-      btnSubmit.textContent = "Masuk";
+      btnSubmit.textContent = "Login";
     }
   });
 
   function showError(msg) {
-    errEl.textContent = msg;
+    if (errMsg) errMsg.textContent = msg;
     errEl.style.display = "flex";
   }
+  function clearError() { errEl.style.display = "none"; if (errMsg) errMsg.textContent = ""; }
 
-  /* [F6.0] Lupa Password — pakai fitur bawaan Firebase Auth
-     (sendPasswordResetEmail), pola email sama seperti login()
-     di auth.js ({username}@pmr-smkibg3.app). Tidak mengubah
-     Authentication yang sudah ada, hanya memanggil API tambahan. */
   document.getElementById("btn-lupa-password")?.addEventListener("click", async () => {
-    if (!FIREBASE_ENABLED) {
-      showError("Reset password tersedia setelah aplikasi terhubung ke Firebase.");
-      return;
-    }
+    if (!FIREBASE_ENABLED) return showError("Reset password tersedia setelah aplikasi terhubung ke Firebase.");
     const username = (document.getElementById("input-username").value || prompt("Masukkan username akunmu:") || "").trim().toLowerCase();
     if (!username) return;
     try {
-      await firebase.auth().sendPasswordResetEmail(`${username}@pmr-smkibg3.app`);
+      const lookup = await fetch("/api/auth-lookup", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({username}) });
+      const data = await lookup.json().catch(()=>({}));
+      if (!lookup.ok || !data.email) throw new Error("Username tidak ditemukan.");
+      await firebase.auth().sendPasswordResetEmail(data.email);
       errEl.className = "alert";
-      showError("Tautan reset password sudah dikirim. Silakan cek email terdaftar akunmu.");
-    } catch (e) {
+      showError("Tautan reset password sudah dikirim ke email terdaftar.");
+    } catch (_) {
+      errEl.className = "alert alert-danger";
       showError("Gagal mengirim reset password. Pastikan username sudah benar.");
-    }
-  });
-
-  /* ── Akses Demo ── */
-  document.getElementById("btn-demo-login")?.addEventListener("click", async () => {
-    errEl.style.display = "none";
-    const btnDemo = document.getElementById("btn-demo-login");
-    btnDemo.disabled = true;
-    btnDemo.textContent = "Membuka Demo…";
-
-    /* Demo tetap login melalui jalur autentikasi yang sama,
-       hanya kredensialnya diisi otomatis. */
-    if (FIREBASE_ENABLED) {
-      await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    }
-
-    const result = await login("demo", "demo123", "demo");
-    if (result.ok) {
-      btnDemo.textContent = "✓ Demo dibuka";
-      setTimeout(() => (window.location.href = "dashboard.html"), 250);
-    } else {
-      showError(result.message || "Akun Demo belum tersedia. Buat akun Demo melalui Setup terlebih dahulu.");
-      btnDemo.disabled = false;
-      btnDemo.textContent = "Coba Demo";
     }
   });
 });

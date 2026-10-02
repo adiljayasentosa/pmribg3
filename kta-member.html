@@ -41,7 +41,7 @@
     <span class="badge badge-red">KTA PMR</span>
     <h1>Masuk Anggota</h1>
     <p class="page-sub">Akses KTA dan profil milik akun yang sedang login.</p>
-    <div class="field"><label>Nomor Induk</label><input id="ni" autocomplete="username" placeholder="Nomor Induk"></div>
+    <div class="field"><label>Username</label><input id="ni" autocomplete="username" placeholder="Username"></div>
     <div class="field"><label>Password</label><input id="pw" type="password" autocomplete="current-password" placeholder="Password"></div>
     <button id="btn-login" class="btn btn-primary" style="width:100%">Masuk</button>
     <p id="msg" class="kta-msg"></p>
@@ -77,7 +77,12 @@ const loginCard = document.getElementById('login-card');
 const ktaCard = document.getElementById('kta-card');
 
 function m(t,kind=''){if(!msg)return;msg.textContent=t;msg.className='kta-msg '+kind}
-function email(ni){return String(ni).trim().toLowerCase()+'@pmr-smkibg3.app'}
+async function resolveLoginEmail(username){
+  const r=await fetch('/api/auth-lookup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:String(username).trim().toLowerCase()})});
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok||!data.email)throw new Error(data.error||'Username tidak ditemukan.');
+  return data.email;
+}
 function showOnly(el){[publicCard,loginCard,ktaCard].forEach(x=>{if(x)x.style.display='none'});if(el)el.style.display='block'}
 function esc(v){const d=document.createElement('div');d.textContent=String(v??'');return d.innerHTML}
 
@@ -147,14 +152,15 @@ document.getElementById('btn-login')?.addEventListener('click',async()=>{
   const btn=document.getElementById('btn-login');
   const ni=document.getElementById('ni').value.trim();
   const pw=document.getElementById('pw').value;
-  if(!ni||!pw){m('Nomor Induk dan password wajib diisi.','error');return;}
+  if(!ni||!pw){m('Username dan password wajib diisi.','error');return;}
 
   loginInProgress=true;
   if(btn){btn.disabled=true;btn.textContent='Memverifikasi…';}
   m('Memverifikasi…');
   try {
+    const authEmail=await resolveLoginEmail(ni);
     const cred=await withTimeout(
-      firebase.auth().signInWithEmailAndPassword(email(ni),pw),
+      firebase.auth().signInWithEmailAndPassword(authEmail,pw),
       15000,
       'Login terlalu lama. Periksa koneksi internet lalu coba lagi.'
     );
@@ -166,7 +172,7 @@ document.getElementById('btn-login')?.addEventListener('click',async()=>{
     try { if(firebase.auth().currentUser) await firebase.auth().signOut(); } catch(_) {}
     const code=e.code||'';
     const message = code==='auth/invalid-credential' || code==='auth/wrong-password' || code==='auth/user-not-found'
-      ? 'Nomor Induk atau password salah.'
+      ? 'Username atau password salah.'
       : code==='auth/network-request-failed'
         ? 'Gagal terhubung ke Firebase. Periksa koneksi internet.'
         : e.message || 'Login gagal.';
