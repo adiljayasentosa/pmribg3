@@ -492,8 +492,12 @@ function _initDashboard(user) {
     if (pageId === "pembina" && user.role !== "pembina") pageId = "beranda";
     
 
-    document.body.classList.toggle("pembina-mode", user.role === "pembina");
-    document.body.classList.toggle("pembina-dashboard-mode", user.role === "pembina" && pageId === "pembina");
+    /* Mode khusus Pembina hanya berlaku saat benar-benar berada di Dashboard Pembina.
+       Saat Pembina membuka Dashboard Utama (#beranda), shell Pengurus harus kembali tampil
+       penuh agar tampilannya identik dengan Dashboard Utama Pengurus. */
+    const isPembinaDashboard = user.role === "pembina" && pageId === "pembina";
+    document.body.classList.toggle("pembina-mode", isPembinaDashboard);
+    document.body.classList.toggle("pembina-dashboard-mode", isPembinaDashboard);
     document.body.classList.toggle("admin-dashboard-mode", user.role === "admin" && pageId === "beranda");
 
     const page = PAGES[pageId];

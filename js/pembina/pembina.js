@@ -231,24 +231,10 @@ function renderPembina(el, user) {
   });
   loadNotes();
 
-  document.getElementById("btn-pembina-view-pengurus")?.addEventListener("click", () => {
-  /*
-   * Dashboard Utama harus dinavigasikan melalui router utama dashboard.js,
-   * bukan hanya dengan mengubah hash.
-   *
-   * Klik sidebar Beranda agar router utama menjalankan
-   * navigateTo("beranda") dan merender Dashboard Utama.
-   */
-  const mainDashboardLink = document.querySelector(
-    '.sidebar-link[data-page="beranda"]'
-  );
-
-  if (mainDashboardLink) {
-    mainDashboardLink.click();
-    return;
-  }
-
-  // Fallback jika link Beranda tidak ditemukan.
-  window.location.hash = "beranda";
-});
+  document.getElementById("btn-pembina-logout")?.addEventListener("click", () => {
+    Modal.konfirmasi("Yakin ingin keluar dari sesi Pembina?", () => {
+      DB.stopListeners();
+      logout();
+    });
+  });
 }
