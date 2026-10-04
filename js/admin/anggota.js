@@ -15,6 +15,7 @@ const DIVISI_ANGGOTA_LIST = ["Pertolongan Pertama", "Tandu"];
 
 function renderAnggota(el, user) {
   const canEdit = hasManagementAccess(user);
+  const canDelete = user?.role === "admin" || user?.role === "pembina";
   const GROUPS = ["XII", "XI", "X", "Alumni"];
 
   el.innerHTML = `
@@ -67,8 +68,8 @@ function renderAnggota(el, user) {
     <td>${a.divisi||"—"}</td>
     <td><div style="display:flex;gap:6px">
       <button class="btn btn-ghost btn-sm btn-detail-anggota" data-id="${a.id}" title="Detail" aria-label="Lihat detail ${a.nama}">👁</button>
-      ${canEdit?`<button class="btn btn-ghost btn-sm btn-edit-anggota" data-id="${a.id}" title="Edit" aria-label="Edit ${a.nama}">✏</button>
-      <button class="btn btn-ghost btn-sm btn-hapus-anggota" data-id="${a.id}" title="Hapus" aria-label="Hapus ${a.nama}" style="color:var(--danger)">🗑</button>`:""}
+      ${canEdit?`<button class="btn btn-ghost btn-sm btn-edit-anggota" data-id="${a.id}" title="Edit" aria-label="Edit ${a.nama}">✏</button>`:""}
+      ${canDelete?`<button class="btn btn-ghost btn-sm btn-hapus-anggota" data-id="${a.id}" title="Hapus" aria-label="Hapus ${a.nama}" style="color:var(--danger)">🗑</button>`:""}
     </div></td>
   </tr>`;
 
@@ -142,7 +143,7 @@ function renderAnggota(el, user) {
     if (e.target.closest(".btn-edit-anggota") && canEdit) {
       bukaFormAnggota(AppState.anggota.find(x => x.id === id), () => renderAnggota(el, user));
     }
-    if (e.target.closest(".btn-hapus-anggota") && canEdit) {
+    if (e.target.closest(".btn-hapus-anggota") && canDelete) {
       const a = AppState.anggota.find(x => x.id === id);
       Modal.konfirmasi(`Hapus anggota <strong>${a?.nama}</strong>?`, async () => {
         await DB.anggota.hapus(id);

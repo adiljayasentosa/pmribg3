@@ -159,8 +159,9 @@ service cloud.firestore {
       // CREATE & UPDATE: Admin, ketua, sekretaris.
       allow create, update: if isPengurus();
 
-      // DELETE: Admin dan ketua — operasi destruktif.
-      allow delete: if isPimpinan();
+      // DELETE: hanya Admin dan Pembina. Pengurus tetap dapat read/create/update,
+      // tetapi tidak boleh menghapus data anggota.
+      allow delete: if hasAnyRole(['admin', 'pembina']);
     }
 
 

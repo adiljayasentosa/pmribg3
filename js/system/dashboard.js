@@ -397,8 +397,7 @@ async function tryLoadKtaPhoto(src){
 let PAGES = {};
 
 function userRoleTitlePlaceholder() {
-  const u = getCurrentUser();
-  return u?.role === "admin" ? "Dashboard Admin" : "Beranda";
+  return "Beranda";
 }
 
 function _initDashboard(user) {
@@ -441,17 +440,13 @@ function _initDashboard(user) {
     });
   }
 
-  /* ── Shell khusus Dashboard Admin ── */
-  document.body.classList.toggle("admin-dashboard-mode", user.role === "admin" && (location.hash.replace("#", "") || "beranda") === "beranda");
-
   /* ── Navigasi SPA-lite ── */
   const contentArea = document.getElementById("content-area");
   const navLinks    = document.querySelectorAll(".sidebar-link[data-page]");
   const topbarTitle = document.getElementById("topbar-title");
 
   PAGES = {
-    beranda:    { title: userRoleTitlePlaceholder(), render:(el,u)=>u.role === "admin" ? renderAdminDashboard(el,u) : renderBeranda(el,u) },
-    pembina:    { title:"Ringkasan Organisasi", render:renderPembina },
+    beranda:    { title:"Beranda", render:renderBeranda },
     anggota:    { title:"Data Anggota", render:(el,u)=>u.role === "anggota" ? renderMemberPortal(el,u) : renderAnggota(el,u) },
     "persetujuan-anggota": { title:"Persetujuan Anggota PMR", render:renderPersetujuanAnggota },
     kta:        { title:"KTA PMR", render:renderKta },
@@ -489,16 +484,11 @@ function _initDashboard(user) {
        satu halaman hanya dengan mengubah hash. Firestore Rules tetap
        menjadi lapisan keamanan utama untuk data. */
     if (user.role === "anggota" && pageId !== "anggota") pageId = "anggota";
-    if (pageId === "pembina" && user.role !== "pembina") pageId = "beranda";
-    
-
-    /* Mode khusus Pembina hanya berlaku saat benar-benar berada di Dashboard Pembina.
-       Saat Pembina membuka Dashboard Utama (#beranda), shell Pengurus harus kembali tampil
-       penuh agar tampilannya identik dengan Dashboard Utama Pengurus. */
-    const isPembinaDashboard = user.role === "pembina" && pageId === "pembina";
-    document.body.classList.toggle("pembina-mode", isPembinaDashboard);
-    document.body.classList.toggle("pembina-dashboard-mode", isPembinaDashboard);
-    document.body.classList.toggle("admin-dashboard-mode", user.role === "admin" && pageId === "beranda");
+    /* Dashboard utama adalah satu-satunya dashboard untuk Admin, Pembina, dan Pengurus.
+       Route lama #pembina dinormalisasi ke #beranda agar tidak ada dashboard khusus
+       yang kembali muncul karena cache, bookmark lama, atau tombol versi sebelumnya. */
+    if (pageId === "pembina") pageId = "beranda";
+    document.body.classList.remove("pembina-mode", "pembina-dashboard-mode", "admin-dashboard-mode");
 
     const page = PAGES[pageId];
     if (!page) return;
@@ -510,10 +500,10 @@ function _initDashboard(user) {
     history.replaceState(null, "", "#" + pageId);
   }
 
-  /* Pembina memiliki dashboard sendiri. Dashboard Pengurus hanya dapat
-     dilihat lewat tombol perpindahan, bukan dicampur sebagai menu sidebar. */
+  /* Dashboard utama dipakai bersama oleh Admin, Pembina, dan Pengurus.
+     Link dashboard Pembina lama disembunyikan agar tidak ada jalur UI ganda. */
   document.querySelectorAll(".nav-management-overview").forEach(link => {
-    link.style.display = user.role === "pembina" ? "flex" : "none";
+    link.style.display = "none";
   });
 
   /* Aktivitas Sistem hanya untuk Admin. Sembunyikan di UI, Rules tetap menjadi lapisan keamanan. */
@@ -524,8 +514,8 @@ function _initDashboard(user) {
   navLinks.forEach(a => a.addEventListener("click", e => { e.preventDefault(); navigateTo(a.dataset.page); }));
 
   let initPage = location.hash.replace("#","");
-  if (!initPage) initPage = user.role === "pembina" ? "pembina" : "beranda";
-  if (!(initPage in PAGES)) initPage = user.role === "pembina" ? "pembina" : "beranda";
+  if (!initPage) initPage = "beranda";
+  if (initPage === "pembina" || !(initPage in PAGES)) initPage = "beranda";
   navigateTo(initPage);
 
   /* ── Notifikasi ── */
