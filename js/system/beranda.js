@@ -140,7 +140,8 @@ function _hitungReminder(user) {
  * Render panel Notification Center + pasang klik-navigasi.
  * Dipanggil setelah el.innerHTML di-set (butuh elemen #panel-reminder ada di DOM).
  */
-function _renderPanelReminder(reminderList) {
+function _renderPanelReminder(reminderList, options = {}) {
+  const readOnly = !!options.readOnly;
   const wrap = document.getElementById("panel-reminder");
   if (!wrap) return;
 
@@ -160,6 +161,7 @@ function _renderPanelReminder(reminderList) {
 
   wrap.querySelectorAll(".reminder-item[data-goto]").forEach(item => {
     item.addEventListener("click", () => {
+      if (readOnly) return;
       const goto = item.dataset.goto;
       location.hash = goto;
       document.querySelector(`.sidebar-link[data-page="${goto}"]`)?.click();
@@ -267,12 +269,15 @@ function renderBerandaPengurus(el, user) {
      render ulang (F4.2). Lihat _hitungReminder() di atas. */
   const reminderList = _hitungReminder(user);
 
+  const pembinaPreview = user.role === "pembina";
   el.innerHTML = `
-  <div class="page-head">
+  <div class="page-head pengurus-preview-head">
     <div>
-      <h1>Selamat Datang, ${user.nama.split(" ")[0]} 👋</h1>
-      <p class="page-sub">Masa Bakti ${AppState.periode} · ${FIREBASE_ENABLED ? "🔴 Live Firestore" : "📦 Mode Demo"}</p>
+      <div class="preview-eyebrow">LIHAT PROGRES · DASHBOARD PENGURUS</div>
+      <h1>${pembinaPreview ? "Dashboard Pengurus" : `Selamat Datang, ${user.nama.split(" ")[0]} 👋`}</h1>
+      <p class="page-sub">Masa Bakti ${AppState.periode} · ${FIREBASE_ENABLED ? "🔴 Live Firestore" : "📦 Mode Demo"}${pembinaPreview ? " · Tampilan pemantauan Pembina" : ""}</p>
     </div>
+    ${pembinaPreview ? `<button type="button" class="btn btn-outline btn-sm" id="btn-return-pembina-dashboard">Kembali ke Dashboard Pembina</button>` : ""}
   </div>
 
   <div class="grid grid-4" style="margin-bottom:24px">${statCards.join("")}</div>
@@ -282,7 +287,7 @@ function renderBerandaPengurus(el, user) {
     <div id="panel-reminder"></div>
   </div>
 
-  ${aksi.length ? `
+  ${!pembinaPreview && aksi.length ? `
   <div class="card" style="margin-bottom:24px">
     <div class="card-title">⚡ Aksi Cepat</div>
     <div class="grid grid-4" id="grid-quick-actions"></div>
@@ -299,12 +304,12 @@ function renderBerandaPengurus(el, user) {
     </div>
   </div>
 
-  ${hasManagementAccess(user) ? `<div class="card admin-pembina-notes-card" style="margin-top:24px">
+  ${!pembinaPreview && hasManagementAccess(user) ? `<div class="card admin-pembina-notes-card" style="margin-top:24px">
     <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span>📝 Catatan Pembina</span><button class="btn btn-outline btn-sm" id="btn-admin-view-pembina-notes">Lihat Semua</button></div>
     <div id="admin-pembina-notes-list"><div class="empty-state" style="padding:22px 10px"><p>Memuat catatan…</p></div></div>
   </div>` : ""}`;
 
-  _renderPanelReminder(reminderList);
+  _renderPanelReminder(reminderList, { readOnly: pembinaPreview });
 
   if (hasManagementAccess(user)) {
     const wrapNotes = document.getElementById("admin-pembina-notes-list");
@@ -323,7 +328,7 @@ function renderBerandaPengurus(el, user) {
   }
 
   /* Render Quick Actions (grid-4 dipakai kembali, bukan komponen baru) */
-  if (aksi.length) {
+  if (!pembinaPreview && aksi.length) {
     const gridAksi = document.getElementById("grid-quick-actions");
     gridAksi.innerHTML = aksi.map((a, i) => `
       <button class="quick-action-btn" data-idx="${i}" aria-label="${a.label}">
@@ -383,6 +388,12 @@ function renderBerandaPengurus(el, user) {
           </div>
         </div>
       </div>`).join("")}</div>`;
+  }
+  if (pembinaPreview) {
+    document.getElementById("btn-return-pembina-dashboard")?.addEventListener("click", () => {
+      location.hash = "pembina";
+      document.querySelector('.sidebar-link[data-page="pembina"]')?.click();
+    });
   }
 }
 

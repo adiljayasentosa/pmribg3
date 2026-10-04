@@ -6,9 +6,9 @@
 function json(res, status, payload) {
   res.status(status)
     .setHeader('Content-Type', 'application/json; charset=utf-8')
-    .setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0')
-    .setHeader('Vercel-CDN-Cache-Control', 'no-store')
-    .setHeader('CDN-Cache-Control', 'no-store');
+    .setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
+    .setHeader('Vercel-CDN-Cache-Control', 's-maxage=60, stale-while-revalidate=300')
+    .setHeader('CDN-Cache-Control', 'max-age=60, stale-while-revalidate=300');
   return res.end(JSON.stringify(payload));
 }
 
@@ -32,14 +32,20 @@ module.exports = async function handler(req, res) {
     }
 
     const db = getFirestore();
-    const snap = await db.collection('anggota')
+    // IMPORTANT: never download every active member document just to count them.
+    // The previous .get() returned every matching document, so every public visitor
+    // caused one Firestore document read per active member. With the landing page
+    // polling every 15 seconds, dozens of visitors could burn the daily read quota.
+    // Firestore aggregation count returns only the count metadata instead.
+    const aggregate = await db.collection('anggota')
       .where('statusKeanggotaan', '==', 'Aktif')
-      .select('statusKeanggotaan')
+      .count()
       .get();
+    const activeMembers = Number(aggregate.data().count || 0);
 
     return json(res, 200, {
       ok: true,
-      activeMembers: snap.size,
+      activeMembers,
       updatedAt: new Date().toISOString()
     });
   } catch (e) {

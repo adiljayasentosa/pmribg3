@@ -1,5 +1,5 @@
 /* =========================================================
-   REGISTRATION — v1.1.59
+   REGISTRATION — v1.1.60
    Two-step member registration matching the PMR auth flow.
    ========================================================= */
 .registration-body{margin:0;min-height:100svh;background:#f8f9fb;color:var(--ink);font-family:var(--font-body)}
@@ -22,7 +22,7 @@
 @media(min-width:700px){.registration-page{padding:42px 24px}.registration-page::before{height:170px}.registration-page::after{height:160px}.registration-card{padding:29px 31px 26px}.registration-title-block h1{font-size:1.55rem}.registration-screen{padding:42px 24px}.registration-screen::before{height:170px}.registration-screen::after{height:160px}}
 @media(max-width:620px){.registration-page{padding:17px 11px 29px}.registration-card{padding:21px 16px 18px;border-radius:19px}.registration-login-link{max-width:125px;text-align:right;font-size:.57rem}.registration-progress{margin-bottom:19px}.registration-progress>i{width:30px}.registration-grid{grid-template-columns:1fr;gap:10px}.registration-grid .field-full{grid-column:auto}.registration-grid .field input,.registration-grid .field select{min-height:44px}.registration-actions{margin-top:18px}.registration-actions .btn{min-height:45px}.registration-actions #reg-prev{max-width:none}.registration-title-block h1{font-size:1.3rem}.registration-title-block p{font-size:.64rem}.registration-screen{padding:17px 11px 30px}.registration-success-card{padding:22px 18px 19px}.success-lead{font-size:.66rem}}
 
-/* v1.1.59 mobile reference correction */
+/* v1.1.60 mobile reference correction */
 @media(max-width:699px){
   .registration-page{min-height:100svh;align-items:flex-start;padding:0 10px 30px;background:#fff;overflow-y:auto;}
   .registration-page::before{height:128px;clip-path:polygon(0 0,100% 0,100% 64%,91% 72%,81% 63%,71% 76%,60% 66%,50% 79%,40% 68%,29% 80%,19% 69%,9% 80%,0 68%);}

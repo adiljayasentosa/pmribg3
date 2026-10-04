@@ -69,9 +69,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const updateActiveMemberCount = async () => {
     if (!activeMemberCounter) return;
     try {
-      const response = await fetch(`/api/public-stats?ts=${Date.now()}`, {
+      const response = await fetch('/api/public-stats', {
         method: 'GET',
-        cache: 'no-store',
+        cache: 'default',
         headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (activeMemberPollTimer) clearInterval(activeMemberPollTimer);
     activeMemberPollTimer = setInterval(() => {
       if (!document.hidden) updateActiveMemberCount();
-    }, 15000);
+    }, 60000);
   };
 
   startActiveMemberPolling();

@@ -65,8 +65,8 @@ function _pembinaStrukturSummary() {
 }
 
 function renderPembina(el, user) {
-  if (!hasManagementAccess(user)) {
-    el.innerHTML = `<div class="alert alert-danger" style="display:flex">Halaman ini hanya untuk akun pengelola PMR.</div>`;
+  if (!user || user.role !== "pembina") {
+    el.innerHTML = `<div class="alert alert-danger" style="display:flex">Dashboard Pembina hanya dapat diakses oleh akun Pembina.</div>`;
     return;
   }
 
@@ -91,7 +91,10 @@ function renderPembina(el, user) {
           <h1>Selamat datang, ${_pembinaEsc(user.nama)} 👋</h1>
           <p>Masa Bakti ${_pembinaEsc(currentPeriod)} · Ringkasan organisasi dan pengelolaan PMR WIRA UNIT SMK IBG 3</p>
         </div>
-        <button type="button" class="btn btn-outline btn-sm pembina-logout" id="btn-pembina-logout">Keluar</button>
+        <div class="pembina-hero-actions">
+          <button type="button" class="btn btn-primary btn-sm" id="btn-pembina-view-pengurus">Lihat Dashboard Pengurus</button>
+          <button type="button" class="btn btn-outline btn-sm pembina-logout" id="btn-pembina-logout">Keluar</button>
+        </div>
       </section>
 
       <section class="pembina-stat-grid" aria-label="Ringkasan PMR">
@@ -222,6 +225,10 @@ function renderPembina(el, user) {
 
   document.getElementById("btn-pembina-add-note")?.addEventListener("click", openNoteForm);
   document.getElementById("btn-pembina-view-notes")?.addEventListener("click", openAllNotes);
+  document.getElementById("btn-pembina-view-pengurus")?.addEventListener("click", () => {
+    location.hash = "beranda";
+    document.querySelector('.sidebar-link[data-page="beranda"]')?.click();
+  });
   loadNotes();
 
   document.getElementById("btn-pembina-logout")?.addEventListener("click", () => {

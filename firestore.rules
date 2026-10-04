@@ -84,6 +84,17 @@ service cloud.firestore {
 
 
     // ═══════════════════════════════════════════════════
+    // COLLECTION: usernameIndex
+    //
+    // Reserved exclusively for the Vercel backend (Admin SDK).
+    // Browser clients must never read or write this index directly.
+    // ═══════════════════════════════════════════════════
+    match /usernameIndex/{username} {
+      allow read, write: if false;
+    }
+
+
+    // ═══════════════════════════════════════════════════
     // COLLECTION: users
     //
     // Profil login + role setiap pengguna.

@@ -143,6 +143,8 @@ module.exports = async function handler(req, res) {
     return json(res, 201, { ok: true, id: ref.id, status: 'pending' });
   } catch (e) {
     console.error('[api/pendaftaran]', e);
-    return json(res, 500, { error: e.message || 'Gagal menyimpan pendaftaran.' });
+    const message=String(e?.message||'');
+    const safeError=/RESOURCE_EXHAUSTED|Quota exceeded/i.test(message) ? 'Pendaftaran sedang mengalami gangguan sementara. Silakan coba kembali nanti.' : 'Gagal menyimpan pendaftaran.';
+    return json(res, 500, { error: safeError });
   }
 };

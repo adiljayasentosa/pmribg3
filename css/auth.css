@@ -1,5 +1,5 @@
 /* =========================================================
-   AUTHENTICATION — v1.1.59
+   AUTHENTICATION — v1.1.60
    Mobile-first auth screens following the PMR reference flow.
    ========================================================= */
 .auth-body{margin:0;min-height:100svh;background:#f8f9fb;color:var(--ink);font-family:var(--font-body)}
@@ -23,7 +23,7 @@
 @media(min-width:700px){.auth-page{padding:42px 24px}.auth-form-container{padding:36px 34px 27px}.auth-page::before{height:180px}.auth-page::after{height:175px}}
 @media(max-width:420px){.auth-page{padding:24px 12px 32px}.auth-form-container{border-radius:22px;padding:28px 20px 22px}.auth-mobile-brand{margin-bottom:22px}.auth-mobile-brand img{width:50px;height:50px}.auth-heading-left h2{font-size:1.5rem}.auth-heading-left p{font-size:.69rem}.auth-input-wrap input{min-height:48px}.auth-main-btn{min-height:49px}}
 
-/* v1.1.59 mobile reference correction */
+/* v1.1.60 mobile reference correction */
 @media(max-width:699px){
   .auth-page{min-height:100svh;align-items:flex-start;padding:0 18px 34px;background:#fff;overflow-y:auto;}
   .auth-page::before{height:126px;clip-path:polygon(0 0,100% 0,100% 64%,91% 71%,82% 64%,72% 76%,61% 67%,51% 78%,40% 68%,30% 80%,19% 69%,9% 79%,0 68%);}

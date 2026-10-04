@@ -31,8 +31,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       /* Pasang handler re-render ke AppState listener */
       setReRenderHandler(() => {
-        let halaman = location.hash.replace("#","") || "beranda";
+        let halaman = location.hash.replace("#","") || (user.role === "pembina" ? "pembina" : "beranda");
         if (user.role === "anggota" && halaman !== "anggota") halaman = "anggota";
+        if (user.role === "pembina" && !["pembina","beranda"].includes(halaman)) halaman = "pembina";
         if (PAGES[halaman]) {
           document.getElementById("content-area").innerHTML = "";
           PAGES[halaman].render(document.getElementById("content-area"), user);
@@ -480,7 +481,13 @@ function _initDashboard(user) {
        satu halaman hanya dengan mengubah hash. Firestore Rules tetap
        menjadi lapisan keamanan utama untuk data. */
     if (user.role === "anggota" && pageId !== "anggota") pageId = "anggota";
-    
+    if (pageId === "pembina" && user.role !== "pembina") pageId = "beranda";
+    if (user.role === "pembina" && !["pembina","beranda"].includes(pageId)) pageId = "pembina";
+
+    document.body.classList.toggle("pembina-mode", user.role === "pembina");
+    document.body.classList.toggle("pembina-preview-mode", user.role === "pembina" && pageId === "beranda");
+    document.body.classList.toggle("pembina-dashboard-mode", user.role === "pembina" && pageId === "pembina");
+
     const page = PAGES[pageId];
     if (!page) return;
     navLinks.forEach(a => a.classList.toggle("active", a.dataset.page === pageId));
@@ -491,6 +498,12 @@ function _initDashboard(user) {
     history.replaceState(null, "", "#" + pageId);
   }
 
+  /* Pembina memiliki dashboard sendiri. Dashboard Pengurus hanya dapat
+     dilihat lewat tombol perpindahan, bukan dicampur sebagai menu sidebar. */
+  document.querySelectorAll(".nav-management-overview").forEach(link => {
+    link.style.display = user.role === "pembina" ? "flex" : "none";
+  });
+
   /* Aktivitas Sistem hanya untuk Admin. Sembunyikan di UI, Rules tetap menjadi lapisan keamanan. */
   document.querySelectorAll(".nav-activity-admin").forEach(link => {
     link.style.display = user.role === "admin" ? "flex" : "none";
@@ -498,7 +511,10 @@ function _initDashboard(user) {
 
   navLinks.forEach(a => a.addEventListener("click", e => { e.preventDefault(); navigateTo(a.dataset.page); }));
 
-  const initPage = (location.hash.replace("#","") in PAGES) ? location.hash.replace("#","") : "beranda";
+  let initPage = location.hash.replace("#","");
+  if (!initPage) initPage = user.role === "pembina" ? "pembina" : "beranda";
+  if (user.role === "pembina" && !["pembina","beranda"].includes(initPage)) initPage = "pembina";
+  if (!(initPage in PAGES)) initPage = user.role === "pembina" ? "pembina" : "beranda";
   navigateTo(initPage);
 
   /* ── Notifikasi ── */

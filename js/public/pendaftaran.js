@@ -1,5 +1,5 @@
 /* =========================================================
-   PENDAFTARAN ANGGOTA PMR — v1.1.59
+   PENDAFTARAN ANGGOTA PMR — v1.1.60
    Step 1: buat akun pribadi Firebase Auth
    Step 2: lengkapi data anggota lalu kirim pendaftaran
    KTA tidak lagi membuat akun.
@@ -45,23 +45,52 @@ document.addEventListener('DOMContentLoaded', () => {
     const input=document.getElementById('reg-password'), visible=input.type==='text'; input.type=visible?'password':'text'; e.currentTarget.innerHTML=visible?'<svg class="eye-icon" viewBox="0 0 24 24" focusable="false"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>':'<svg class="eye-icon" viewBox="0 0 24 24" focusable="false"><path d="M3 3l18 18"/><path d="M10.6 5.2A10.7 10.7 0 0 1 12 5c6 0 9.5 7 9.5 7a18.4 18.4 0 0 1-3.1 3.8M6.1 6.1C3.7 8.1 2.5 12 2.5 12s3.5 7 9.5 7c1.1 0 2.1-.2 3-.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
   });
 
+  async function registerAccountProfile(email, username, nama) {
+    const current=firebase.auth().currentUser;
+    if(!current) throw new Error('Sesi akun tidak ditemukan. Ulangi pendaftaran dari awal.');
+    const token=await current.getIdToken(true);
+    const resp=await fetch('/api/register-account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:token,username,email,nama})});
+    const data=await resp.json().catch(()=>({}));
+    if(!resp.ok) {
+      const err=new Error(data.error||`Gagal membuat profil akun (${resp.status}).`);
+      err.httpStatus=resp.status;
+      throw err;
+    }
+    return data;
+  }
+
   next.addEventListener('click',async()=>{
     if(!validateStep())return;
     if(!FIREBASE_ENABLED){showError('Pendaftaran akun memerlukan koneksi Firebase.');return;}
     next.disabled=true;next.textContent='Menyimpan…';
     try{
       const email=value('reg-email').toLowerCase(), username=value('reg-username').toLowerCase(), password=value('reg-password');
-      const cred=await firebase.auth().createUserWithEmailAndPassword(email,password);
-      accountUid=cred.user.uid;
-      const token=await cred.user.getIdToken(true);
-      const resp=await fetch('/api/register-account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:token,username,email,nama:value('reg-nama')})});
-      const data=await resp.json().catch(()=>({}));
-      if(!resp.ok)throw new Error(data.error||`Gagal membuat profil akun (${resp.status}).`);
+      const current=firebase.auth().currentUser;
+
+      // If Auth was already created but the previous API request timed out/failed,
+      // retry the profile operation instead of creating another Auth account.
+      if(current && accountUid===current.uid){
+        await registerAccountProfile(email,username,value('reg-nama'));
+      }else{
+        const cred=await firebase.auth().createUserWithEmailAndPassword(email,password);
+        accountUid=cred.user.uid;
+        await registerAccountProfile(email,username,value('reg-nama'));
+      }
+
       accountCreated=true;
       step=2;updateUI();
     }catch(err){
-      try{if(firebase.auth().currentUser && accountUid)await firebase.auth().currentUser.delete();}catch(_){ }
-      accountUid=null;accountCreated=false;showError(err?.code==='auth/email-already-in-use'?'Email tersebut sudah terdaftar. Gunakan email lain.':err.message||'Gagal membuat akun.');
+      // Do not delete Auth after an uncertain backend/network failure. The next click
+      // can retry /api/register-account idempotently with the same UID.
+      if(err?.code==='auth/email-already-in-use' && !accountUid){
+        accountUid=null;
+      }
+      accountCreated=false;
+      let msg=err?.code==='auth/email-already-in-use'
+        ? 'Email tersebut sudah terdaftar. Gunakan email lain.'
+        : (err.message||'Gagal membuat akun.');
+      if(/RESOURCE_EXHAUSTED|quota exceeded/i.test(msg)) msg='Pendaftaran sedang mengalami gangguan sementara. Silakan coba kembali nanti.';
+      showError(msg);
     }finally{next.disabled=false;next.textContent='Simpan Akun';}
   });
 
