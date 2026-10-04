@@ -122,6 +122,99 @@ async function profile(req, res, body) {
   return json(res, 404, { error: 'Profil pengguna belum dibuat. Hubungi admin.' });
 }
 
+
+async function adminUsage(req, res, body) {
+  const idToken = String(body.idToken || '').trim();
+  if (!idToken) return json(res, 400, { error: 'Token admin wajib diisi.' });
+
+  const { auth, db, app } = await getAdmin();
+  const decoded = await auth.verifyIdToken(idToken, true);
+  const profile = await db.collection('users').doc(decoded.uid).get();
+  if (!profile.exists || String(profile.data()?.role || '').toLowerCase() !== 'admin') {
+    return json(res, 403, { error: 'Akses hanya untuk Admin.' });
+  }
+
+  const projectId = String(app.options.projectId || '').trim();
+  const credential = app.options.credential;
+  if (!projectId || !credential || typeof credential.getAccessToken !== 'function') {
+    return json(res, 500, { error: 'Credential backend tidak mendukung Cloud Monitoring.' });
+  }
+
+  const access = await credential.getAccessToken();
+  const token = access?.access_token || access?.accessToken;
+  if (!token) return json(res, 500, { error: 'Token Cloud Monitoring tidak tersedia.' });
+
+  const end = new Date();
+  const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
+
+  async function metric(metricType, mode = 'sum') {
+    const filter = `metric.type="firestore.googleapis.com/${metricType}" AND resource.type="firestore.googleapis.com/Database"`;
+    const url = new URL(`https://monitoring.googleapis.com/v3/projects/${encodeURIComponent(projectId)}/timeSeries`);
+    url.searchParams.set('filter', filter);
+    url.searchParams.set('interval.startTime', start.toISOString());
+    url.searchParams.set('interval.endTime', end.toISOString());
+    url.searchParams.set('aggregation.alignmentPeriod', '86400s');
+    url.searchParams.set('aggregation.perSeriesAligner', mode === 'latest' ? 'ALIGN_NEXT_OLDER' : 'ALIGN_SUM');
+    url.searchParams.set('aggregation.crossSeriesReducer', 'REDUCE_SUM');
+
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error?.message || `Cloud Monitoring ${response.status}`);
+
+    const series = Array.isArray(data.timeSeries) ? data.timeSeries : [];
+    if (mode === 'latest') {
+      let latest = null;
+      for (const seriesItem of series) {
+        for (const point of (seriesItem.points || [])) {
+          const value = point.value?.int64Value ?? point.value?.doubleValue;
+          if (value != null) {
+            const time = point.interval?.endTime || '';
+            if (!latest || time > latest.time) latest = { time, value: Number(value) };
+          }
+        }
+      }
+      return latest?.value || 0;
+    }
+
+    let total = 0;
+    for (const seriesItem of series) {
+      for (const point of (seriesItem.points || [])) {
+        const value = point.value?.int64Value ?? point.value?.doubleValue;
+        if (value != null) total += Number(value);
+      }
+    }
+    return total;
+  }
+
+  const [reads, writes, deletes, activeConnections, totalUsers, adminCount, pembinaCount, pengurusCount] = await Promise.all([
+    metric('document/read_ops_count'),
+    metric('document/write_ops_count'),
+    metric('document/delete_ops_count'),
+    metric('network/active_connections', 'latest'),
+    db.collection('users').count().get(),
+    db.collection('users').where('role', '==', 'admin').count().get(),
+    db.collection('users').where('role', '==', 'pembina').count().get(),
+    db.collection('users').where('role', '==', 'pengurus').count().get()
+  ]);
+
+  return json(res, 200, {
+    ok: true,
+    projectId,
+    reads,
+    writes,
+    deletes,
+    activeConnections,
+    totalUsers: Number(totalUsers.data().count || 0),
+    roleCounts: {
+      admin: Number(adminCount.data().count || 0),
+      pembina: Number(pembinaCount.data().count || 0),
+      pengurus: Number(pengurusCount.data().count || 0)
+    },
+    updatedAt: end.toISOString(),
+    window: '24h'
+  });
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Method tidak diizinkan.' });
 
@@ -131,6 +224,7 @@ module.exports = async function handler(req, res) {
 
     if (action === 'lookup') return await lookup(req, res, body);
     if (action === 'profile') return await profile(req, res, body);
+    if (action === 'admin-usage') return await adminUsage(req, res, body);
 
     return json(res, 400, { error: 'Action autentikasi tidak valid.' });
   } catch (e) {

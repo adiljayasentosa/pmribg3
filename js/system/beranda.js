@@ -287,7 +287,7 @@ function renderBerandaPengurus(el, user) {
     <div id="panel-reminder"></div>
   </div>
 
-  ${!pembinaPreview && aksi.length ? `
+  ${aksi.length ? `
   <div class="card" style="margin-bottom:24px">
     <div class="card-title">⚡ Aksi Cepat</div>
     <div class="grid grid-4" id="grid-quick-actions"></div>
@@ -309,7 +309,7 @@ function renderBerandaPengurus(el, user) {
     <div id="admin-pembina-notes-list"><div class="empty-state" style="padding:22px 10px"><p>Memuat catatan…</p></div></div>
   </div>` : ""}`;
 
-  _renderPanelReminder(reminderList, { readOnly: pembinaPreview });
+  _renderPanelReminder(reminderList, { readOnly: false });
 
   if (hasManagementAccess(user)) {
     const wrapNotes = document.getElementById("admin-pembina-notes-list");
@@ -328,7 +328,7 @@ function renderBerandaPengurus(el, user) {
   }
 
   /* Render Quick Actions (grid-4 dipakai kembali, bukan komponen baru) */
-  if (!pembinaPreview && aksi.length) {
+  if (aksi.length) {
     const gridAksi = document.getElementById("grid-quick-actions");
     gridAksi.innerHTML = aksi.map((a, i) => `
       <button class="quick-action-btn" data-idx="${i}" aria-label="${a.label}">

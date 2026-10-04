@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setReRenderHandler(() => {
         let halaman = location.hash.replace("#","") || (user.role === "pembina" ? "pembina" : "beranda");
         if (user.role === "anggota" && halaman !== "anggota") halaman = "anggota";
-        if (user.role === "pembina" && !["pembina","beranda"].includes(halaman)) halaman = "pembina";
+        
         if (PAGES[halaman]) {
           document.getElementById("content-area").innerHTML = "";
           PAGES[halaman].render(document.getElementById("content-area"), user);
@@ -396,6 +396,11 @@ async function tryLoadKtaPhoto(src){
 
 let PAGES = {};
 
+function userRoleTitlePlaceholder() {
+  const u = getCurrentUser();
+  return u?.role === "admin" ? "Dashboard Admin" : "Beranda";
+}
+
 function _initDashboard(user) {
   /* ── Info user di sidebar/topbar ── */
   const roleConf = ROLES[user.role] || { label:user.role, badge:"badge-gray" };
@@ -442,7 +447,7 @@ function _initDashboard(user) {
   const topbarTitle = document.getElementById("topbar-title");
 
   PAGES = {
-    beranda:    { title:"Beranda",      render:renderBeranda    },
+    beranda:    { title: userRoleTitlePlaceholder(), render:(el,u)=>u.role === "admin" ? renderAdminDashboard(el,u) : renderBeranda(el,u) },
     pembina:    { title:"Ringkasan Organisasi", render:renderPembina },
     anggota:    { title:"Data Anggota", render:(el,u)=>u.role === "anggota" ? renderMemberPortal(el,u) : renderAnggota(el,u) },
     "persetujuan-anggota": { title:"Persetujuan Anggota PMR", render:renderPersetujuanAnggota },
@@ -482,7 +487,7 @@ function _initDashboard(user) {
        menjadi lapisan keamanan utama untuk data. */
     if (user.role === "anggota" && pageId !== "anggota") pageId = "anggota";
     if (pageId === "pembina" && user.role !== "pembina") pageId = "beranda";
-    if (user.role === "pembina" && !["pembina","beranda"].includes(pageId)) pageId = "pembina";
+    
 
     document.body.classList.toggle("pembina-mode", user.role === "pembina");
     document.body.classList.toggle("pembina-preview-mode", user.role === "pembina" && pageId === "beranda");
@@ -513,7 +518,6 @@ function _initDashboard(user) {
 
   let initPage = location.hash.replace("#","");
   if (!initPage) initPage = user.role === "pembina" ? "pembina" : "beranda";
-  if (user.role === "pembina" && !["pembina","beranda"].includes(initPage)) initPage = "pembina";
   if (!(initPage in PAGES)) initPage = user.role === "pembina" ? "pembina" : "beranda";
   navigateTo(initPage);
 
