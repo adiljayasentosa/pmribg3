@@ -441,6 +441,9 @@ function _initDashboard(user) {
     });
   }
 
+  /* ── Shell khusus Dashboard Admin ── */
+  document.body.classList.toggle("admin-dashboard-mode", user.role === "admin" && (location.hash.replace("#", "") || "beranda") === "beranda");
+
   /* ── Navigasi SPA-lite ── */
   const contentArea = document.getElementById("content-area");
   const navLinks    = document.querySelectorAll(".sidebar-link[data-page]");
@@ -490,8 +493,8 @@ function _initDashboard(user) {
     
 
     document.body.classList.toggle("pembina-mode", user.role === "pembina");
-    document.body.classList.toggle("pembina-preview-mode", user.role === "pembina" && pageId === "beranda");
     document.body.classList.toggle("pembina-dashboard-mode", user.role === "pembina" && pageId === "pembina");
+    document.body.classList.toggle("admin-dashboard-mode", user.role === "admin" && pageId === "beranda");
 
     const page = PAGES[pageId];
     if (!page) return;

@@ -406,7 +406,6 @@
 .pembina-logout{flex-shrink:0}
 .preview-eyebrow{font-size:.68rem;font-weight:800;letter-spacing:.12em;color:var(--pmr-red);text-transform:uppercase;margin-bottom:4px}
 .pengurus-preview-head{align-items:center}
-.pembina-preview-mode .content{max-width:1180px;margin:0 auto;width:100%}
 @media (max-width:720px){.pembina-hero{align-items:flex-start;flex-direction:column}.pembina-hero-actions{width:100%;justify-content:flex-start}.pembina-hero-actions .btn{flex:1}.pengurus-preview-head{align-items:flex-start;flex-direction:column}.pengurus-preview-head .btn{width:100%}}
 .pembina-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
 .pembina-stat-card{padding:18px 18px 16px;position:relative;overflow:hidden}
