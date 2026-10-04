@@ -92,7 +92,7 @@ function renderPembina(el, user) {
           <p>Masa Bakti ${_pembinaEsc(currentPeriod)} · Ringkasan organisasi dan pengelolaan PMR WIRA UNIT SMK IBG 3</p>
         </div>
         <div class="pembina-hero-actions">
-          <button type="button" class="btn btn-primary btn-sm" id="btn-pembina-view-pengurus">Lihat Dashboard Pengurus</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-pembina-view-pengurus">Lihat Dashboard Utama</button>
           <button type="button" class="btn btn-outline btn-sm pembina-logout" id="btn-pembina-logout">Keluar</button>
         </div>
       </section>
