@@ -53,12 +53,18 @@ module.exports = async function handler(req, res) {
       if (detailId) {
         // Ambil hanya field yang dipakai pada modal detail. Jangan mengirim
         // authUid/email/username dan metadata internal yang tidak diperlukan.
-        const doc = await db.collection('pendaftaran').doc(detailId)
+        // `select()` adalah metode Query, bukan DocumentReference. Query dokumen
+        // berdasarkan ID + field mask agar hanya field detail yang dibaca/dikirim.
+        const { FieldPath } = require('firebase-admin/firestore');
+        const detailSnap = await db.collection('pendaftaran')
+          .where(FieldPath.documentId(), '==', detailId)
           .select('nama', 'nik', 'kelas', 'divisi', 'nomorInduk', 'tempatLahir', 'tanggalLahir',
             'agama', 'jenisKelamin', 'noHandphone', 'golonganDarah', 'alamat',
             'desaKelurahan', 'kecamatan', 'kabKota', 'provinsi', 'status')
+          .limit(1)
           .get();
-        if (!doc.exists) return json(res, 404, { error: 'Pendaftaran tidak ditemukan.' });
+        if (detailSnap.empty) return json(res, 404, { error: 'Pendaftaran tidak ditemukan.' });
+        const doc = detailSnap.docs[0];
         const data = doc.data() || {};
         if (String(data.status || '') !== 'pending') {
           return json(res, 409, { error: 'Pendaftaran ini sudah diproses.' });
@@ -149,8 +155,17 @@ module.exports = async function handler(req, res) {
     return json(res, 201, { ok: true, id: ref.id, status: 'pending' });
   } catch (e) {
     console.error('[api/pendaftaran]', e);
-    const message=String(e?.message||'');
-    const safeError=/RESOURCE_EXHAUSTED|Quota exceeded/i.test(message) ? 'Pendaftaran sedang mengalami gangguan sementara. Silakan coba kembali nanti.' : 'Gagal menyimpan pendaftaran.';
+    const message = String(e?.message || '');
+    if (req.method === 'GET') {
+      // Pesan GET harus menggambarkan kegagalan membaca, bukan menyimpan data.
+      const safeError = /RESOURCE_EXHAUSTED|Quota exceeded/i.test(message)
+        ? 'Data pendaftaran sedang sulit dimuat karena batas layanan sementara. Coba lagi nanti.'
+        : 'Gagal memuat data pendaftaran.';
+      return json(res, 500, { error: safeError });
+    }
+    const safeError = /RESOURCE_EXHAUSTED|Quota exceeded/i.test(message)
+      ? 'Pendaftaran sedang mengalami gangguan sementara. Silakan coba kembali nanti.'
+      : 'Gagal menyimpan pendaftaran.';
     return json(res, 500, { error: safeError });
   }
 };
