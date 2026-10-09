@@ -51,7 +51,13 @@ module.exports = async function handler(req, res) {
       // payload ringan, terutama ketika jumlah pendaftar mulai banyak.
       const detailId = String(req.query?.id || '').trim();
       if (detailId) {
-        const doc = await db.collection('pendaftaran').doc(detailId).get();
+        // Ambil hanya field yang dipakai pada modal detail. Jangan mengirim
+        // authUid/email/username dan metadata internal yang tidak diperlukan.
+        const doc = await db.collection('pendaftaran').doc(detailId)
+          .select('nama', 'nik', 'kelas', 'divisi', 'nomorInduk', 'tempatLahir', 'tanggalLahir',
+            'agama', 'jenisKelamin', 'noHandphone', 'golonganDarah', 'alamat',
+            'desaKelurahan', 'kecamatan', 'kabKota', 'provinsi', 'status')
+          .get();
         if (!doc.exists) return json(res, 404, { error: 'Pendaftaran tidak ditemukan.' });
         const data = doc.data() || {};
         if (String(data.status || '') !== 'pending') {

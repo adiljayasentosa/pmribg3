@@ -78,6 +78,9 @@ async function renderPersetujuanAnggota(el, user) {
   if (!allowed) { el.innerHTML = `<div class="empty-state"><p>Akses hanya untuk pengurus yang berwenang.</p></div>`; return; }
 
   let pending = [];
+  // Cache detail hanya selama halaman persetujuan ini aktif. Tidak mengubah
+  // Firestore dan akan hilang ketika halaman dirender ulang/navigasi.
+  const detailCache = new Map();
   if (FIREBASE_ENABLED && user.role !== "demo") {
     try {
       const current = firebase.auth().currentUser;
@@ -144,6 +147,11 @@ async function renderPersetujuanAnggota(el, user) {
     if (!FIREBASE_ENABLED || !id) return;
     Modal.buka({judul:"Detail Pendaftaran", ukuran:"modal-lg", konten:`<div style="padding:28px;text-align:center;color:var(--ink-soft)">Memuat detail pendaftaran…</div>`, aksi:[{label:"Tutup",kelas:"btn-primary",id:"reg-detail-close",onClick:()=>Modal.tutup()}]});
     try {
+      const cached = detailCache.get(id);
+      if (cached) {
+        Modal.buka({judul:"Detail Pendaftaran", ukuran:"modal-lg", konten:detailHtml(cached), aksi:[{label:"Tutup",kelas:"btn-primary",id:"reg-detail-close",onClick:()=>Modal.tutup()}]});
+        return;
+      }
       const current = firebase.auth().currentUser;
       if (!current) throw new Error("Sesi login tidak ditemukan.");
       const token = await current.getIdToken();
@@ -156,6 +164,7 @@ async function renderPersetujuanAnggota(el, user) {
       if (!resp.ok) throw new Error(data.error || `Gagal memuat detail (${resp.status}).`);
       const a = data.data;
       if (!a) throw new Error("Detail pendaftaran tidak ditemukan.");
+      detailCache.set(id, a);
       Modal.buka({judul:"Detail Pendaftaran", ukuran:"modal-lg", konten:detailHtml(a), aksi:[{label:"Tutup",kelas:"btn-primary",id:"reg-detail-close",onClick:()=>Modal.tutup()}]});
     } catch (e) {
       Modal.buka({judul:"Detail Pendaftaran", ukuran:"modal-lg", konten:`<div class="alert alert-danger" style="display:flex">Gagal memuat detail: ${escapeHtmlKta(e.message || "gagal mengambil data")}</div>`, aksi:[{label:"Tutup",kelas:"btn-primary",id:"reg-detail-close",onClick:()=>Modal.tutup()}]});
