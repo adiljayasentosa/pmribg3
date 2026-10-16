@@ -217,6 +217,11 @@ async function renderPersetujuanAnggota(el, user) {
   }));
 }
 
+// Cache KTA in-memory singkat untuk mencegah pembacaan Firestore berulang
+// saat halaman KTA dirender ulang. Cache tidak persisten dan tidak mengubah data.
+const _ktaReadCache = new Map();
+const _KTA_CACHE_TTL_MS = 30_000;
+
 async function renderKta(el, user) {
   const allowed = hasManagementAccess(user);
   if (!allowed) { el.innerHTML = `<div class="empty-state"><p>Akses hanya untuk pengurus yang berwenang.</p></div>`; return; }
@@ -224,10 +229,32 @@ async function renderKta(el, user) {
   if (FIREBASE_ENABLED && user.role !== "demo") {
     try {
       const fdb = firebase.firestore();
-      await Promise.all(AppState.anggota.map(async a => {
-        try { const snap = await fdb.collection("kta").doc(a.id).get(); if (snap.exists) Object.assign(a, snap.data()); } catch (_) {}
+      // Anggota nonaktif tidak ditampilkan pada halaman KTA, jadi tidak perlu
+      // membaca dokumen KTA mereka. Baca hanya anggota aktif dan gunakan cache TTL.
+      const activeIds = AppState.anggota
+        .filter(a => String(a.statusKeanggotaan || a.status || "Aktif").trim().toLowerCase() === "aktif")
+        .map(a => String(a.id));
+      const now = Date.now();
+      const idsToFetch = activeIds.filter(id => {
+        const cached = _ktaReadCache.get(id);
+        return !cached || (now - cached.at) >= _KTA_CACHE_TTL_MS;
+      });
+      await Promise.all(idsToFetch.map(async id => {
+        try {
+          const snap = await fdb.collection("kta").doc(id).get();
+          _ktaReadCache.set(id, { at: Date.now(), data: snap.exists ? snap.data() : null });
+        } catch (e) {
+          // Jangan cache kegagalan agar kunjungan berikutnya dapat mencoba lagi.
+          console.warn(`[PMR] Gagal memuat KTA anggota ${id}:`, e);
+        }
       }));
-    } catch (_) {}
+      AppState.anggota.forEach(a => {
+        const cached = _ktaReadCache.get(String(a.id));
+        if (cached && cached.data) Object.assign(a, cached.data);
+      });
+    } catch (e) {
+      console.warn("[PMR] Gagal memuat data KTA:", e);
+    }
   }
 
   // Status keanggotaan menentukan apakah anggota aktif.
@@ -333,7 +360,9 @@ async function kelolaAkunKta(a, adminUser) {
           const token=await current.getIdToken(true);
           const r=await fetch('/api/kta-account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:token,anggotaId:a.id,action:'activate'})});
           const data=await r.json().catch(()=>({})); if(!r.ok)throw new Error(data.error||`Gagal mengaktifkan KTA (${r.status}).`);
-          a.ktaToken=data.ktaToken; Modal.tutup(); tampilToast('Verifikasi KTA berhasil diaktifkan.','success');
+          a.ktaToken=data.ktaToken;
+          _ktaReadCache.set(String(a.id), { at: Date.now(), data: { ...(a.ktaToken ? { ktaToken: a.ktaToken } : {}), ktaToken: data.ktaToken } });
+          Modal.tutup(); tampilToast('Verifikasi KTA berhasil diaktifkan.','success');
           await renderKta(document.getElementById('content-area'),adminUser);
         }catch(err){if(btn)btn.disabled=false;tampilToast(err.message,'error');}
       }}

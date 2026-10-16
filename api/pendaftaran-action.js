@@ -42,7 +42,14 @@ module.exports = async function handler(req, res) {
     if (p.status !== 'pending') return json(res, 409, { error: 'Pendaftaran ini sudah diproses.' });
 
     if (action === 'reject') {
-      await ref.update({ status: 'rejected', diprosesOleh: decoded.uid, diprosesPada: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+      await db.runTransaction(async tx => {
+        const latest = await tx.get(ref);
+        if (!latest.exists) throw Object.assign(new Error('Pendaftaran tidak ditemukan.'), { code: 'REG_NOT_FOUND' });
+        if (String((latest.data() || {}).status || '') !== 'pending') {
+          throw Object.assign(new Error('Pendaftaran ini sudah diproses.'), { code: 'REG_ALREADY_PROCESSED' });
+        }
+        tx.update(ref, { status: 'rejected', diprosesOleh: decoded.uid, diprosesPada: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+      });
       return json(res, 200, { ok: true, status: 'rejected' });
     }
 
@@ -102,6 +109,14 @@ module.exports = async function handler(req, res) {
       createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp()
     };
     await db.runTransaction(async tx => {
+      // Pemeriksaan status dilakukan DI DALAM transaksi akhir. Jika dua pengurus
+      // menekan Setujui hampir bersamaan, transaksi kedua akan membaca status
+      // terbaru setelah retry dan berhenti sebelum membuat anggota duplikat.
+      const latest = await tx.get(ref);
+      if (!latest.exists) throw Object.assign(new Error('Pendaftaran tidak ditemukan.'), { code: 'REG_NOT_FOUND' });
+      if (String((latest.data() || {}).status || '') !== 'pending') {
+        throw Object.assign(new Error('Pendaftaran ini sudah diproses.'), { code: 'REG_ALREADY_PROCESSED' });
+      }
       tx.set(anggotaRef, anggotaData);
       tx.set(db.collection('anggota_private').doc(anggotaRef.id), anggotaPrivateData);
       tx.update(ref, { status: 'approved', anggotaId: anggotaRef.id, nomorInduk, diprosesOleh: decoded.uid, diprosesPada: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
@@ -123,6 +138,8 @@ module.exports = async function handler(req, res) {
       'auth/id-token-revoked': 'Sesi admin sudah dicabut. Silakan login ulang.',
       'auth/invalid-id-token': 'Token admin tidak valid. Silakan login ulang.'
     };
+    if (e?.code === 'REG_ALREADY_PROCESSED') return json(res, 409, { error: e.message });
+    if (e?.code === 'REG_NOT_FOUND') return json(res, 404, { error: e.message });
     return json(res, 500, { error: known[e.code] || e.message || 'Gagal memproses pendaftaran.' });
   }
 };

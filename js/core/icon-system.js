@@ -1,4 +1,4 @@
-/* PMR WIRA UNIT — UI Icon System v1.1.70
+/* PMR WIRA UNIT — UI Icon System v1.1.71
  * Mengganti emoji yang berfungsi sebagai ikon antarmuka dengan SVG outline.
  * Emoji di paragraf/konten editorial sengaja dipertahankan agar isi teks tidak berubah.
  */

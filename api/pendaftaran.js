@@ -140,19 +140,37 @@ module.exports = async function handler(req, res) {
     if (!/^https?:\/\/(?:drive\.google\.com|docs\.google\.com)\//i.test(data.fotoDrive)) return json(res, 400, { error: 'Link foto harus berasal dari Google Drive.' });
 
     const db = getFirestore();
-    if (data.nik) {
-      const existing = await db.collection('pendaftaran').where('nik', '==', data.nik).limit(5).get();
-      if (existing.docs.some(d => ['pending', 'approved'].includes(String(d.data().status || '')))) {
-        return json(res, 409, { error: 'NIK/NISN tersebut sudah memiliki pendaftaran yang sedang diproses atau sudah disetujui.' });
+    // Jalankan pemeriksaan duplikat dan pembuatan dokumen dalam satu transaksi.
+    // Ini mencegah dua request bersamaan melewati pemeriksaan lalu membuat dua
+    // pendaftaran untuk NIK/akun yang sama. Query tetap dibatasi agar tidak
+    // membaca seluruh koleksi.
+    const registrationRef = db.collection('pendaftaran').doc();
+    await db.runTransaction(async tx => {
+      const reads = [];
+      if (data.nik) {
+        reads.push(tx.get(db.collection('pendaftaran').where('nik', '==', data.nik).limit(5)));
+        reads.push(tx.get(db.collection('anggota_private').where('nik', '==', data.nik).limit(1)));
       }
-      const anggotaExisting = await db.collection('anggota_private').where('nik', '==', data.nik).limit(1).get();
-      if (!anggotaExisting.empty) return json(res, 409, { error: 'NIK/NISN tersebut sudah terdaftar sebagai anggota.' });
-    }
-    const ownRegistrations = await db.collection('pendaftaran').where('authUid', '==', uid).limit(5).get();
-    if (ownRegistrations.docs.some(d => String(d.data().status || '') === 'pending')) return json(res, 409, { error: 'Pendaftaran untuk akun ini sudah dikirim dan sedang menunggu persetujuan.' });
-
-    const ref = await db.collection('pendaftaran').add(data);
-    return json(res, 201, { ok: true, id: ref.id, status: 'pending' });
+      reads.push(tx.get(db.collection('pendaftaran').where('authUid', '==', uid).limit(5)));
+      const results = await Promise.all(reads);
+      let idx = 0;
+      if (data.nik) {
+        const existing = results[idx++];
+        const anggotaExisting = results[idx++];
+        if (existing.docs.some(d => ['pending', 'approved'].includes(String(d.data().status || '')))) {
+          throw Object.assign(new Error('NIK/NISN tersebut sudah memiliki pendaftaran yang sedang diproses atau sudah disetujui.'), { code: 'REG_DUPLICATE_NIK' });
+        }
+        if (!anggotaExisting.empty) {
+          throw Object.assign(new Error('NIK/NISN tersebut sudah terdaftar sebagai anggota.'), { code: 'REG_NIK_MEMBER_EXISTS' });
+        }
+      }
+      const ownRegistrations = results[idx];
+      if (ownRegistrations.docs.some(d => String(d.data().status || '') === 'pending')) {
+        throw Object.assign(new Error('Pendaftaran untuk akun ini sudah dikirim dan sedang menunggu persetujuan.'), { code: 'REG_DUPLICATE_UID' });
+      }
+      tx.create(registrationRef, data);
+    });
+    return json(res, 201, { ok: true, id: registrationRef.id, status: 'pending' });
   } catch (e) {
     console.error('[api/pendaftaran]', e);
     const message = String(e?.message || '');
@@ -163,6 +181,12 @@ module.exports = async function handler(req, res) {
         : 'Gagal memuat data pendaftaran.';
       return json(res, 500, { error: safeError });
     }
+    const known = {
+      REG_DUPLICATE_NIK: 'NIK/NISN tersebut sudah memiliki pendaftaran yang sedang diproses atau sudah disetujui.',
+      REG_NIK_MEMBER_EXISTS: 'NIK/NISN tersebut sudah terdaftar sebagai anggota.',
+      REG_DUPLICATE_UID: 'Pendaftaran untuk akun ini sudah dikirim dan sedang menunggu persetujuan.'
+    };
+    if (known[e?.code]) return json(res, 409, { error: known[e.code] });
     const safeError = /RESOURCE_EXHAUSTED|Quota exceeded/i.test(message)
       ? 'Pendaftaran sedang mengalami gangguan sementara. Silakan coba kembali nanti.'
       : 'Gagal menyimpan pendaftaran.';
