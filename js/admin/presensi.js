@@ -384,7 +384,7 @@ function renderTabInput() {
 
     <div class="presensi-toolbar" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
       <input id="presensi-search" type="search"
-        placeholder="🔍 Cari nama, NIN, atau kelas..."
+        placeholder="Cari nama, NIN, atau kelas..."
         autocomplete="off"
         style="width:100%;border:1px solid var(--gray-300);border-radius:10px;padding:10px 12px;font-size:0.9rem;background:var(--white,#fff)">
       <div id="presensi-filters" style="display:flex;gap:7px;flex-wrap:wrap">

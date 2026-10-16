@@ -1,0 +1,21 @@
+/* Konsistensi ikon UI PMR WIRA UNIT */
+.ui-icon-svg {
+  display: inline-block;
+  flex: 0 0 auto;
+  vertical-align: -0.16em;
+  width: 1em;
+  height: 1em;
+  stroke: currentColor;
+  overflow: visible;
+}
+button .ui-icon-svg, a .ui-icon-svg, [role="button"] .ui-icon-svg,
+.btn .ui-icon-svg, .sidebar-item .ui-icon-svg, .nav-item .ui-icon-svg {
+  margin-inline-end: .32em;
+}
+.icon .ui-icon-svg, .stat-icon .ui-icon-svg, .menu-icon .ui-icon-svg,
+.nav-icon .ui-icon-svg, .action-icon .ui-icon-svg, .card-icon .ui-icon-svg,
+.feature-icon .ui-icon-svg {
+  margin-inline-end: 0;
+  width: 1.15em;
+  height: 1.15em;
+}

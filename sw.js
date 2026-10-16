@@ -25,7 +25,7 @@
    deploy yang mengubah isi file apa pun, karena inilah yang membuat
    browser mendeteksi ada versi sw.js baru (lihat penjelasan mekanisme
    update di README-PWA.md). */
-const APP_VERSION = "1.1.69";
+const APP_VERSION = "1.1.70";
 
 const CACHE_STATIC  = `pmr-static-${APP_VERSION}`;   // app shell: html/css/js/icon/logo
 const CACHE_RUNTIME = `pmr-runtime-${APP_VERSION}`;  // font & aset eksternal lain
@@ -80,6 +80,7 @@ const PRECACHE_URLS = [
   "/css/landing.css",
   "/css/content.css",
   "/css/modal.css",
+  "/css/icon-system.css",
 
   // JS yang dipakai halaman publik
   "/js/firebase-config.js",
@@ -90,6 +91,7 @@ const PRECACHE_URLS = [
   "/js/public/content-public.js",
   "/js/public/landing.js",
   "/js/core/modal.js",
+  "/js/core/icon-system.js",
   "/js/public/app-download.js",
   "/js/system/pwa-register.js",
 
