@@ -14,6 +14,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const errMsg = document.getElementById("login-error-msg");
   const btnSubmit = document.getElementById("btn-login");
   const password = document.getElementById("input-password");
+  const authContainer = document.querySelector(".auth-form-container");
+  document.getElementById("btn-choice-login")?.addEventListener("click", () => {
+    authContainer?.classList.add("auth-login-detail");
+    document.getElementById("input-username")?.focus();
+  });
 
   document.getElementById("btn-toggle-password")?.addEventListener("click", (e) => {
     const btn = e.currentTarget;

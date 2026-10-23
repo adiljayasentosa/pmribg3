@@ -132,12 +132,12 @@ module.exports = async function handler(req, res) {
     const required = [
       ['nama', 'Nama lengkap'], ['tempatLahir', 'Tempat lahir'], ['tanggalLahir', 'Tanggal lahir'],
       ['agama', 'Agama'], ['jenisKelamin', 'Jenis kelamin'], ['noHandphone', 'Nomor handphone'],
-      ['golonganDarah', 'Golongan darah'], ['alamat', 'Alamat'], ['kelas', 'Kelas'], ['jurusan', 'Jurusan'], ['divisi', 'Divisi PMR'], ['fotoDrive', 'Foto KTA dari Google Drive']
+      ['golonganDarah', 'Golongan darah'], ['alamat', 'Alamat'], ['kelas', 'Kelas'], ['jurusan', 'Jurusan'], ['divisi', 'Divisi PMR']
     ];
     const missing = required.find(([key]) => !data[key]);
     if (missing) return json(res, 400, { error: `${missing[1]} wajib diisi.` });
     if (data.nik && !/^\d{5,20}$/.test(data.nik)) return json(res, 400, { error: 'NIK/NISN harus berupa 5–20 digit angka.' });
-    if (!/^https?:\/\/(?:drive\.google\.com|docs\.google\.com)\//i.test(data.fotoDrive)) return json(res, 400, { error: 'Link foto harus berasal dari Google Drive.' });
+    if (data.fotoDrive && !/^https?:\/\/(?:drive\.google\.com|docs\.google\.com)\//i.test(data.fotoDrive)) return json(res, 400, { error: 'Link foto harus berasal dari Google Drive.' });
 
     const db = getFirestore();
     // Jalankan pemeriksaan duplikat dan pembuatan dokumen dalam satu transaksi.

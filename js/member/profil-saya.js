@@ -125,6 +125,19 @@ function _renderTampilanProfil(el, profil) {
       </div>
     </div>
 
+    ${(() => {
+      const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+      return user?.role === "anggota" && String(user.anggotaId || "") === String(profil.id)
+        ? `<form id="form-foto-kta-profil" style="margin-top:18px;padding:16px;border:1px solid var(--border,#e5e7eb);border-radius:var(--radius-md)">
+            <label for="profil-link-foto" style="display:block;font-size:.85rem;font-weight:700;margin-bottom:8px">Link Foto KTA (opsional)</label>
+            <input id="profil-link-foto" type="url" value="${String(profil.foto || "").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;")}" placeholder="Tempel link Google Drive" style="width:100%;box-sizing:border-box;padding:11px;border:1px solid var(--border,#d1d5db);border-radius:10px">
+            <p style="font-size:.78rem;color:var(--ink-soft);margin:8px 0 12px">Foto dapat ditambahkan setelah berfoto dengan syal PMR. Link lama akan dipertahankan sampai kamu menyimpan perubahan.</p>
+            <div id="profil-foto-error" role="status" style="display:none;font-size:.8rem;margin-bottom:10px"></div>
+            <button type="submit" class="btn btn-primary btn-sm">Simpan Link Foto</button>
+          </form>`
+        : "";
+    })()}
+
     <div style="margin-top:18px;padding:16px;background:var(--gray-100);border-radius:var(--radius-md)">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
         <span style="font-size:1.1rem">📊</span>
@@ -136,6 +149,36 @@ function _renderTampilanProfil(el, profil) {
       </p>
     </div>
   </div>`;
+
+  document.getElementById("form-foto-kta-profil")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const input = document.getElementById("profil-link-foto");
+    const status = document.getElementById("profil-foto-error");
+    const submit = e.currentTarget.querySelector('button[type="submit"]');
+    const foto = String(input?.value || "").trim();
+    if (foto && !/^https:\/\/(drive\.google\.com|docs\.google\.com)\//i.test(foto)) {
+      status.textContent = "Gunakan link Google Drive yang valid, atau kosongkan untuk menghapus link.";
+      status.style.display = "block";
+      return;
+    }
+    const authUser = typeof firebase !== "undefined" ? firebase.auth()?.currentUser : null;
+    if (!authUser) { status.textContent = "Sesi login tidak ditemukan. Silakan login ulang."; status.style.display = "block"; return; }
+    submit.disabled = true; submit.textContent = "Menyimpan…"; status.style.display = "none";
+    try {
+      const idToken = await authUser.getIdToken();
+      const resp = await fetch("/api/member-photo", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({idToken, foto}) });
+      const result = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(result.error || "Gagal menyimpan link foto.");
+      profil.foto = foto;
+      status.textContent = "Link foto berhasil diperbarui.";
+      status.style.color = "var(--success,#16803c)";
+      status.style.display = "block";
+    } catch (err) {
+      status.textContent = err.message || "Gagal menyimpan link foto.";
+      status.style.color = "var(--danger,#b91c1c)";
+      status.style.display = "block";
+    } finally { submit.disabled = false; submit.textContent = "Simpan Link Foto"; }
+  });
 
   document.getElementById("btn-ganti-profil").addEventListener("click", () => {
     Modal.konfirmasi("Ganti ke profil lain? Kamu perlu memilih nama lagi.", () => {

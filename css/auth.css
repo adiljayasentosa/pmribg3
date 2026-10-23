@@ -61,3 +61,20 @@
 .auth-input-wrap input{padding-left:46px!important}
 .password-toggle{display:grid;place-items:center}
 .auth-home-link{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+
+/* v1.1.72: entry choice screen (Login / Daftar) */
+.auth-choice{width:100%;text-align:center;padding:8px 0 4px}
+.auth-choice-kicker{display:inline-block;margin:0 0 14px;padding:7px 11px;border-radius:999px;background:#fff0f2;color:#b30d2b;font-size:.62rem;font-weight:800;letter-spacing:.12em}
+.auth-choice h1{margin:0 0 10px;color:#172338;font-family:var(--font-display);font-size:clamp(1.8rem,6vw,2.25rem);line-height:1.12;letter-spacing:-.045em}
+.auth-choice p{max-width:290px;margin:0 auto 28px;color:#858992;font-size:.78rem;line-height:1.65}
+.auth-choice-btn{display:flex;align-items:center;justify-content:space-between;gap:18px;width:100%;min-height:54px;box-sizing:border-box;margin-top:12px;padding:0 18px;border-radius:14px;text-decoration:none;font:700 .82rem var(--font-body);transition:transform .18s,box-shadow .18s,border-color .18s}
+.auth-choice-btn:hover{transform:translateY(-1px)}
+.auth-choice-primary{border:1px solid #c8102e;background:linear-gradient(135deg,#c8102e,#e52b4b);color:#fff;box-shadow:0 10px 24px rgba(200,16,46,.18);cursor:pointer}
+.auth-choice-secondary{border:1px solid #e7e7eb;background:#fff;color:#252b38}
+.auth-choice-btn span{font-size:1.15rem}
+.auth-form-container.auth-login-detail .auth-choice{display:none}
+.auth-form-container:not(.auth-login-detail) .auth-heading,.auth-form-container:not(.auth-login-detail) #login-error,.auth-form-container:not(.auth-login-detail) #login-form,.auth-form-container:not(.auth-login-detail) .auth-home-link{display:none!important}
+.auth-form-container.auth-login-detail .auth-heading,.auth-form-container.auth-login-detail #login-form{display:block}
+.auth-form-container.auth-login-detail #login-error{display:flex}
+.auth-form-container.auth-login-detail #login-error[style*="display: none"]{display:none!important}
+@media(max-width:699px){.auth-choice{padding:12px 0 8px}.auth-choice p{margin-bottom:24px}}
