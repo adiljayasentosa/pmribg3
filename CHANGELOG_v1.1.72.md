@@ -4,7 +4,7 @@
 - Kolom link foto Google Drive pada pendaftaran anggota baru menjadi opsional.
 - Backend pendaftaran menerima `fotoDrive` kosong, tetapi tetap memvalidasi host jika link diisi.
 - Halaman Profil Saya menyediakan pembaruan link foto hanya untuk akun anggota yang terhubung dengan UID anggota secara valid.
-- Endpoint baru `/api/member-photo` memverifikasi ID token dan hubungan akun-anggota di server sebelum memperbarui foto.
+- Pembaruan link foto KTA memakai endpoint yang sudah ada (`/api/kta-member-session`) agar jumlah API Vercel tidak bertambah.
 - Panel admin/pengurus tetap dapat mengelola link foto melalui formulir Edit Anggota yang sudah tersedia.
 - Data dan akun lama tidak dihapus atau dimigrasikan.
 

@@ -166,7 +166,7 @@ function _renderTampilanProfil(el, profil) {
     submit.disabled = true; submit.textContent = "Menyimpan…"; status.style.display = "none";
     try {
       const idToken = await authUser.getIdToken();
-      const resp = await fetch("/api/member-photo", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({idToken, foto}) });
+      const resp = await fetch("/api/kta-member-session", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({idToken, foto, action:"update-photo"}) });
       const result = await resp.json().catch(() => ({}));
       if (!resp.ok) throw new Error(result.error || "Gagal menyimpan link foto.");
       profil.foto = foto;

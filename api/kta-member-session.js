@@ -27,6 +27,7 @@ module.exports = async function handler(req, res) {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     const idToken = String(body.idToken || '').trim();
     const targetToken = String(body.targetToken || '').trim();
+    const action = String(body.action || 'session').trim();
     if (!idToken) return json(res, 400, { error: 'Token login wajib diisi.' });
 
     const auth = getAuth();
@@ -67,6 +68,17 @@ module.exports = async function handler(req, res) {
       return json(res, 403, { error: 'Akun belum terhubung ke data anggota yang valid. Hubungi pengurus.' });
     }
     if (a.statusKeanggotaan === 'Tidak Aktif') return json(res, 403, { error: 'KTA ini tidak aktif.' });
+
+    // Reuse this existing endpoint for member photo updates to stay within Vercel's function limit.
+    if (action === 'update-photo') {
+      const foto = String(body.foto || '').trim();
+      if (foto && (foto.length > 1000 || !/^https:\/\/(?:drive\.google\.com|docs\.google\.com)\//i.test(foto))) {
+        return json(res, 400, { error: 'Masukkan link Google Drive yang valid atau kosongkan kolom.' });
+      }
+      await db.collection('anggota').doc(anggotaId).update({ foto, updatedAt: FieldValue.serverTimestamp() });
+      return json(res, 200, { ok: true, foto });
+    }
+    if (action !== 'session') return json(res, 400, { error: 'Aksi tidak dikenali.' });
 
     const ktaRef = db.collection('kta').doc(anggotaId);
     let ktaSnap = await ktaRef.get();
