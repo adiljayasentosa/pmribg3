@@ -10,7 +10,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const progress=[...document.querySelectorAll('[data-progress]')];
   const prev=document.getElementById('reg-prev'), next=document.getElementById('reg-next'), submit=document.getElementById('reg-submit');
   const errorEl=document.getElementById('registration-error');
-  let step=1, accountCreated=false, accountUid=null;
+  let step=1, accountCreated=false, accountUid=null, recoveryRunning=false, accountRequestInFlight=false;
+  const DRAFT_KEY='pmr_registration_account_draft_v1';
+  const draftFields=['reg-nama','reg-username','reg-email'];
+  function saveDraft(){
+    try{localStorage.setItem(DRAFT_KEY,JSON.stringify(Object.fromEntries(draftFields.map(id=>[id,document.getElementById(id)?.value||'']))));}catch{}
+  }
+  function readDraft(){
+    try{const d=JSON.parse(localStorage.getItem(DRAFT_KEY)||sessionStorage.getItem(DRAFT_KEY)||'{}');for(const id of draftFields){const el=document.getElementById(id);if(el && !el.value && typeof d[id]==='string')el.value=d[id];}return d;}catch{return {};}
+  }
+  function clearDraft(){try{localStorage.removeItem(DRAFT_KEY);sessionStorage.removeItem(DRAFT_KEY);}catch{}}
 
   const value=id=>document.getElementById(id)?.value?.trim()||'';
   function showError(msg){errorEl.textContent=msg;errorEl.style.display='flex';errorEl.scrollIntoView({behavior:'smooth',block:'nearest'});}
@@ -22,8 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const panel=currentPanel();
     if(step===2 && !accountCreated){showError('Akun belum dibuat. Kembali ke tahap pertama dan simpan akun terlebih dahulu.');return false;}
     const fields=[...panel.querySelectorAll('input,select,textarea')];
+    const signedInUser=FIREBASE_ENABLED&&firebase?.auth?firebase.auth().currentUser:null;
+    const canResume=signedInUser && String(signedInUser.email||'').toLowerCase()===value('reg-email').toLowerCase();
     for(const f of fields){
       if(f.type==='radio') continue;
+      // A resumed Firebase account already has a password; do not require re-entry after reload.
+      if(f.id==='reg-password' && canResume) continue;
       if(!f.checkValidity()){f.reportValidity();return false;}
     }
     if(step===2 && !document.querySelector('input[name="jenisKelamin"]:checked')){showError('Pilih jenis kelamin terlebih dahulu.');return false;}
@@ -62,14 +75,15 @@ document.addEventListener('DOMContentLoaded', () => {
   next.addEventListener('click',async()=>{
     if(!validateStep())return;
     if(!FIREBASE_ENABLED){showError('Pendaftaran akun memerlukan koneksi Firebase.');return;}
-    next.disabled=true;next.textContent='Menyimpan…';
+    next.disabled=true;next.textContent='Menyimpan…'; accountRequestInFlight=true;
     try{
       const email=value('reg-email').toLowerCase(), username=value('reg-username').toLowerCase(), password=value('reg-password');
+      saveDraft();
       const current=firebase.auth().currentUser;
 
-      // If Auth was already created but the previous API request timed out/failed,
-      // retry the profile operation instead of creating another Auth account.
-      if(current && accountUid===current.uid){
+      // Resume an existing signed-in account even after a page reload reset in-memory accountUid.
+      if(current && String(current.email||'').toLowerCase()===email){
+        accountUid=current.uid;
         await registerAccountProfile(email,username,value('reg-nama'));
       }else{
         const cred=await firebase.auth().createUserWithEmailAndPassword(email,password);
@@ -78,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       accountCreated=true;
+      accountUid=firebase.auth().currentUser?.uid||accountUid;
       step=2;updateUI();
     }catch(err){
       // Do not delete Auth after an uncertain backend/network failure. The next click
@@ -87,12 +102,37 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       accountCreated=false;
       let msg=err?.code==='auth/email-already-in-use'
-        ? 'Email tersebut sudah terdaftar. Gunakan email lain.'
+        ? 'Email ini sudah memiliki akun. Jika pendaftaran tadi terputus, muat ulang halaman dengan sesi akun yang sama untuk melanjutkan; jangan membuat akun baru.'
         : (err.message||'Gagal membuat akun.');
       if(/RESOURCE_EXHAUSTED|quota exceeded/i.test(msg)) msg='Pendaftaran sedang mengalami gangguan sementara. Silakan coba kembali nanti.';
       showError(msg);
-    }finally{next.disabled=false;next.textContent='Simpan Akun';}
+    }finally{accountRequestInFlight=false;next.disabled=false;next.textContent='Simpan Akun';}
   });
+
+  // Recover an interrupted registration after a reload. Firebase Auth keeps the
+  // signed-in user; localStorage keeps only non-secret form fields (never password).
+  if(FIREBASE_ENABLED && firebase?.auth){
+    firebase.auth().onAuthStateChanged(async user=>{
+      if(!user || recoveryRunning || accountRequestInFlight || step!==1) return;
+      const draft=readDraft();
+      const email=String(draft['reg-email']||'').trim().toLowerCase();
+      const username=String(draft['reg-username']||'').trim().toLowerCase();
+      const nama=String(draft['reg-nama']||'').trim();
+      if(!email || !username || !nama || String(user.email||'').toLowerCase()!==email) return;
+      recoveryRunning=true;
+      accountUid=user.uid;
+      next.disabled=true; next.textContent='Memulihkan…'; clearError();
+      try{
+        await registerAccountProfile(email,username,nama);
+        accountCreated=true; step=2; updateUI();
+      }catch(err){
+        accountCreated=false;
+        showError((err?.message||'Pendaftaran belum dapat dipulihkan.')+' Data akun tetap disimpan. Tekan “Simpan Akun” untuk mencoba lagi.');
+      }finally{
+        recoveryRunning=false; next.disabled=false; next.textContent='Simpan Akun';
+      }
+    });
+  }
 
   prev.addEventListener('click',()=>{clearError();step=1;updateUI();});
 
@@ -112,6 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data=await resp.json().catch(()=>({}));
       if(!resp.ok)throw new Error(data.error||`Pendaftaran gagal (${resp.status}).`);
       localStorage.setItem('pmr_last_registration',data.id||'');
+      clearDraft();
       await firebase.auth().signOut();
       window.location.href='pendaftaran-selesai.html';
     }catch(err){showError(err.message||'Pendaftaran gagal.');submit.disabled=false;submit.textContent='Kirim Pendaftaran';}
