@@ -1,18 +1,18 @@
-# Audit performa Firestore — v1.1.70 (tanpa perubahan versi)
+# Audit performa Firestore — v1.1.73
 
-## Perubahan yang diterapkan
-- Halaman KTA hanya membaca dokumen `kta/{anggotaId}` untuk anggota berstatus aktif yang ditampilkan.
-- Cache KTA di memori selama 30 detik menghindari pembacaan ulang ketika halaman KTA dirender ulang dalam waktu singkat.
-- Kegagalan baca tidak disimpan dalam cache, sehingga percobaan berikutnya tetap bisa mencoba lagi.
-- Cache diinvalidasi secara efektif untuk anggota yang KTA-nya baru diaktifkan dengan menyimpan token terbaru.
-- Tidak ada dokumen Firestore yang dihapus/ditulis ulang dan tidak ada perubahan rules, role, API, atau skema data.
+## Perubahan
+- Untuk role non-anggota, koleksi operasional yang dipantau realtime tidak lagi diambil lewat `.get()` sebelum `onSnapshot()` dipasang. Snapshot pertama menjadi sumber data awal.
+- Bootstrap menunggu snapshot pertama listener yang relevan sebelum menutup loading.
+- Snapshot pertama tidak memicu render berulang per koleksi; render realtime tetap terjadi pada perubahan sesudah snapshot awal.
+- Dokumen `pengurus/struktur` tetap diambil terpisah karena tidak memiliki listener di bootstrap ini.
+- Jalur portal anggota dipertahankan untuk menghindari perubahan pada pencocokan akun dan query data personal.
 
-## Temuan untuk tahap berikutnya
-1. `js/core/firebase-db.js`: `DB.init()` membaca beberapa koleksi penuh lalu `DB.initListeners()` memasang listener pada koleksi yang sama. Listener realtime melakukan initial snapshot yang juga dapat menimbulkan pembacaan. Menghapus fetch awal perlu refaktor bootstrap agar UI menunggu snapshot pertama secara aman; tidak dilakukan otomatis untuk menghindari regresi.
-2. Koleksi `presensi`, `iuran`, `keuangan`, `piket`, dan `upacara` punya beberapa query tanpa batas. Pagination/limit harus diterapkan per halaman dan laporan, bukan secara global, agar rekap historis tidak terpotong.
-3. Listener koleksi penuh untuk data operasional bisa mahal ketika histori tumbuh. Solusi aman adalah memisahkan query per halaman dan menerapkan pagination; untuk dashboard, gunakan agregasi/ringkasan yang konsisten bila memang dibutuhkan.
-4. `js/firebase-db.js` lama juga berisi pembacaan/listener koleksi penuh. Periksa apakah file ini masih dipakai sebelum menghapus atau memodifikasinya.
+## Pekerjaan lanjutan
+1. Audit jalur portal anggota karena masih melakukan fetch awal lalu memasang listener untuk sebagian koleksi yang sama.
+2. Evaluasi pagination per halaman untuk koleksi histori (`presensi`, `iuran`, `keuangan`, `piket`, `upacara`) tanpa memotong kebutuhan laporan.
+3. Ukur Firestore reads dan lakukan uji browser dengan role admin, bendahara, sekretaris, PJ, pembina, serta anggota.
+4. Pastikan rules aktif di Firebase Console sesuai file rules di repositori.
 
 ## Batas verifikasi
-- `node --check js/system/dashboard.js` berhasil.
-- Ini audit statis; belum ada pengujian browser end-to-end atau pengukuran metrik Firestore produksi.
+- Pemeriksaan sintaks statis lulus.
+- Belum dilakukan uji end-to-end browser atau pengukuran metrik Firebase produksi.

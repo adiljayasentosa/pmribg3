@@ -157,7 +157,10 @@ function _simulasiProgress(onProgress, dibatalkanFn) {
  * performa, dan ini justru satu-satunya cara yang sesuai spesifikasi
  * resmi ImageKit. */
 async function _ambilAuthImageKit() {
-  const resp = await fetch("/api/imagekit");
+  const currentUser = (typeof firebase !== "undefined" && firebase.auth) ? firebase.auth().currentUser : null;
+  if (!currentUser) throw new Error("Silakan login dengan akun pengurus sebelum mengunggah media.");
+  const idToken = await currentUser.getIdToken();
+  const resp = await fetch("/api/imagekit", { headers: { Authorization: `Bearer ${idToken}` } });
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
     throw new Error(err.error || `Gagal mengambil otentikasi ImageKit (status ${resp.status}).`);
@@ -287,9 +290,15 @@ async function deleteImage(pathAtauUrl) {
     return;
   }
   try {
+    const currentUser = (typeof firebase !== "undefined" && firebase.auth) ? firebase.auth().currentUser : null;
+    if (!currentUser) {
+      console.warn("[StorageHelper] Penghapusan media dilewati karena sesi login tidak tersedia.");
+      return;
+    }
+    const idToken = await currentUser.getIdToken();
     const resp = await fetch("/api/imagekit", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
       body: JSON.stringify({ fileId: pathAtauUrl })
     });
     if (!resp.ok) {

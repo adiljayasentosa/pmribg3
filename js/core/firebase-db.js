@@ -236,80 +236,34 @@ const DB = {
       return;
     }
 
-    /* Group 1: anggota, kegiatan, pengurus, inventaris, piket, upacara —
-       boleh dibaca SEMUA role yang sudah login. Upacara (F4.4) masuk
-       grup ini dengan alasan sama seperti Piket (transparansi jadwal). */
-    /* Pembina hanya membutuhkan data overview yang memang diizinkan Rules.
-       Piket dan Upacara tidak termasuk kewenangan baca Pembina, sehingga
-       jangan pernah di-fetch di sini. Promise.all() sebelumnya membuat
-       permission-denied dari salah satu collection menggagalkan seluruh
-       DB.init() dan dashboard berhenti di skeleton loading. */
-    const [snapAnggota, snapKegiatan, snapPengurus, snapInventaris, snapPiket, snapUpacara] = await Promise.all([
-      fdb.collection("anggota").orderBy("nama").get(),
-      fdb.collection("kegiatan").orderBy("tanggal", "desc").get(),
-      fdb.collection("pengurus").doc("struktur").get(),
-      fdb.collection("inventaris").orderBy("nama").get(),
-      fdb.collection("piket").orderBy("tanggal", "desc").get(),
-      fdb.collection("upacara").orderBy("tanggal", "desc").get()
-    ]);
-
-    AppState.anggota    = snapAnggota.docs.map(d => _normalisasiAnggota({ id: d.id, ...d.data() })).sort(compareAnggotaKelasNama);
-    AppState.kegiatan   = snapKegiatan.docs.map(d => ({ id: d.id, ...d.data() }));
-    AppState.inventaris = snapInventaris.docs.map(d => ({ id: d.id, ...d.data() }));
-    AppState.piket      = snapPiket.docs.map(d => ({ id: d.id, ...d.data() }));
-    AppState.upacara    = snapUpacara.docs.map(d => ({ id: d.id, ...d.data() }));
-
+    /* Struktur pengurus tidak memiliki listener realtime khusus di bootstrap
+       ini, jadi ambil satu dokumen saja. Data operasional lainnya akan diisi
+       oleh snapshot pertama pada initListeners() agar tidak di-fetch dua kali. */
+    const snapPengurus = await fdb.collection("pengurus").doc("struktur").get();
     if (snapPengurus.exists) {
       const data = snapPengurus.data();
-      /* Normalisasi ID ke string agar konsisten dengan DOM dataset.id */
       AppState.strukturPengurus = (data.jabatan || []).map(jabatan => ({
         ...jabatan,
-        /* Semua PJ divisi menyediakan sampai 3 slot.
-           Normalisasi ini juga menaikkan struktur lama yang masih menyimpan maks: 2,
-           sehingga admin tidak perlu mengedit data Firestore secara manual. */
         maks: String(jabatan.role_id || "").startsWith("pj_") ? 3 : (jabatan.maks || 1),
         anggota: (jabatan.anggota || []).map(a => ({ ...a, id: String(a.id) }))
       }));
       AppState.periode = data.periode || "2025/2026";
-      /* Guru disimpan di dokumen pengurus/struktur agar bisa dikelola
-         tanpa deploy ulang. Kosong jika belum diisi admin. */
       AppState.guru = (data.guru || []).map(g => ({ ...g, id: String(g.id) }));
     }
 
-    /* Group 2: keuangan, iuran — HANYA di-fetch jika role diizinkan Rules.
-       "iuran" (F4.4) sengaja disatukan tier-nya dengan "keuangan" karena
-       ini data finansial per-anggota, bukan data umum seperti presensi.
-
-       [F4.4 / audit Rules] Dokumen "_pengaturan" di dalam collection
-       "iuran" menyimpan nominalIuranStandar — SENGAJA di collection ini
-       (bukan pengurus/struktur seperti percobaan awal) karena Rules
-       pengurus/struktur hanya izinkan admin+ketua menulis, sedangkan
-       nominal iuran harus bisa diubah bendahara juga. Menaruhnya di
-       collection "iuran" membuat RBAC-nya otomatis ikut tier iuran
-       (admin+bendahara) tanpa melonggarkan Rules pengurus. Dokumen ini
-       DIFILTER dari AppState.iuran (bukan data pembayaran sungguhan). */
-    const [keuanganData, iuranSnapData] = await Promise.all([
-      ROLE_AKSES_KEUANGAN.includes(role)
-        ? _fetchAman(() => fdb.collection("keuangan").orderBy("tanggal", "desc").get(), "keuangan")
-        : [],
-      ROLE_AKSES_IURAN.includes(role)
-        ? _fetchAman(() => fdb.collection("iuran").get(), "iuran")
-        : []
-    ]);
-    AppState.keuangan = keuanganData;
-    const pengaturanIuran = iuranSnapData.find(d => d.id === "_pengaturan");
-    AppState.nominalIuranStandar = pengaturanIuran?.nominalStandar || 5000;
-    AppState.iuran = iuranSnapData.filter(d => d.id !== "_pengaturan");
-
-    /* Group 3: presensi — sama, hanya di-fetch untuk role yang diizinkan. */
-    AppState.presensiHistory = ROLE_AKSES_PRESENSI.includes(role)
-      ? await _fetchAman(
-          () => fdb.collection("presensi").get(),
-          "presensi"
-        )
-      : [];
-
+    /* Nilai awal untuk role/collection yang tidak memiliki izin listener.
+       Collection yang diizinkan akan diisi oleh snapshot pertama. */
+    AppState.anggota = [];
+    AppState.kegiatan = [];
+    AppState.inventaris = [];
+    AppState.piket = [];
+    AppState.upacara = [];
+    AppState.keuangan = [];
+    AppState.iuran = [];
+    AppState.presensiHistory = [];
+    AppState.nominalIuranStandar = 5000;
     _hitungRingkasan();
+
   },
 
   /* ── Real-time listeners (role-aware) ── */
@@ -340,79 +294,82 @@ const DB = {
       return;
     }
 
-    /* anggota, kegiatan, inventaris — boleh di-listen SEMUA role yang login */
-    this._listeners.push(
-      fdb.collection("anggota").orderBy("nama").onSnapshot(snap => {
-        _laporkanStatusCache(snap);
-        AppState.anggota = snap.docs.map(d => _normalisasiAnggota({ id: d.id, ...d.data() }));
-        _hitungRingkasan(); _reRenderPage();
-      }),
-      fdb.collection("kegiatan").orderBy("tanggal", "desc").onSnapshot(snap => {
-        _laporkanStatusCache(snap);
-        AppState.kegiatan = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        _hitungRingkasan(); _reRenderPage();
-      }),
-      fdb.collection("inventaris").orderBy("nama").onSnapshot(snap => {
-        _laporkanStatusCache(snap);
-        AppState.inventaris = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        _reRenderPage();
-      })
+    /* Snapshot pertama sekaligus menjadi data awal; hindari .get() lalu
+       onSnapshot() untuk koleksi yang sama. Promise resolve setelah snapshot
+       pertama tiap query, supaya bootstrap tidak menampilkan dashboard kosong. */
+    const firstSnapshots = [];
+    const listenOnceReady = (query, apply, label) => {
+      let settled = false;
+      const ready = new Promise(resolve => {
+        const unsub = query.onSnapshot(snap => {
+          _laporkanStatusCache(snap);
+          const isInitialSnapshot = !settled;
+          apply(snap, isInitialSnapshot);
+          if (!settled) { settled = true; resolve(); }
+        }, err => {
+          console.error(`[PMR] Listener '${label}' gagal:`, err);
+          if (!settled) { settled = true; resolve(); }
+        });
+        this._listeners.push(unsub);
+      });
+      firstSnapshots.push(ready);
+    };
+
+    listenOnceReady(
+      fdb.collection("anggota").orderBy("nama"),
+      (snap, initial) => { AppState.anggota = snap.docs.map(d => _normalisasiAnggota({ id: d.id, ...d.data() })).sort(compareAnggotaKelasNama); _hitungRingkasan(); if (!initial) _reRenderPage(); },
+      "anggota"
+    );
+    listenOnceReady(
+      fdb.collection("kegiatan").orderBy("tanggal", "desc"),
+      (snap, initial) => { AppState.kegiatan = snap.docs.map(d => ({ id: d.id, ...d.data() })); _hitungRingkasan(); if (!initial) _reRenderPage(); },
+      "kegiatan"
+    );
+    listenOnceReady(
+      fdb.collection("inventaris").orderBy("nama"),
+      (snap, initial) => { AppState.inventaris = snap.docs.map(d => ({ id: d.id, ...d.data() })); if (!initial) _reRenderPage(); },
+      "inventaris"
     );
 
-    /* Piket dan Upacara tidak boleh dipasang listener untuk Pembina karena
-       Rules saat ini memang tidak memberi akses baca pada role tersebut. */
     if (role !== 'pembina') {
-      this._listeners.push(
-        fdb.collection("piket").orderBy("tanggal", "desc").onSnapshot(snap => {
-          _laporkanStatusCache(snap);
-          AppState.piket = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          _reRenderPage();
-        }),
-        fdb.collection("upacara").orderBy("tanggal", "desc").onSnapshot(snap => {
-          _laporkanStatusCache(snap);
-          AppState.upacara = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          _reRenderPage();
-        })
+      listenOnceReady(
+        fdb.collection("piket").orderBy("tanggal", "desc"),
+        (snap, initial) => { AppState.piket = snap.docs.map(d => ({ id: d.id, ...d.data() })); if (!initial) _reRenderPage(); },
+        "piket"
+      );
+      listenOnceReady(
+        fdb.collection("upacara").orderBy("tanggal", "desc"),
+        (snap, initial) => { AppState.upacara = snap.docs.map(d => ({ id: d.id, ...d.data() })); if (!initial) _reRenderPage(); },
+        "upacara"
       );
     }
 
-    /* keuangan, iuran — listener HANYA dipasang jika role diizinkan Rules.
-       Tidak memasang listener yang akan ditolak lebih baik daripada
-       memasang lalu menangkap errornya — onSnapshot yang gagal
-       permission akan terus retry di background jika tetap dipasang. */
     if (ROLE_AKSES_KEUANGAN.includes(role)) {
-      this._listeners.push(
-        fdb.collection("keuangan").orderBy("tanggal", "desc").onSnapshot(snap => {
-          _laporkanStatusCache(snap);
-          AppState.keuangan = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          _hitungRingkasan(); _reRenderPage();
-        })
+      listenOnceReady(
+        fdb.collection("keuangan").orderBy("tanggal", "desc"),
+        (snap, initial) => { AppState.keuangan = snap.docs.map(d => ({ id: d.id, ...d.data() })); _hitungRingkasan(); if (!initial) _reRenderPage(); },
+        "keuangan"
       );
     }
-
     if (ROLE_AKSES_IURAN.includes(role)) {
-      this._listeners.push(
-        fdb.collection("iuran").onSnapshot(snap => {
-          _laporkanStatusCache(snap);
-          const semua = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          const pengaturan = semua.find(d => d.id === "_pengaturan");
-          AppState.nominalIuranStandar = pengaturan?.nominalStandar || 5000;
-          AppState.iuran = semua.filter(d => d.id !== "_pengaturan");
-          _reRenderPage();
-        })
+      listenOnceReady(fdb.collection("iuran"), (snap, initial) => {
+        const semua = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const pengaturan = semua.find(d => d.id === "_pengaturan");
+        AppState.nominalIuranStandar = pengaturan?.nominalStandar || 5000;
+        AppState.iuran = semua.filter(d => d.id !== "_pengaturan");
+        if (!initial) _reRenderPage();
+      }, "iuran");
+    }
+    if (ROLE_AKSES_PRESENSI.includes(role)) {
+      listenOnceReady(
+        fdb.collection("presensi"),
+        (snap, initial) => { AppState.presensiHistory = snap.docs.map(d => ({ id: d.id, ...d.data() })); _hitungRingkasan(); if (!initial) _reRenderPage(); },
+        "presensi"
       );
     }
 
-    /* presensi — sama, hanya untuk role yang diizinkan */
-    if (ROLE_AKSES_PRESENSI.includes(role)) {
-      this._listeners.push(
-        fdb.collection("presensi").onSnapshot(snap => {
-          _laporkanStatusCache(snap);
-          AppState.presensiHistory = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          _hitungRingkasan(); _reRenderPage();
-        })
-      );
-    }
+    return Promise.all(firstSnapshots);
+
   },
 
   stopListeners() {

@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       /* Aktifkan real-time listener (Firestore) */
-      DB.initListeners();
+      await DB.initListeners();
 
       /* Mulai dashboard */
       _initDashboard(user);
